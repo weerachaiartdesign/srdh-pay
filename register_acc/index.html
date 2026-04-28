@@ -1,187 +1,65 @@
+<!-- เวอร์ชัน: 003 -->
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Viewer</title>
-    
-    <!-- ใช้ Tailwind CSS แบบมาตรฐานเพื่อลดปัญหา Performance และ Warning -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- นำ api-config.js มาไว้ใน head และตรวจสอบการโหลด -->
-    <script src="js/api-config.js"></script>
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
-        body { font-family: 'Sarabun', sans-serif; background-color: #f1f5f9; }
-        .table-wrapper { 
-            overflow-x: auto; 
-            background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
-        }
-        .loading-ring {
-            display: inline-block;
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(59, 130, 246, 0.3);
-            border-radius: 50%;
-            border-top-color: #3b82f6;
-            animation: spin 1s ease-in-out infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        /* ปรับแต่ง Scrollbar สำหรับคอลัมน์เยอะๆ */
-        .table-wrapper::-webkit-scrollbar { height: 8px; }
-        .table-wrapper::-webkit-scrollbar-track { background: #f1f1f1; }
-        .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    </style>
+   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบทะเบียนฎีกา - Register Acc v001-3</title>
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- UI Frameworks -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="main.css">
+  
+  <!-- Third-party Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-            <div>
-                <h1 id="appTitle" class="text-2xl font-bold text-gray-800">ระบบฐานข้อมูล</h1>
-                <p class="text-gray-500">แสดงข้อมูลคอลัมน์ A-Y จาก Sheet "register"</p>
-            </div>
-            <button onclick="fetchData()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-sync"></i> รีเฟรชข้อมูล
-            </button>
-        </div>
+<body>
 
-        <!-- Search Bar -->
-        <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
-            <div class="relative">
-                <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="globalSearch" onkeyup="handleSearch()" placeholder="ค้นหาข้อมูล..." class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
-            </div>
+  <!-- ส่วนควบคุมเมนูข้าง (Sidebar) -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-intersect fs-3"></i>
+        <div>
+          <div class="fw-bold" style="font-size: 1.1rem; line-height: 1;">ทะเบียนฎีกา</div>
+          <small style="font-size: 0.65rem; font-weight: normal; opacity: 0.8;">Register Acc v001-3</small>
         </div>
-
-        <!-- Loading State -->
-        <div id="loader" class="flex flex-col items-center justify-center py-20">
-            <div class="loading-ring mb-4"></div>
-            <p class="text-gray-500 text-lg">กำลังดึงข้อมูลจาก Cloudflare & GitHub...</p>
-        </div>
-
-        <!-- Table Content -->
-        <div id="tableContainer" class="hidden">
-            <div class="table-wrapper">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-800 text-white">
-                        <tr id="headerRow"></tr>
-                    </thead>
-                    <tbody id="bodyRows" class="divide-y divide-gray-200 text-gray-700 text-sm"></tbody>
-                </table>
-            </div>
-            <div id="noResults" class="hidden py-12 text-center text-gray-400">
-                 ไม่พบข้อมูลที่ต้องการ
-            </div>
-        </div>
-
-        <!-- Error State -->
-        <div id="errorBox" class="hidden bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-circle-exclamation"></i>
-                <p class="font-bold">เกิดข้อผิดพลาด</p>
-            </div>
-            <p id="errorText" class="mt-1 text-sm"></p>
-        </div>
+      </div>
     </div>
+    <nav class="nav flex-column mt-3">
+      <div class="nav-link" id="btn-dash" onclick="changePage('dashboard')">
+        <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
+      </div>
+      <div class="nav-link" id="btn-list" onclick="changePage('list')">
+        <i class="bi bi-table"></i> <span>รายการทะเบียน</span>
+      </div>
+    </nav>
+  </div>
 
-    <script>
-        // ฟังก์ชันตรวจสอบว่าโหลด Config สำเร็จหรือไม่
-        function checkConfig() {
-            if (typeof API_CONFIG === 'undefined') {
-                showError("ไม่พบไฟล์ 'api-config.js' หรือไฟล์มีรูปแบบไม่ถูกต้อง กรุณาตรวจสอบว่าไฟล์อยู่ในโฟลเดอร์เดียวกันกับ index.html");
-                return false;
-            }
-            return true;
-        }
+  <!-- พื้นที่แสดงผลข้อมูล (Main View) -->
+  <div class="main-content">
+    <div id="view-container">
+      <div class="text-center py-5" style="margin-top: 100px;">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+        <p class="mt-3 text-muted fw-light">กำลังเตรียมข้อมูลระบบทะเบียน...</p>
+      </div>
+    </div>
+  </div>
 
-        async function fetchData() {
-            if (!checkConfig()) return;
+  <!-- การโหลดไฟล์ JavaScript (ลำดับสำคัญมากเพื่อป้องกัน 'config is not defined') -->
+  <!-- 1. โหลดค่าตั้งค่าก่อน -->
+  <script src="js/api-config.js"></script>
+  <!-- 2. โหลดคอมโพเนนต์ย่อย -->
+  <script src="js/dashboard.js"></script>
+  <script src="js/register-list.js"></script>
+  <!-- 3. โหลดลอจิกหลักเป็นลำดับสุดท้าย -->
+  <script src="js/index.js"></script>
 
-            const loader = document.getElementById('loader');
-            const container = document.getElementById('tableContainer');
-            const errorBox = document.getElementById('errorBox');
-            const headerRow = document.getElementById('headerRow');
-            const bodyRows = document.getElementById('bodyRows');
-
-            loader.classList.remove('hidden');
-            container.classList.add('hidden');
-            errorBox.classList.add('hidden');
-            
-            try {
-                document.getElementById('appTitle').textContent = API_CONFIG.appName;
-
-                if (!API_CONFIG.scriptUrl || API_CONFIG.scriptUrl.includes("AKfycb...")) {
-                    throw new Error("กรุณาแก้ไขไฟล์ api-config.js และใส่ URL ของ Google Apps Script ที่ใช้งานจริง");
-                }
-
-                const response = await fetch(API_CONFIG.scriptUrl);
-                const result = await response.json();
-
-                if (result.success) {
-                    headerRow.innerHTML = '';
-                    bodyRows.innerHTML = '';
-
-                    // สร้าง Header
-                    result.headers.forEach(header => {
-                        const th = document.createElement('th');
-                        th.className = "px-6 py-4 font-semibold whitespace-nowrap";
-                        th.textContent = header;
-                        headerRow.appendChild(th);
-                    });
-
-                    // สร้าง Data Rows
-                    result.data.forEach(item => {
-                        const tr = document.createElement('tr');
-                        tr.className = "hover:bg-blue-50 transition-colors";
-                        result.headers.forEach(header => {
-                            const td = document.createElement('td');
-                            td.className = "px-6 py-4 whitespace-nowrap";
-                            td.textContent = item[header] !== undefined ? item[header] : "";
-                            tr.appendChild(td);
-                        });
-                        bodyRows.appendChild(tr);
-                    });
-
-                    container.classList.remove('hidden');
-                } else {
-                    throw new Error(result.error || "API ตอบกลับแต่ไม่สำเร็จ");
-                }
-            } catch (err) {
-                showError(err.message);
-            } finally {
-                loader.classList.add('hidden');
-            }
-        }
-
-        function handleSearch() {
-            const query = document.getElementById('globalSearch').value.toLowerCase();
-            const rows = document.querySelectorAll('#bodyRows tr');
-            let matchCount = 0;
-
-            rows.forEach(row => {
-                const text = row.innerText.toLowerCase();
-                if (text.includes(query)) {
-                    row.style.display = "";
-                    matchCount++;
-                } else {
-                    row.style.display = "none";
-                }
-            });
-            document.getElementById('noResults').classList.toggle('hidden', matchCount > 0);
-        }
-
-        function showError(msg) {
-            document.getElementById('loader').classList.add('hidden');
-            document.getElementById('errorBox').classList.remove('hidden');
-            document.getElementById('errorText').textContent = msg;
-        }
-
-        window.onload = fetchData;
-    </script>
 </body>
 </html>
