@@ -3,35 +3,37 @@
 function loadDashboard() {
   const content = document.getElementById('content');
   content.innerHTML = `
+    <h3 class="mb-4">📊 ภาพรวมฎีกา</h3>
     <div class="row mb-4" id="moneySummaryCards"></div>
-    <div class="alert alert-info" id="avgTimeBox"></div>
+    <div class="alert alert-success" id="avgTimeBox"></div>
     <div class="row">
-      <div class="col-md-6"><canvas id="deptChart"></canvas></div>
+      <div class="col-md-6"><canvas id="deptSummaryChart"></canvas></div>
       <div class="col-md-6"><canvas id="deptMoneyTypeChart"></canvas></div>
     </div>
   `;
-  
+
   renderSummaryCards();
-  renderDeptCharts();
+  renderAvgTime();
+  renderDeptSummaryChart();     // จำนวนฎีกา+จำนวนเงิน (แท่งซ้อนแนวตั้ง)
+  renderDeptMoneyTypeChart();   // แต่ละหน่วยงานแยกประเภทเงิน
 }
 
+// 1.1 สรุปตามประเภทเงิน
 function renderSummaryCards() {
   const types = ["เงินงบประมาณ", "เงินบำรุง", "เงิน 30 บาท", "เงินอุดหนุน", "เงินอื่น"];
   let html = '';
-  
   types.forEach(type => {
     const filtered = allData.filter(d => d.moneyType === type);
     const paid = filtered.filter(d => d.checkDate !== "");
     const totalAmount = filtered.reduce((s, d) => s + (Number(d.amount) || 0), 0);
     const paidAmount = paid.reduce((s, d) => s + (Number(d.amount) || 0), 0);
-    
     html += `
-      <div class="col-md-4 mb-2">
-        <div class="card shadow-sm">
+      <div class="col-md-4 mb-3">
+        <div class="card shadow-sm border-${paid.length === filtered.length && filtered.length ? 'success' : 'primary'}">
           <div class="card-body">
-            <h6>${type}</h6>
-            <p>ฎีกา: ${paid.length}/${filtered.length} ฉบับ</p>
-            <p>เงิน: ${paidAmount.toLocaleString()}/${totalAmount.toLocaleString()} บาท</p>
+            <h6 class="card-title">${type}</h6>
+            <p class="mb-1">📄 ฎีกา: ${paid.length}/${filtered.length} ฉบับ</p>
+            <p class="mb-0">💰 เงิน: ${paidAmount.toLocaleString()}/${totalAmount.toLocaleString()} บาท</p>
           </div>
         </div>
       </div>`;
@@ -39,9 +41,72 @@ function renderSummaryCards() {
   document.getElementById('moneySummaryCards').innerHTML = html;
 }
 
-function renderDeptCharts() {
-  // Logic สำหรับสร้าง Bar Chart ตามหน่วยงาน (B)
-  const ctx = document.getElementById('deptChart').getContext('2d');
-  // ใช้ Chart.js สร้าง Stacked Bar Chart แสดงจำนวนฎีกาและยอดเงิน
+// 1.2 เฉลี่ยวันตรวจสอบ (วันที่รับ ถึง อนุมัติ)
+function renderAvgTime() {
+  let totalDays = 0;
+  let count = 0;
+  allData.forEach(d => {
+    if(d.dateIn && d.approveDate) {
+      const start = new Date(d.dateIn);
+      const end = new Date(d.approveDate);
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      totalDays += diffDays;
+      count++;
+    }
+  });
+  const avg = count ? (totalDays / count).toFixed(1) : 0;
+  document.getElementById('avgTimeBox').innerHTML = `<strong>⏱️ ระยะเวลาเฉลี่ยการตรวจสอบฎีกา (วันรับ -> วันอนุมัติ):</strong> ${avg} วัน (จาก ${count} ฎีกา)`;
+}
+
+// 1.3 กราฟแท่งซ้อนแนวตั้ง แยกหน่วยงานยา,พัสดุ,โภชนา,ปกส,บริหาร,เลือด,Lab,X-Ray อื่นๆ
+function renderDeptSummaryChart() {
+  const ctx = document.getElementById('deptSummaryChart').getContext('2d');
+  const depts = ["ยา", "พัสดุ", "โภชนา", "ปกส", "บริหาร", "เลือด", "Lab", "X-Ray", "อื่นๆ"];
+  const countData = [];
+  const amountData = [];
+
+  depts.forEach(dept => {
+    const filtered = allData.filter(d => (d.dept || "").toLowerCase().includes(dept.toLowerCase()));
+    const paidAmount = filtered.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    countData.push(filtered.length);
+    amountData.push(paidAmount);
+  });
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: depts,
+      datasets: [
+        { label: 'จำนวนฎีกา (ฉบับ)', data: countData, backgroundColor: '#4bc0c0', yAxisID: 'y' },
+        { label: 'ยอดเงิน (พันบาท)', data: amountData.map(v => v/1000), backgroundColor: '#ff9f40', yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw.toFixed(0)}` } } },
+      scales: { y: { title: { display: true, text: 'จำนวนฎีกา (ฉบับ)' } }, y1: { position: 'right', title: { text: 'ยอดเงิน (พันบาท)' } } }
+    }
+  });
+}
+
+// 1.4 กราฟแท่งแยกหน่วยงาน + แยกประเภทเงิน (แสดงจำนวนฎีกา)
+function renderDeptMoneyTypeChart() {
+  const ctx = document.getElementById('deptMoneyTypeChart').getContext('2d');
+  const depts = ["ยา", "พัสดุ", "โภชนา", "ปกส", "บริหาร", "เลือด", "Lab", "X-Ray", "อื่นๆ"];
+  const moneyTypes = ["เงินงบประมาณ", "เงินบำรุง", "เงิน 30 บาท", "เงินอุดหนุน", "เงินอื่น"];
+  const datasets = moneyTypes.map((type, idx) => {
+    const colors = ['#36a2eb', '#ff6384', '#ffce56', '#4bc0c0', '#9966ff'];
+    const data = depts.map(dept => {
+      return allData.filter(d => (d.dept || "").toLowerCase().includes(dept.toLowerCase()) && d.moneyType === type).length;
+    });
+    return { label: type, data: data, backgroundColor: colors[idx % colors.length] };
+  });
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: { labels: depts, datasets: datasets },
+    options: { responsive: true, scales: { x: { stacked: false }, y: { title: { display: true, text: 'จำนวนฎีกา (ฉบับ)' } } } }
+  });
 }
 </script>
