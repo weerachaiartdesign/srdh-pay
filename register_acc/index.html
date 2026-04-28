@@ -1,44 +1,42 @@
 <!-- version 001-1 -->
 <!DOCTYPE html>
 <html>
-  <head>
-    <base target="_top">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <?!= include('main.css'); ?>
-  </head>
-  <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-      <div class="container">
-        <a class="navbar-brand" href="#">ทะเบียนฎีกา</a>
-        <div class="navbar-nav">
-          <a class="nav-link active" href="#" onclick="showPage('dashboard')">Dashboard</a>
-          <a class="nav-link" href="#" onclick="showPage('register-list')">รายการทะเบียน</a>
-        </div>
-      </div>
-    </nav>
-
-    <div class="container mt-4">
-      <div id="content">
-        <div class="text-center">กำลังโหลดข้อมูล...</div>
-      </div>
+<head>
+  <base target="_top">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <?!= include('main.css'); ?>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" href="#">📋 ทะเบียนฎีกา</a>
+    <div class="navbar-nav">
+      <a class="nav-link active" href="#" onclick="showPage('dashboard')">Dashboard</a>
+      <a class="nav-link" href="#" onclick="showPage('register-list')">รายการทะเบียน</a>
     </div>
+  </div>
+</nav>
+<div class="container mt-4">
+  <div id="content">กำลังโหลดข้อมูล...</div>
+</div>
 
-    <script>
-      let allData = [];
+<script>
+  let allData = [];
 
-      function showPage(pageName) {
-        document.getElementById('content').innerHTML = 'กำลังโหลด...';
-        google.script.run.withSuccessHandler(data => {
-          allData = data;
-          if(pageName === 'dashboard') loadDashboard();
-          else loadRegisterList();
-        }).getRegisterData();
-      }
+  function showPage(pageName) {
+    document.getElementById('content').innerHTML = 'กำลังโหลด...';
+    google.script.run.withSuccessHandler(data => {
+      allData = data;
+      if(pageName === 'dashboard') loadDashboard();
+      else if(pageName === 'register-list') loadRegisterList();
+    }).getRegisterData();
+  }
 
-      window.onload = () => showPage('dashboard');
-    </script>
-    <?!= include('dashboard.html'); ?>
-    <?!= include('register-list.html'); ?>
-  </body>
+  window.onload = () => showPage('dashboard');
+</script>
+
+<?!= include('dashboard.html'); ?>
+<?!= include('register-list.html'); ?>
+</body>
 </html>
