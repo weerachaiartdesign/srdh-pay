@@ -1,32 +1,27 @@
 /** * version 001-3
- * ไฟล์: main.css
- * หน้าที่: กำหนดสไตล์หลักของระบบ เน้นสีม่วง (Medium Orchid) และความทันสมัยแบบ Clean UI
+ * หน้าที่: สไตล์หลักของระบบ เน้นความเป็นระเบียบและ Responsive
  */
 
 :root {
   --primary: #BA55D3;
-  --primary-dark: #9932CC;
-  --bg-light: #f4f7f6;
-  --sidebar-width: 260px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --bg: #f8f9fa;
+  --sidebar: #ffffff;
 }
 
 body {
   font-family: 'Sarabun', sans-serif;
-  background: var(--bg-light);
-  margin: 0;
-  color: #333;
+  background-color: var(--bg);
+  color: #444;
 }
 
-/* Sidebar Styling */
+/* Sidebar */
 .sidebar {
-  width: var(--sidebar-width);
+  width: 260px;
   height: 100vh;
-  background: #ffffff;
+  background: var(--sidebar);
   border-right: 1px solid rgba(0,0,0,0.05);
   position: fixed;
   z-index: 1000;
-  box-shadow: 4px 0 10px rgba(0,0,0,0.02);
 }
 
 .sidebar-header {
@@ -34,26 +29,23 @@ body {
   background: var(--primary);
   color: white;
   font-weight: 600;
-  font-size: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  font-size: 1.3rem;
 }
 
 .nav-link {
-  padding: 14px 20px;
+  padding: 15px 20px;
   color: #666;
   text-decoration: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 12px;
-  cursor: pointer;
-  border-left: 4px solid transparent;
-  transition: var(--transition);
+  border-left: 5px solid transparent;
+  transition: all 0.2s;
 }
 
 .nav-link:hover {
-  background: #f8f0fc;
+  background: #fdf5ff;
   color: var(--primary);
 }
 
@@ -66,58 +58,57 @@ body {
 
 /* Content Area */
 .main-content {
-  margin-left: var(--sidebar-width);
+  margin-left: 260px;
   padding: 40px;
-  min-height: 100vh;
+}
+
+/* Search Box */
+.search-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+.search-wrapper i {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+}
+
+.search-wrapper .form-control {
+  padding-left: 40px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
 }
 
 /* UI Elements */
 .card {
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-  transition: var(--transition);
-}
-
-.stat-card {
-  border-left: 6px solid var(--primary) !important;
-}
-
-.stat-card:hover {
-  transform: translateY(-5px);
+  border-radius: 15px;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.04);
 }
 
 .text-purple { color: var(--primary); }
 .bg-purple { background-color: var(--primary); }
 
-.search-box {
-  max-width: 400px;
-  border-radius: 10px;
-  padding: 10px 15px;
-  border: 1px solid #ddd;
-}
-
 .table thead th {
   font-weight: 500;
-  padding: 15px;
   border: none;
+  padding: 15px;
 }
 
-.table tbody td {
-  padding: 12px 15px;
-}
-
+/* Badge colors override */
 .badge {
   font-weight: 400;
-  padding: 6px 12px;
-  border-radius: 6px;
+  font-size: 0.85rem;
 }
 
-/* Mobile Responsive */
+/* Mobile */
 @media (max-width: 768px) {
   .sidebar { width: 70px; }
   .sidebar-header span, .nav-link span { display: none; }
   .main-content { margin-left: 70px; padding: 20px; }
-  .sidebar-header { padding: 25px 15px; justify-content: center; }
-  .nav-link { justify-content: center; padding: 20px 0; }
-  .search-box { max-width: 100%; }
+  .search-wrapper { max-width: 100%; }
 }
