@@ -1,93 +1,79 @@
-/**
- * version 001-3
- * ไฟล์: index.js
- * หน้าที่: 
- * 1. จัดการการโหลดข้อมูลเริ่มต้น (Initialize Data) จาก Google Apps Script API
- * 2. จัดการระบบ Navigation (SPA) เพื่อสลับหน้า Dashboard และ รายการทะเบียน
- * 3. เก็บสถานะข้อมูลส่วนกลาง (Global State) เพื่อใช้งานร่วมกันในระบบ
+/* version 002
+ * ไฟล์หลัก ควบคุมการโหลดข้อมูลและการเปลี่ยนหน้า
  */
 
-let allData = []; // ตัวแปรเก็บข้อมูลหลักของระบบ
+let allData = [];
+let cachedData = null;
+let lastFetch = 0;
 
-// เริ่มต้นทำงานเมื่อไฟล์ JS ทั้งหมดโหลดเสร็จ
-window.addEventListener('load', init);
+// เริ่มต้นเมื่อโหลดหน้า
+window.addEventListener('DOMContentLoaded', init);
 
-/**
- * ฟังก์ชัน init:
- * ดึงข้อมูลจาก API โดยอ้างอิงค่าจาก CONFIG ใน api-config.js
- * มีการจัดการ Error Handling กรณีเชื่อมต่อไม่ได้
- */
 async function init() {
+  await loadData();
+  changePage('dashboard');
+}
+
+async function loadData(forceRefresh = false) {
   const container = document.getElementById('view-container');
   
+  // ตรวจสอบ cache
+  const now = Date.now();
+  if (!forceRefresh && cachedData && (now - lastFetch) < CONFIG.CACHE_TIMEOUT) {
+    allData = cachedData;
+    return;
+  }
+  
+  // แสดง loading
+  if (container) {
+    container.innerHTML = `
+      <div class="loading-spinner">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+        <p class="mt-3 text-muted">กำลังโหลดข้อมูลจากระบบ...</p>
+      </div>
+    `;
+  }
+  
   try {
-    // ตรวจสอบว่ามีวัตถุ CONFIG หรือไม่เพื่อป้องกันข้อผิดพลาด config is not defined
-    if (typeof CONFIG === 'undefined') {
-      throw new Error("ไม่พบไฟล์ตั้งค่าระบบ (api-config.js)");
-    }
-
-    const response = await fetch(CONFIG.API_URL);
-    if (!response.ok) throw new Error("Network response was not ok");
-    
-    const result = await response.json();
-    
-    if(result.error) throw new Error(result.error);
-    
-    allData = result;
-    // เมื่อข้อมูลพร้อม ให้แสดงหน้า Dashboard เป็นหน้าเริ่มต้น
-    changePage('dashboard');
-  } catch (e) {
-    console.error("Fetch Error:", e);
+    const data = await fetchRegisterData();
+    allData = data;
+    cachedData = data;
+    lastFetch = now;
+  } catch (error) {
+    console.error('Load data error:', error);
     if (container) {
       container.innerHTML = `
         <div class="alert alert-danger m-4 shadow-sm border-0" style="border-radius:15px;">
-          <h5 class="alert-heading text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> การเชื่อมต่อล้มเหลว</h5>
-          <p class="mb-2">ไม่สามารถโหลดข้อมูลจาก Google Sheets ได้: <br><code class="text-dark">${e.message}</code></p>
-          <hr>
-          <button class="btn btn-danger btn-sm px-4" onclick="location.reload()" style="border-radius:8px;">
-            <i class="bi bi-arrow-clockwise"></i> ลองใหม่อีกครั้ง
+          <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> เกิดข้อผิดพลาด</h5>
+          <p>ไม่สามารถโหลดข้อมูลได้: ${error.message}</p>
+          <button class="btn btn-danger" onclick="location.reload()">
+            <i class="bi bi-arrow-clockwise"></i> ลองใหม่
           </button>
-        </div>`;
+        </div>
+      `;
     }
+    throw error;
   }
 }
 
-/**
- * ฟังก์ชัน changePage:
- * ควบคุมการเปลี่ยนหน้าจอโดยไม่ต้องรีโหลดหน้าเว็บ (SPA)
- * @param {string} page - ชื่อหน้าจอที่ต้องการแสดง ('dashboard' หรือ 'list')
- */
 function changePage(page) {
-  const container = document.getElementById('view-container');
-  if (!container) return;
-
-  // เปลี่ยนสถานะเมนูใน Sidebar ให้ Active ตามหน้าที่เลือก
+  // อัปเดต active menu
   document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
   
-  if(page === 'dashboard') {
+  if (page === 'dashboard') {
     const btnDash = document.getElementById('btn-dash');
     if (btnDash) btnDash.classList.add('active');
-    
-    // เรียกฟังก์ชันจาก dashboard.js
-    if (typeof renderDashboard === 'function') {
-      renderDashboard();
-    }
-  } else if(page === 'list') {
+    renderDashboard(allData);
+  } else if (page === 'list') {
     const btnList = document.getElementById('btn-list');
     if (btnList) btnList.classList.add('active');
-    
-    // โหลดโครงสร้าง HTML ของหน้ารายการ
-    fetch('register-list.html')
-      .then(res => res.text())
-      .then(html => {
-        container.innerHTML = html;
-        // เรียกฟังก์ชันลอจิกจาก register-list.js
-        if (typeof initListLogic === 'function') {
-          initListLogic();
-        }
-      })
-      .catch(err => {
-        container.innerHTML = `<div class="alert alert-warning">โหลดหน้าจอรายการไม่สำเร็จ: ${err.message}</div>`;
-      });
+    renderRegisterList(allData);
   }
 }
+
+// ฟังก์ชัน refresh ข้อมูล
+window.refreshData = async function() {
+  await loadData(true);
+  const currentPage = document.querySelector('.nav-link.active')?.id === 'btn-dash' ? 'dashboard' : 'list';
+  changePage(currentPage);
+};
