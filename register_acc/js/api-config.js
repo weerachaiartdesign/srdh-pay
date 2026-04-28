@@ -1,4 +1,4 @@
 /**
  * version 001-1
  */
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwpSlnx42f3kMiWRE5onSqYBh4oXPJNMUa7fUDaWv5X3ITsAbSAVWjEH85H8KxPCqx7/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwth7QbXFb7K6M3rrmrlIpqTZjqWE9u_sK-ncy0Lwwbx-Rgj1ntDeSl_2_w6Ujb62ZV/exec";
