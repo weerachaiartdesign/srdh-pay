@@ -1,48 +1,70 @@
-/** * ระบบทะเบียนฎีกา - Table & Search Logic
- * version 001-2
+/**
+ * version 001-3
+ * หน้าที่: ลอจิกการแสดงผลตาราง และการกรองข้อมูล (Search)
  */
-function renderList() {
-  const container = document.getElementById('view-container');
-  container.innerHTML = `
-    <div class="d-flex justify-content-between mb-4">
-      <h4 class="text-purple fw-bold"><i class="bi bi-table"></i> รายการทะเบียน</h4>
-      <input type="text" id="q" class="form-control w-50 shadow-sm" placeholder="🔍 ค้นหา (เลขรับ, ฎีกา, บริษัท...)" onkeyup="doSearch()">
-    </div>
-    <div class="card shadow-sm overflow-hidden">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead style="background: #BA55D3; color: white">
-            <tr><th>สถานะ</th><th>เจ้าหนี้</th><th class="text-end">จำนวนเงิน</th><th>รายการ</th><th>ประเภทเงิน</th><th>หน่วยงาน</th></tr>
-          </thead>
-          <tbody id="list-body"></tbody>
-        </table>
-      </div>
-    </div>
-  `;
+
+function initListLogic() {
   drawTable(allData);
 }
 
 function drawTable(data) {
   const body = document.getElementById('list-body');
+  if(!body) return;
+  
+  if(data.length === 0) {
+    body.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">ไม่พบข้อมูลที่ต้องการค้นหา</td></tr>`;
+    return;
+  }
+  
   body.innerHTML = data.map(r => `
     <tr>
-      <td><span class="badge" style="background:${stColor(r.status)}">${r.status}</span></td>
-      <td><b>${r.vendor || '-'}</b><br><small class="text-muted">เลขรับ: ${r.receiveNo}</small></td>
-      <td class="text-end text-purple fw-bold">${Number(r.amount || 0).toLocaleString()}</td>
-      <td><div class="text-truncate" style="max-width:200px">${r.item || '-'}</div></td>
-      <td><small>${r.moneyType || '-'}</small></td>
-      <td>${r.dept || '-'}</td>
+      <td class="ps-3">
+        <span class="badge w-100 py-2" style="background:${stColor(r.status)}">${r.status}</span>
+      </td>
+      <td>
+        <div class="fw-bold text-dark">${r.vendor || '-'}</div>
+        <small class="text-muted">เลขรับ: ${r.receiveNo}</small>
+      </td>
+      <td class="text-end text-purple fw-bold">
+        ${Number(r.amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}
+      </td>
+      <td>
+        <div class="text-truncate" style="max-width:250px" title="${r.item}">
+          ${r.item || '-'}
+        </div>
+        <small class="text-muted">เลขเบิก/ฎีกา: ${r.withdrawNo || '-'}/${r.dikaNo || '-'}</small>
+      </td>
+      <td>
+        <div><i class="bi bi-building"></i> ${r.dept || '-'}</div>
+        <div class="small badge bg-light text-dark border mt-1 font-weight-normal">${r.moneyType || '-'}</div>
+      </td>
     </tr>
   `).join('');
 }
 
-function stColor(s) {
-  const map = { 'จ่ายแล้ว':'#28a745', 'ยกเลิก':'#dc3545', 'อนุมัติจ่าย':'#17a2b8', 'ส่งเสนอ':'#ffc107', 'ตรวจสอบ':'#BA55D3' };
-  return map[s] || '#6c757d';
+function doSearch() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = allData.filter(d => 
+    (d.vendor || '').toLowerCase().includes(q) ||
+    (d.receiveNo || '').toString().includes(q) ||
+    (d.item || '').toLowerCase().includes(q) ||
+    (d.dikaNo || '').toLowerCase().includes(q) ||
+    (d.dept || '').toLowerCase().includes(q)
+  );
+  drawTable(filtered);
 }
 
-function doSearch() {
-  const val = document.getElementById('q').value.toLowerCase();
-  const filtered = allData.filter(d => Object.values(d).some(v => String(v).toLowerCase().includes(val)));
-  drawTable(filtered);
+// ฟังก์ชันกำหนดสี Badge ตาม 8 สถานะใหม่
+function stColor(s) {
+  const map = { 
+    'จ่ายแล้ว': '#28a745', 
+    'ยกเลิก': '#343a40', 
+    'อนุมัติจ่าย': '#fd7e14', 
+    'ส่งเสนอ': '#ffc107', 
+    'หน.ตรวจสอบ': '#17a2b8',
+    'แก้ไข': '#dc3545',
+    'ตรวจสอบ': '#007bff',
+    'รับเข้าระบบ': '#6c757d'
+  };
+  return map[s] || '#dee2e6';
 }
