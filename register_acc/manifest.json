@@ -1,8 +1,8 @@
 {
-  "version": "00029",
-  "name": "BMA Assets Management",
-  "short_name": "BMA Assets",
-  "description": "โปรแกรมจัดการทรัพย์สิน กรุงเทพมหานคร",
+  "version": "001",
+  "name": "Register Acc",
+  "short_name": "register acc",
+  "description": "ทะเบียนฏีกา",
   "start_url": "/index.html",
   "display": "standalone",
   "orientation": "portrait",
