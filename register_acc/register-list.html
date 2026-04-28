@@ -1,49 +1,30 @@
-<script>
-function renderList() {
-  const content = document.getElementById('page-content');
-  content.innerHTML = `
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h4 style="color: #BA55D3"><i class="bi bi-list-task"></i> รายการทะเบียนฎีกา</h4>
-      <input type="text" id="search" class="form-control w-50 shadow-sm" placeholder="🔍 ค้นหา (Invoice, ฎีกา, เจ้าหนี้, ฯลฯ)" onkeyup="doSearch()">
-    </div>
-    <div class="card shadow-sm border-0 overflow-hidden">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead style="background: #BA55D3; color: white">
-            <tr>
-              <th>สถานะ</th><th>เจ้าหนี้/บริษัท</th><th class="text-end">จำนวนเงิน</th><th>รายการ</th><th>ประเภทเงิน</th><th>หน่วยงาน</th>
-            </tr>
-          </thead>
-          <tbody id="list-body"></tbody>
-        </table>
-      </div>
-    </div>
-  `;
-  drawTable(allData);
-}
+<!-- 
+  version 001-3
+  หน้าที่: โครงสร้าง UI สำหรับหน้าตารางข้อมูล
+-->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <h4 class="text-purple fw-bold mb-0"><i class="bi bi-list-ul"></i> รายการทะเบียนฎีกา</h4>
+  <div class="search-wrapper">
+    <i class="bi bi-search"></i>
+    <input type="text" id="searchInput" class="form-control" placeholder="ค้นหา เจ้าหนี้, เลขรับ, รายการ..." onkeyup="doSearch()">
+  </div>
+</div>
 
-function drawTable(data) {
-  const body = document.getElementById('list-body');
-  body.innerHTML = data.map(r => `
-    <tr>
-      <td><span class="badge" style="background:${stColor(r.status)}">${r.status}</span></td>
-      <td><b>${r.vendor || '-'}</b><br><small class="text-muted">เลขรับ: ${r.receiveNo}</small></td>
-      <td class="text-end text-primary fw-bold">${Number(r.amount || 0).toLocaleString()}</td>
-      <td><div style="max-width:200px" class="text-truncate">${r.item || '-'}</div></td>
-      <td><small>${r.moneyType || '-'}</small></td>
-      <td>${r.dept || '-'}</td>
-    </tr>
-  `).join('');
-}
-
-function stColor(s) {
-  const colors = { 'จ่ายแล้ว':'#28a745', 'ยกเลิก':'#dc3545', 'อนุมัติจ่าย':'#17a2b8', 'ส่งเสนอ':'#ffc107', 'ตรวจสอบ':'#BA55D3' };
-  return colors[s] || '#6c757d';
-}
-
-function doSearch() {
-  const q = document.getElementById('search').value.toLowerCase();
-  const filtered = allData.filter(d => Object.values(d).some(v => String(v).toLowerCase().includes(q)));
-  drawTable(filtered);
-}
-</script>
+<div class="card shadow-sm border-0 overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="bg-purple text-white">
+        <tr>
+          <th class="ps-3" style="min-width:120px">สถานะ</th>
+          <th>เจ้าหนี้ / บริษัท</th>
+          <th class="text-end">จำนวนเงิน</th>
+          <th>รายการ</th>
+          <th>หน่วยงาน / ประเภทเงิน</th>
+        </tr>
+      </thead>
+      <tbody id="list-body">
+        <!-- ข้อมูลจาก register-list.js -->
+      </tbody>
+    </table>
+  </div>
+</div>
