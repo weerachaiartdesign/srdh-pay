@@ -1,0 +1,42 @@
+{
+  "//": "version 003",
+  "name": "Register Acc",
+  "short_name": "RegAcc",
+  "description": "ระบบติดตามสถานะฎีกา รพส.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#BA55D3",
+  "lang": "th","icons": [
+    {
+      "src": "icons/register_acc-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/register_acc-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {"src": "icons/register_acc-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/register_acc-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/register_acc-touch-icon-ipad.png",
+      "sizes": "167x167",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
