@@ -1,4 +1,5 @@
-/**
- * version 001-1
+/* version 001-2
  */
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwth7QbXFb7K6M3rrmrlIpqTZjqWE9u_sK-ncy0Lwwbx-Rgj1ntDeSl_2_w6Ujb62ZV/exec";
+const CONFIG = {
+  API_URL: "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"
+};
