@@ -1,130 +1,69 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <!-- เวอร์ชัน: 001-3
-    รายละเอียดไฟล์: index.html (Main Entry)
-    หน้าที่: 
-      1. เป็นจุดเข้าใช้งานหลักของระบบ (Single Page Application - SPA Style)
-      2. จัดการโครงสร้างหน้าจอหลัก (Layout), Sidebar และส่วนแสดงเนื้อหา
-      3. โหลดข้อมูลเริ่มต้นจาก Google Apps Script API (Code.gs)
-      4. ควบคุมการสลับหน้าจอระหว่าง Dashboard และ รายการทะเบียน
+  <!-- 
+    ระบบ: ทะเบียนฎีกาและสถานะการเบี้ยจ่าย (Register Acc)
+    เวอร์ชัน: 001-3
+    รายละเอียด: ไฟล์โครงสร้างหลัก (Frontend Skeleton)
+    ฟังก์ชัน: จัดการ Layout หลัก, Sidebar และเรียกใช้ทรัพยากรภายนอก
   -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบทะเบียนฎีกา</title>
+  <title>ระบบทะเบียนฎีกา - Register Acc v001-3</title>
   <link rel="manifest" href="manifest.json">
   
-  <!-- External CSS -->
+  <!-- UI Frameworks -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
   
-  <!-- Custom CSS -->
+  <!-- Stylesheets -->
   <link rel="stylesheet" href="main.css">
   
-  <!-- Scripts -->
+  <!-- Third-party Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-  <!-- ส่วนแถบเมนูด้านข้าง (Sidebar Navigation) -->
+  <!-- ส่วนควบคุมเมนูข้าง (Sidebar) -->
   <div class="sidebar">
     <div class="sidebar-header">
-      <i class="bi bi-intersect"></i> <span>ทะเบียนฎีกา</span>
-      <div style="font-size: 10px; font-weight: normal; opacity: 0.7;">Version 001-3</div>
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-intersect fs-3"></i>
+        <div>
+          <div class="fw-bold" style="font-size: 1.1rem; line-height: 1;">ทะเบียนฎีกา</div>
+          <small style="font-size: 0.65rem; font-weight: normal; opacity: 0.8;">Register Acc v001-3</small>
+        </div>
+      </div>
     </div>
     <nav class="nav flex-column mt-3">
-      <!-- เมนู Dashboard: แสดงกราฟและสถิติภาพรวม -->
-      <div class="nav-link active" id="btn-dash" onclick="changePage('dashboard')">
+      <div class="nav-link" id="btn-dash" onclick="changePage('dashboard')">
         <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
       </div>
-      <!-- เมนู รายการทะเบียน: แสดงตารางข้อมูลและการค้นหา -->
       <div class="nav-link" id="btn-list" onclick="changePage('list')">
         <i class="bi bi-table"></i> <span>รายการทะเบียน</span>
       </div>
     </nav>
   </div>
 
-  <!-- ส่วนแสดงผลเนื้อหาหลัก (Main Display Area) -->
+  <!-- พื้นที่แสดงผลข้อมูล (Main View) -->
   <div class="main-content">
     <div id="view-container">
-      <!-- สถานะการโหลด (Loading State) -->
-      <div class="text-center py-5">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-3">กำลังโหลดข้อมูลและประมวลผลสถานะ...</p>
+      <div class="text-center py-5" style="margin-top: 100px;">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+        <p class="mt-3 text-muted fw-light">กำลังเตรียมข้อมูลระบบทะเบียน...</p>
       </div>
     </div>
   </div>
 
-  <!-- การนำเข้าไฟล์ Config และ Logic แยกส่วน -->
+  <!-- การโหลดไฟล์ JavaScript (ลำดับสำคัญมากเพื่อป้องกัน 'config is not defined') -->
+  <!-- 1. โหลดค่าตั้งค่าก่อน -->
   <script src="api-config.js"></script>
+  <!-- 2. โหลดคอมโพเนนต์ย่อย -->
   <script src="dashboard.js"></script>
   <script src="register-list.js"></script>
+  <!-- 3. โหลดลอจิกหลักเป็นลำดับสุดท้าย -->
+  <script src="index.js"></script>
 
-  <script>
-    /**
-     * ตัวแปร Global สำหรับเก็บข้อมูลทั้งหมดที่โหลดมาจาก Spreadsheet
-     * เพื่อให้หน้า Dashboard และ List เข้าถึงข้อมูลเดียวกันได้โดยไม่ต้องดึงใหม่
-     */
-    let allData = [];
-    
-    // เริ่มต้นทำงานเมื่อโหลดหน้าเว็บเสร็จ
-    window.onload = init;
-
-    /**
-     * ฟังก์ชัน init:
-     * ดึงข้อมูลจาก API_URL ที่กำหนดไว้ใน api-config.js
-     */
-    async function init() {
-      try {
-        const response = await fetch(CONFIG.API_URL);
-        const result = await response.json();
-        
-        if(result.error) throw new Error(result.error);
-        
-        allData = result;
-        // เมื่อข้อมูลพร้อม ให้แสดงหน้า Dashboard เป็นหน้าแรก
-        changePage('dashboard');
-      } catch (e) {
-        console.error("Fetch Error:", e);
-        document.getElementById('view-container').innerHTML = `
-          <div class="alert alert-danger m-4 shadow-sm">
-            <h5 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> การเชื่อมต่อล้มเหลว</h5>
-            <p>ไม่สามารถโหลดข้อมูลจาก Google Sheets ได้: ${e.message}</p>
-            <hr>
-            <button class="btn btn-outline-danger btn-sm" onclick="location.reload()">
-              <i class="bi bi-arrow-clockwise"></i> พยายามเชื่อมต่ออีกครั้ง
-            </button>
-          </div>`;
-      }
-    }
-
-    /**
-     * ฟังก์ชัน changePage:
-     * จัดการการสลับหน้าจอ (Navigation) และเรียกฟังก์ชัน Render จากไฟล์ภายนอก
-     */
-    function changePage(page) {
-      // ปรับเปลี่ยนสถานะเมนูใน Sidebar
-      document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-      
-      if(page === 'dashboard') {
-        document.getElementById('btn-dash').classList.add('active');
-        // ฟังก์ชัน renderDashboard() อยู่ในไฟล์ dashboard.js
-        renderDashboard();
-      } else {
-        document.getElementById('btn-list').classList.add('active');
-        // สำหรับรายการทะเบียน จะโหลดโครงสร้างจาก register-list.html ก่อน
-        // แล้วจึงเรียก initListLogic() จาก register-list.js
-        fetch('register-list.html')
-          .then(res => res.text())
-          .then(html => {
-            document.getElementById('view-container').innerHTML = html;
-            if (typeof initListLogic === 'function') {
-              initListLogic();
-            }
-          });
-      }
-    }
-  </script>
 </body>
 </html>
