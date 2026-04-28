@@ -1,26 +1,123 @@
-/** * ระบบทะเบียนฎีกา - Stylesheet
- * version 001-2
+/** * version 001-3
+ * ไฟล์: main.css
+ * หน้าที่: กำหนดสไตล์หลักของระบบ เน้นสีม่วง (Medium Orchid) และความทันสมัยแบบ Clean UI
  */
+
 :root {
   --primary: #BA55D3;
   --primary-dark: #9932CC;
-  --sidebar-bg: #ffffff;
-  --content-bg: #f4f7f6;
+  --bg-light: #f4f7f6;
+  --sidebar-width: 260px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-body { font-family: 'Sarabun', sans-serif; background: var(--content-bg); margin: 0; display: flex; }
+body {
+  font-family: 'Sarabun', sans-serif;
+  background: var(--bg-light);
+  margin: 0;
+  color: #333;
+}
 
-.sidebar { width: 260px; height: 100vh; background: var(--sidebar-bg); border-right: 1px solid #ddd; position: fixed; z-index: 1000; }
-.sidebar-header { padding: 25px 20px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; }
-.nav-link { padding: 15px 20px; color: #555; text-decoration: none; display: flex; align-items: center; gap: 10px; cursor: pointer; border-left: 5px solid transparent; }
-.nav-link:hover { background: #fdf5ff; color: var(--primary); }
-.nav-link.active { background: #f5e6fa; color: var(--primary); border-left-color: var(--primary); font-weight: bold; }
+/* Sidebar Styling */
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid rgba(0,0,0,0.05);
+  position: fixed;
+  z-index: 1000;
+  box-shadow: 4px 0 10px rgba(0,0,0,0.02);
+}
 
-.main-content { margin-left: 260px; flex: 1; padding: 30px; }
-.card { border: none; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-.text-purple { color: var(--primary) !important; }
+.sidebar-header {
+  padding: 25px 20px;
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
+.nav-link {
+  padding: 14px 20px;
+  color: #666;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  border-left: 4px solid transparent;
+  transition: var(--transition);
+}
+
+.nav-link:hover {
+  background: #f8f0fc;
+  color: var(--primary);
+}
+
+.nav-link.active {
+  background: #f5e6fa;
+  color: var(--primary);
+  border-left-color: var(--primary);
+  font-weight: 600;
+}
+
+/* Content Area */
+.main-content {
+  margin-left: var(--sidebar-width);
+  padding: 40px;
+  min-height: 100vh;
+}
+
+/* UI Elements */
+.card {
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  transition: var(--transition);
+}
+
+.stat-card {
+  border-left: 6px solid var(--primary) !important;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.text-purple { color: var(--primary); }
+.bg-purple { background-color: var(--primary); }
+
+.search-box {
+  max-width: 400px;
+  border-radius: 10px;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+}
+
+.table thead th {
+  font-weight: 500;
+  padding: 15px;
+  border: none;
+}
+
+.table tbody td {
+  padding: 12px 15px;
+}
+
+.badge {
+  font-weight: 400;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
-  .sidebar { left: -260px; }
-  .main-content { margin-left: 0; }
+  .sidebar { width: 70px; }
+  .sidebar-header span, .nav-link span { display: none; }
+  .main-content { margin-left: 70px; padding: 20px; }
+  .sidebar-header { padding: 25px 15px; justify-content: center; }
+  .nav-link { justify-content: center; padding: 20px 0; }
+  .search-box { max-width: 100%; }
 }
