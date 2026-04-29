@@ -1,5 +1,5 @@
-/* version 003
+/* version 00100
  */
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbwvN6RQaQa7NBoBHDPrTGxpz_ZKKiHt8GDqaa8JF_nPUXPoSIKS6duAw53YUqdTIniqdw/exec"
+  API_URL: "https://script.google.com/macros/s/AKfycbxXRGTcuOoTG4Mbp63KW0jShEnQhj2okkbB4AZnczPBNNVCiiyc9WUyIqTmF9FYkmbP/exec"
 };
