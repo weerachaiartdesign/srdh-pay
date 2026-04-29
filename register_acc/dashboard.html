@@ -1,84 +1,26 @@
-<!-- version 003
-  หน้าที่: ไฟล์หลักสำหรับ Navigation และแสดงหน้า Dashboard
--->
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบทะเบียนฎีกา</title>
-  <link rel="manifest" href="manifest.json">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="main.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <i class="bi bi-intersect"></i> <span>ทะเบียนฎีกา</span>
+<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+  <div class="p-4 rounded-2xl shadow-sm border border-purple-100" style="background-color: #FFCCFF;">
+    <div class="flex justify-between items-start mb-2">
+      <span class="text-sm font-semibold">เงินงบประมาณ</span>
+      <span class="text-xs"><b id="count-1">0</b>/<span class="text-gray-500" id="total-1">0</span> ฏีกา</span>
     </div>
-    <nav class="nav flex-column mt-3">
-      <div class="nav-link active" id="btn-dash" onclick="changePage('dashboard')">
-        <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
-      </div>
-      <div class="nav-link" id="btn-list" onclick="changePage('list')">
-        <i class="bi bi-table"></i> <span>รายการทะเบียน</span>
-      </div>
-    </nav>
-  </div>
-
-  <div class="main-content">
-    <div id="view-container">
-      <div class="text-center py-5">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-3">กำลังเตรียมข้อมูลจากระบบ...</p>
-      </div>
+    <div class="mt-4">
+      <p class="text-xs text-gray-600">เป็นจำนวนเงิน</p>
+      <p class="text-lg font-bold"><span id="amt-1">0</span> <span class="text-sm text-gray-500 font-normal">/ <span id="tamt-1">0</span> บาท</span></p>
     </div>
   </div>
+  </div>
 
-  <script src="api-config.js"></script>
-  <script src="dashboard.js"></script>
-  <script src="register-list.js"></script>
-  <script>
-    let allData = [];
-    
-    window.onload = init;
+<div class="bg-white p-6 rounded-2xl shadow-sm mb-8">
+  <h3 class="text-gray-600 mb-2">สถานะการเบิกจ่ายสำเร็จ</h3>
+  <div class="w-full bg-gray-200 rounded-full h-4">
+    <div id="progress-bar" class="bg-purple-500 h-4 rounded-full transition-all duration-1000" style="width: 0%"></div>
+  </div>
+  <p id="avg-days" class="mt-4 text-purple-700 font-medium"></p>
+</div>
 
-    async function init() {
-      try {
-        const response = await fetch(CONFIG.API_URL);
-        const result = await response.json();
-        if(result.error) throw new Error(result.error);
-        allData = result;
-        changePage('dashboard');
-      } catch (e) {
-        document.getElementById('view-container').innerHTML = `
-          <div class="alert alert-danger m-4">
-            <h5>เกิดข้อผิดพลาด</h5>
-            <p>${e.message}</p>
-            <button class="btn btn-outline-danger" onclick="location.reload()">ลองใหม่อีกครั้ง</button>
-          </div>`;
-      }
-    }
-
-    function changePage(page) {
-      document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-      if(page === 'dashboard') {
-        document.getElementById('btn-dash').classList.add('active');
-        renderDashboard();
-      } else {
-        document.getElementById('btn-list').classList.add('active');
-        fetch('register-list.html')
-          .then(res => res.text())
-          .then(html => {
-            document.getElementById('view-container').innerHTML = html;
-            initListLogic();
-          });
-      }
-    }
-  </script>
-</body>
-</html>
+<div class="grid grid-cols-1 gap-8">
+  <div class="bg-white p-6 rounded-2xl shadow-sm">
+    <canvas id="mainChart"></canvas>
+  </div>
+</div>
