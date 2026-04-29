@@ -1,13 +1,13 @@
 {
-  "//": "version 003",
-  "name": "Register Acc",
-  "short_name": "RegAcc",
+  "//": "version 00100",
+  "name": "SRDH Pay",
+  "short_name": "SRDH Pay",
   "description": "ระบบติดตามสถานะฎีกา รพส.",
   "start_url": "/index.html",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#BA55D3",
+  "background_color": "#F3E8FF",
+  "theme_color": "#A855F7",
   "lang": "th","icons": [
     {
       "src": "icons/register_acc-152.png",
