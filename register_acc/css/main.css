@@ -1,114 +1,31 @@
-/** * version 003
- * หน้าที่: สไตล์หลักของระบบ เน้นความเป็นระเบียบและ Responsive
- */
+/* version : 00100 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --primary: #BA55D3;
-  --bg: #f8f9fa;
-  --sidebar: #ffffff;
+  --bg-pastel: #F3E8FF;
+  --primary-purple: #A855F7;
+  --secondary-purple: #D8B4FE;
 }
 
 body {
+  background-color: var(--bg-pastel);
   font-family: 'Sarabun', sans-serif;
-  background-color: var(--bg);
-  color: #444;
 }
 
-/* Sidebar */
-.sidebar {
-  width: 260px;
-  height: 100vh;
-  background: var(--sidebar);
-  border-right: 1px solid rgba(0,0,0,0.05);
-  position: fixed;
-  z-index: 1000;
+.sidebar-active {
+  @apply bg-purple-500 text-white shadow-lg;
 }
 
-.sidebar-header {
-  padding: 25px 20px;
-  background: var(--primary);
-  color: white;
-  font-weight: 600;
-  font-size: 1.3rem;
-}
+/* Custom Scrollbar for modern look */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #d8b4fe; border-radius: 10px; }
 
-.nav-link {
-  padding: 15px 20px;
-  color: #666;
-  text-decoration: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-left: 5px solid transparent;
-  transition: all 0.2s;
-}
-
-.nav-link:hover {
-  background: #fdf5ff;
-  color: var(--primary);
-}
-
-.nav-link.active {
-  background: #f5e6fa;
-  color: var(--primary);
-  border-left-color: var(--primary);
-  font-weight: 600;
-}
-
-/* Content Area */
-.main-content {
-  margin-left: 260px;
-  padding: 40px;
-}
-
-/* Search Box */
-.search-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-}
-
-.search-wrapper i {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #aaa;
-}
-
-.search-wrapper .form-control {
-  padding-left: 40px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-}
-
-/* UI Elements */
-.card {
-  border-radius: 15px;
-  border: none;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.04);
-}
-
-.text-purple { color: var(--primary); }
-.bg-purple { background-color: var(--primary); }
-
-.table thead th {
-  font-weight: 500;
-  border: none;
-  padding: 15px;
-}
-
-/* Badge colors override */
-.badge {
-  font-weight: 400;
-  font-size: 0.85rem;
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .sidebar { width: 70px; }
-  .sidebar-header span, .nav-link span { display: none; }
-  .main-content { margin-left: 70px; padding: 20px; }
-  .search-wrapper { max-width: 100%; }
-}
+/* Badge Colors */
+.badge-budget { background-color: #FFCCFF; } /* เงินงบประมาณ */
+.badge-support { background-color: #FFFF99; } /* เงินบำรุง */
+.badge-health { background-color: #F8CBAD; }  /* เงินประกันสุขภาพ */
+.badge-subsidy { background-color: #FF9999; } /* เงินอุดหนุน */
+.badge-other { background-color: #808080; color: white; } /* เงินอื่น */
