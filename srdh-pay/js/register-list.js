@@ -1,6 +1,12 @@
-/* version 00102
- * ปรับปรุงการแสดงผลวันที่เป็นปี พ.ศ. และเพิ่ม Modal รายละเอียด
+/* version 00103
+ * แก้ไขปัญหา initRegisterList is not defined
+ * และจัดรูปแบบวันที่เป็น พ.ศ. พร้อม Modal รายละเอียด
  */
+
+// เพิ่มฟังก์ชันนี้เพื่อให้สอดคล้องกับการเรียกใช้ใน index.js
+function initRegisterList() {
+  initListLogic();
+}
 
 function initListLogic() {
   drawTable(allData);
@@ -63,7 +69,6 @@ function showDetail(receiveNo) {
   const r = allData.find(d => d.receiveNo === receiveNo);
   if (!r) return;
 
-  // สร้าง Modal แบบ Dynamic (ถ้ายังไม่มีในหน้า)
   let modalEl = document.getElementById('detailModal');
   if (!modalEl) {
     const div = document.createElement('div');
