@@ -1,4 +1,4 @@
-/* version : 00101 */
+/* version : 00102 */
 // ควบคุมการทำงานและ State หลักของระบบ
 let allData = [];
 
@@ -41,9 +41,13 @@ async function changePage(page) {
   const btn = document.getElementById(`btn-${page === 'dashboard' ? 'dash' : 'list'}`);
   if(btn) btn.classList.add('active');
 
+  // ตรวจสอบชื่อไฟล์ที่จะโหลดให้ตรงกับที่สร้างไว้
+  let fileName = page === 'list' ? 'register-list.html' : `${page}.html`;
+
   // โหลดหน้า
   try {
-    const res = await fetch(`${page}.html`);
+    const res = await fetch(fileName);
+    if (!res.ok) throw new Error(`ไม่พบไฟล์ ${fileName}`);
     const html = await res.text();
     container.innerHTML = html;
 
