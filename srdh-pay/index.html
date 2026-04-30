@@ -1,63 +1,31 @@
-<!--  V. 00101  -->
+<!-- version : 00101 -->
 
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ทะเบียนฎีกาเบิกจ่ายเงิน</title>
+  <title>Srdh Pay - ทะเบียนฎีกาเบิกจ่ายเงิน</title>
   <link rel="manifest" href="manifest.json">
-  
-  <!-- UI Frameworks -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
-  
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/main.css">
-  
-  <!-- Third-party Scripts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="main.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-
-  <!-- ส่วนควบคุมเมนูข้าง (Sidebar) -->
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-intersect fs-3"></i>
-        <div>
-          <div class="fw-bold" style="font-size: 1.1rem; line-height: 1;">ทะเบียนฎีกาเบิกจ่ายเงิน</div>
-          <small style="font-size: 0.65rem; font-weight: normal; opacity: 0.8;">Register Acc v001-3</small>
-        </div>
-      </div>
-    </div>
-    <nav class="nav flex-column mt-3">
-      <div class="nav-link" id="btn-dash" onclick="changePage('dashboard')">
-        <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
-      </div>
-      <div class="nav-link" id="btn-list" onclick="changePage('list')">
-        <i class="bi bi-table"></i> <span>ทะเบียนฎีกาเบิกจ่ายเงิน</span>
-      </div>
+<body class="flex min-h-screen">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-lg hidden md:block">
+    <div class="p-6 text-2xl font-bold text-purple-600">Srdh Pay</div>
+    <nav class="mt-6">
+      <a href="#" onclick="showPage('dashboard')" class="block py-3 px-6 sidebar-active">Dashboard</a>
+      <a href="#" onclick="showPage('register')" class="block py-3 px-6 hover:bg-purple-50">ทะเบียนฎีกาเบิกจ่าย</a>
     </nav>
-  </div>
+  </aside>
 
-  <!-- พื้นที่แสดงผลข้อมูล (Main View) -->
-  <div class="main-content">
-    <div id="view-container">
-      <div class="text-center py-5" style="margin-top: 100px;">
-        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
-        <p class="mt-3 text-muted fw-light">กำลังเตรียมข้อมูลระบบ...</p>
-      </div>
-    </div>
-  </div>
+  <!-- Main Content -->
+  <main class="flex-1 p-8" id="content-area">
+    <!-- เนื้อหาจะถูกโหลดมาใส่ที่นี่ -->
+  </main>
 
-  
-  <script src="js/api-config.js"></script>
-  <script src="js/dashboard.js"></script>
-  <script src="js/register-list.js"></script>
   <script src="js/index.js"></script>
-
 </body>
 </html>
