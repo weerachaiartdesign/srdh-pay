@@ -1,34 +1,66 @@
 /* version : 00101 */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-pastel: #F3E8FF;
-  --primary-purple: #A855F7;
-  --secondary-purple: #D8B4FE;
-  /* สีประเภทเงิน */
-  --type-budget: #FFCCFF;   /* เงินงบประมาณ */
-  --type-support: #FFFF99;  /* เงินบำรุง */
-  --type-health: #F8CBAD;   /* เงินประกันสุขภาพ */
-  --type-subsidy: #FF9999;  /* เงินอุดหนุน */
-  --type-other: #808080;    /* เงินอื่น */
+  --primary: #9b59b6; /* Purple pastel base */
+  --primary-light: #e8daef;
+  --bg-color: #fcf9fc;
+  --sidebar-bg: #ffffff;
+  
+  /* สีตามประเภทเงิน */
+  --c-budget: #FFCCFF;
+  --c-maintenance: #FFFF99;
+  --c-health: #F8CBAD;
+  --c-subsidize: #FF9999;
+  --c-other: #808080;
 }
 
 body {
-  background-color: var(--bg-pastel);
   font-family: 'Sarabun', sans-serif;
+  background-color: var(--bg-color);
+  color: #333;
 }
 
-.sidebar-active {
-  background-color: var(--primary-purple);
-  color: white;
+/* Custom Scrollbar สำหรับความสวยงาม */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+}
+::-webkit-scrollbar-thumb {
+  background: #c39bd3; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9b59b6; 
 }
 
-.card-summary {
-  @apply rounded-xl p-4 shadow-sm border border-white transition-transform hover:scale-105;
+/* Sidebar Utilities */
+.nav-item {
+  transition: all 0.3s ease;
+}
+.nav-item:hover, .nav-item.active {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  border-right: 4px solid var(--primary);
+  font-weight: 600;
 }
 
-.badge-money {
-  @apply px-2 py-1 rounded text-xs font-semibold;
+/* Table Utilities */
+.table-row-hover:hover {
+  background-color: #fdfafc;
+  cursor: pointer;
+}
+
+/* Loader */
+.loader {
+  border-top-color: var(--primary);
+  -webkit-animation: spinner 1.5s linear infinite;
+  animation: spinner 1.5s linear infinite;
+}
+@keyframes spinner {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
