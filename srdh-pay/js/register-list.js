@@ -1,20 +1,26 @@
-/* version 00103
- * แก้ไขปัญหา initRegisterList is not defined
- * และจัดรูปแบบวันที่เป็น พ.ศ. พร้อม Modal รายละเอียด
+/* version 00104
+ * แก้ไขปัญหาข้อมูลไม่แสดงผล และจัดรูปแบบวันที่เป็น พ.ศ.
  */
 
-// เพิ่มฟังก์ชันนี้เพื่อให้สอดคล้องกับการเรียกใช้ใน index.js
+// ฟังก์ชันเริ่มต้น (เรียกจาก index.js)
 function initRegisterList() {
   initListLogic();
 }
 
 function initListLogic() {
-  drawTable(allData);
+  // ตรวจสอบว่ามีข้อมูลใน allData หรือไม่
+  if (!window.allData || window.allData.length === 0) {
+    // พยายามดึงจากตัวแปร global allData (ที่โหลดมาจากหน้า index)
+    if (typeof allData !== 'undefined') {
+      window.allData = allData;
+    }
+  }
+  drawTable(window.allData || []);
 }
 
 // ฟังก์ชันแปลงวันที่จาก dd/mm/yyyy (ค.ศ.) เป็น dd/mm/yyyy (พ.ศ.)
 function formatThaiDate(dateStr) {
-  if (!dateStr || !dateStr.includes('/')) return '-';
+  if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('/')) return '-';
   const parts = dateStr.split('/');
   if (parts.length !== 3) return dateStr;
   
@@ -22,7 +28,7 @@ function formatThaiDate(dateStr) {
   const month = parts[1];
   let year = parseInt(parts[2]);
   
-  // ถ้าปีที่ส่งมาน้อยกว่า 2400 สันนิษฐานว่าเป็น ค.ศ. ให้บวก 543
+  // แปลง ค.ศ. เป็น พ.ศ.
   if (year < 2400) {
     year += 543;
   }
@@ -32,17 +38,20 @@ function formatThaiDate(dateStr) {
 
 function drawTable(data) {
   const body = document.getElementById('list-body');
-  if(!body) return;
+  if(!body) {
+    console.error("ไม่พบ Element id='list-body' ในหน้า HTML");
+    return;
+  }
   
-  if(data.length === 0) {
-    body.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">ไม่พบข้อมูลที่ต้องการค้นหา</td></tr>`;
+  if(!data || data.length === 0) {
+    body.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">ไม่พบข้อมูลในระบบ หรือกำลังโหลดข้อมูล...</td></tr>`;
     return;
   }
   
   body.innerHTML = data.map(r => `
     <tr onclick="showDetail(${r.receiveNo})" style="cursor:pointer">
       <td class="ps-3">
-        <span class="badge w-100 py-2" style="background:${stColor(r.status)}">${r.status}</span>
+        <span class="badge w-100 py-2" style="background:${stColor(r.status)}">${r.status || 'ไม่ระบุ'}</span>
       </td>
       <td>
         <div class="fw-bold text-dark">${r.vendor || '-'}</div>
@@ -66,7 +75,7 @@ function drawTable(data) {
 }
 
 function showDetail(receiveNo) {
-  const r = allData.find(d => d.receiveNo === receiveNo);
+  const r = (window.allData || allData).find(d => d.receiveNo === receiveNo);
   if (!r) return;
 
   let modalEl = document.getElementById('detailModal');
@@ -138,7 +147,8 @@ function showDetail(receiveNo) {
 
 function doSearch() {
   const q = document.getElementById('searchInput').value.toLowerCase();
-  const filtered = allData.filter(d => 
+  const dataToSearch = window.allData || allData || [];
+  const filtered = dataToSearch.filter(d => 
     (d.vendor || '').toLowerCase().includes(q) ||
     (d.receiveNo || '').toString().includes(q) ||
     (d.item || '').toLowerCase().includes(q) ||
