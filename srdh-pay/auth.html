@@ -1,0 +1,35 @@
+<!-- ==========================================
+     ไฟล์: auth.html (หน้า Login) Version : 00105
+     ========================================== -->
+<div id="auth-view" class="view-section active w-full h-full flex items-center justify-center bg-purple-50 absolute z-50">
+  <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
+    <div class="flex justify-center mb-4">
+      <!-- สมมติโลโก้ ใชั icon แทนชั่วคราว -->
+      <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 text-4xl">
+        <i class="ph ph-shield-check"></i>
+      </div>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Srdh Pay</h1>
+    <p class="text-gray-500 mb-6">ทะเบียนฎีกาเบิกจ่ายเงิน รพส.</p>
+    
+    <div id="login-form">
+      <input type="email" id="login-email" placeholder="อีเมล (Email)" class="w-full px-4 py-3 rounded-lg border border-gray-200 mb-4 focus:outline-none focus:border-purple-500">
+      <input type="password" id="login-password" placeholder="รหัสผ่าน (Password)" class="w-full px-4 py-3 rounded-lg border border-gray-200 mb-6 focus:outline-none focus:border-purple-500">
+      <button onclick="doLogin()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition mb-4">เข้าสู่ระบบ</button>
+    </div>
+
+    <div class="relative flex py-4 items-center">
+      <div class="flex-grow border-t border-gray-200"></div>
+      <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">หรือ</span>
+      <div class="flex-grow border-t border-gray-200"></div>
+    </div>
+
+    <div id="guest-form" class="hidden mt-4">
+      <input type="email" id="guest-email" placeholder="ระบุอีเมลเพื่อเข้าชม (Guest)" class="w-full px-4 py-3 rounded-lg border border-gray-200 mb-4 focus:outline-none focus:border-purple-500">
+      <button onclick="doGuestLogin()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition mb-4">เข้าชมระบบ</button>
+      <button onclick="toggleGuestForm(false)" class="text-sm text-purple-600 underline">กลับไปหน้าล็อกอิน</button>
+    </div>
+    
+    <button id="btn-show-guest" onclick="toggleGuestForm(true)" class="text-sm text-gray-500 hover:text-purple-600 transition">เข้าใช้งานในฐานะผู้เยี่ยมชม (Guest)</button>
+  </div>
+</div>
