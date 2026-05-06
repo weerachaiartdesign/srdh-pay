@@ -58,3 +58,27 @@
              <p class="text-sm text-gray-500">ส่วนนี้สงวนไว้สำหรับ Admin เพื่อจัดการระยะเวลาปีงบประมาณและรายชื่อหน่วยงาน</p>
            </div>
         </div>
+
+<!-- ==========================================
+       ส่วนที่ 3: Modal แสดงรายละเอียด (Pop up)
+       ========================================== -->
+  <div id="modal-detail" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col transform transition-all duration-300 scale-95" id="modal-content">
+      <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-purple-50 rounded-t-2xl">
+        <div class="flex items-center gap-3">
+          <div class="bg-white p-1.5 rounded-lg text-purple-600 shadow-sm"><i class="ph ph-file-text text-xl"></i></div>
+          <h3 class="font-bold text-lg text-purple-900">รายละเอียดฎีกาเบิกจ่าย</h3>
+        </div>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 transition bg-white rounded-full p-1 shadow-sm"><i class="ph ph-x text-xl"></i></button>
+      </div>
+      
+      <div class="p-6 overflow-y-auto flex-1" id="modal-detail-body">
+        <!-- ข้อมูลรายละเอียดจะถูกแทรกที่นี่ด้วย JS -->
+      </div>
+      
+      <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end gap-3" id="modal-detail-actions">
+        <!-- ปุ่ม Actions จะเปลี่ยนไปตามสิทธิ์ผู้ใช้งาน -->
+        <button onclick="closeModal()" class="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition font-medium shadow-sm">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
