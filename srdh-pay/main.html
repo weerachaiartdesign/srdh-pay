@@ -1,0 +1,182 @@
+<!-- ==========================================
+       ไฟล์: main.html (โครงสร้าง App หลัก) version : 00105
+       ========================================== -->
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ทะเบียนฎีกาเบิกจ่ายเงิน รพส.</title>
+  <link rel="manifest" href="manifest.json">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/main.css">
+</head>
+  
+<body class="flex h-screen overflow-hidden">
+
+  <div id="app-view" class="view-section w-full h-full flex flex-col md:flex-row overflow-hidden hidden">
+  
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white shadow-lg flex flex-col transition-all duration-300 transform -translate-x-full md:translate-x-0 fixed md:relative z-40 h-full">
+      <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <img src="https://via.placeholder.com/152/9b59b6/ffffff?text=Logo" alt="Logo" class="w-10 h-10 rounded-lg">
+          <div>
+            <h1 class="font-bold text-gray-800 leading-tight">Srdh Pay</h1>
+            <p class="text-[10px] text-gray-400">ระบบเบิกจ่าย</p>
+          </div>
+        </div>
+        <button onclick="toggleSidebar()" class="md:hidden text-gray-500"><i class="ph ph-x text-xl"></i></button>
+      </div>
+      <nav class="flex-1 py-4 overflow-y-auto" id="main-nav">
+        <!-- Render from JS based on role -->
+      </nav>
+      <div class="p-4 border-t border-gray-100 text-xs text-center text-gray-400">
+        Version 00105
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden w-full relative">
+      <!-- Header -->
+      <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 z-30">
+        <div class="flex items-center gap-4">
+          <button onclick="toggleSidebar()" class="text-gray-600 hover:text-purple-600 text-2xl"><i class="ph ph-list"></i></button>
+          <h2 id="header-title" class="text-lg font-bold text-gray-800 hidden md:block">แดชบอร์ด</h2>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-right hidden sm:block">
+            <div id="user-name" class="text-sm font-bold text-gray-800">-</div>
+            <div id="user-role" class="text-xs text-gray-500">-</div>
+          </div>
+          <div class="relative">
+            <button onclick="toggleProfileMenu()" class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl shadow-sm border border-purple-200">
+              <i class="ph-fill ph-user"></i>
+            </button>
+            <!-- Profile Dropdown -->
+            <div id="profile-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
+              <button onclick="showProfileSettings()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600" id="btn-profile-settings"><i class="ph ph-gear mr-2"></i>ตั้งค่าผู้ใช้งาน</button>
+              <button onclick="logout()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="ph ph-sign-out mr-2"></i>ออกจากระบบ</button>
+            </div>
+          </div>
+        </div>
+      </header>
+    
+    <!-- Content Scrollable Area -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-6 relative bg-[#fcf9fc]" id="main-content">
+      <!-- Loader Overlay -->
+      <div id="app-loader" class="absolute inset-0 bg-white/80 z-40 flex flex-col items-center justify-center hidden">
+        <div class="loader mb-4"></div>
+        <p class="text-purple-600 font-medium">กำลังโหลดข้อมูล...</p>
+      </div>
+
+      <!-- Pages Container -->
+      <div id="page-dashboard" class="page-view active">
+        <!-- dashboard.html content -->
+        <div id="dash-summary-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          <div class="bg-white rounded-xl p-5 shadow-sm border col-span-1 flex flex-col items-center justify-center text-center">
+            <p class="text-gray-500 text-sm mb-2">ระยะเวลาการดำเนินการเฉลี่ย<br>(รับเรื่อง - อนุมัติ)</p>
+            <div id="dash-avg-time" class="text-4xl font-bold text-purple-600">- วัน</div>
+          </div>
+          <div class="bg-white rounded-xl p-5 shadow-sm border col-span-1 lg:col-span-2 flex flex-col justify-center">
+            <div class="flex justify-between items-end mb-2">
+              <span class="text-gray-600 font-medium">สถานะการเบิกจ่ายสำเร็จ (จ่ายแล้ว)</span>
+              <span id="dash-progress-text" class="text-2xl font-bold text-green-500">0%</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-4"><div id="dash-progress-bar" class="bg-green-400 h-4 rounded-full transition-all" style="width: 0%"></div></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 gap-6">
+          <div class="bg-white p-5 rounded-xl shadow-sm border"><canvas id="chart-overall" height="300"></canvas></div>
+          <div class="bg-white p-5 rounded-xl shadow-sm border"><canvas id="chart-types" height="350"></canvas></div>
+        </div>
+      </div>
+
+      <div id="page-list" class="page-view hidden">
+        <!-- list.html content -->
+        <div class="flex flex-col md:flex-row justify-between mb-4 gap-2">
+           <div class="flex gap-2 w-full md:w-auto">
+             <input type="text" id="list-search" oninput="renderTable()" placeholder="ค้นหา..." class="w-full md:w-64 px-3 py-2 border rounded-lg text-sm">
+             <select id="list-limit" onchange="renderTable()" class="border rounded-lg px-2 text-sm bg-white">
+               <option value="50">50</option><option value="100">100</option><option value="500">500</option>
+             </select>
+           </div>
+           <div class="flex flex-wrap gap-2">
+             <select id="list-filter-type" onchange="renderTable()" class="border rounded-lg px-2 py-2 text-sm bg-white"><option value="">ทุกประเภท</option></select>
+             <select id="list-filter-dept" onchange="renderTable()" class="border rounded-lg px-2 py-2 text-sm bg-white"><option value="">ทุกหน่วยงาน</option></select>
+             <button onclick="renderTable()" class="bg-purple-50 text-purple-600 px-3 py-2 rounded-lg text-sm"><i class="ph ph-funnel"></i></button>
+           </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
+          <table class="w-full text-left text-sm mobile-card-table">
+            <thead class="bg-purple-600 text-white">
+              <tr>
+                <th class="px-4 py-3">ลำดับ</th><th class="px-4 py-3">สถานะ</th><th class="px-4 py-3">ฎีกา/ใบขอเบิก</th>
+                <th class="px-4 py-3">เจ้าหนี้</th><th class="px-4 py-3 w-1/4">รายการ</th><th class="px-4 py-3 text-right">จำนวนเงิน</th>
+                <th class="px-4 py-3">ประเภท/หน่วยงาน</th>
+              </tr>
+            </thead>
+            <tbody id="list-tbody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pages สำหรับ Import, Approve, Settings สร้างโครงไว้ -->
+      <div id="page-import" class="page-view hidden">
+         <div class="bg-white p-6 rounded-xl shadow-sm text-center">
+           <i class="ph ph-tools text-6xl text-gray-300 mb-4"></i>
+           <h3 class="text-xl font-bold text-gray-600">หน้าต่างนำเข้าข้อมูล (กำลังพัฒนา UI ส่วนนี้ในโค้ดฉบับเต็ม)</h3>
+           <p class="text-sm text-gray-400">อ้างอิงฟังก์ชัน insertRows() ในไฟล์ main.gs</p>
+         </div>
+      </div>
+      <div id="page-approve" class="page-view hidden">
+        <div class="bg-white p-6 rounded-xl shadow-sm text-center">
+           <i class="ph ph-check-circle text-6xl text-gray-300 mb-4"></i>
+           <h3 class="text-xl font-bold text-gray-600">หน้าต่างบันทึกรายการ / พิมพ์ PDF</h3>
+           <p class="text-sm text-gray-400">รอเชื่อมต่อไลบรารี jsPDF อย่างเต็มรูปแบบ</p>
+         </div>
+      </div>
+      <div id="page-settings" class="page-view hidden">
+         <div class="bg-white p-6 rounded-xl shadow-sm">
+           <h3 class="font-bold text-lg mb-4">ตั้งค่าระบบ</h3>
+           <!-- UI แบบฟอร์มตั้งค่า -->
+           <p class="text-sm text-gray-500">ส่วนนี้สงวนไว้สำหรับ Admin เท่านั้น</p>
+         </div>
+      </div>
+    </main>
+  </div>
+</div>
+    
+      
+  <!-- Detail Modal -->
+  <div id="modal-detail" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+      <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+        <h3 class="font-bold text-lg text-gray-800">รายละเอียดฎีกาเบิกจ่าย</h3>
+        <button onclick="closeModal()" class="text-gray-500 hover:text-red-500"><i class="ph ph-x text-xl"></i></button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1" id="modal-detail-body">
+        <!-- Rendered by JS -->
+      </div>
+      <div class="p-4 border-t bg-gray-50 rounded-b-xl flex justify-end gap-2" id="modal-detail-actions">
+        <!-- Buttons rendered based on Role -->
+        <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">ปิด</button>
+      </div>
+    </div>
+  </div>
+   
+  <!-- Scripts -->
+  <script src="js/api-config.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/register-list.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>
