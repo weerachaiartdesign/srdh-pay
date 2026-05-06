@@ -1,5 +1,5 @@
 /*<!-- ==========================================
-     ไฟล์: css/main.css /* version : 00105
+     ไฟล์: css/main.css  version : 00106
      ========================================== -->*/
 
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
@@ -17,12 +17,16 @@ body {
   overflow-x: hidden;
 }
 
+/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #f1f1f1; }
 ::-webkit-scrollbar-thumb { background: #c39bd3; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #9b59b6; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
-.nav-item { transition: all 0.3s ease; }
+/* Sidebar nav items */
+.nav-item {
+  transition: all 0.3s ease;
+}
 .nav-item:hover, .nav-item.active {
   background-color: var(--primary-light);
   color: var(--primary);
@@ -30,6 +34,7 @@ body {
   font-weight: 600;
 }
 
+/* Loader */
 .loader {
   border: 4px solid #f3f3f3;
   border-top: 4px solid var(--primary);
@@ -39,16 +44,24 @@ body {
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* ซ่อนหน้าต่างๆ */
-.view-section { display: none; animation: fadeIn 0.3s; }
-.view-section.active { display: block; }
+/* Page transitions */
+.page-view { display: none; animation: fadeIn 0.3s; }
+.page-view.active { display: block; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* Responsive Table Classes */
+/* Mobile card table */
 @media (max-width: 768px) {
   .mobile-card-table thead { display: none; }
   .mobile-card-table tr { display: block; background: white; margin-bottom: 1rem; border-radius: 0.5rem; padding: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
   .mobile-card-table td { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 0.5rem 0; text-align: right;}
   .mobile-card-table td::before { content: attr(data-label); font-weight: bold; color: #6b7280; text-align: left; padding-right: 1rem; }
   .mobile-card-table td:last-child { border-bottom: 0; }
+}
+
+/* Print styles */
+@media print {
+  .print:hidden { display: none !important; }
+  .print-slip { font-size: 12pt; }
+  .print-table { width: 100%; border-collapse: collapse; }
+  .print-table th, .print-table td { border: 1px solid black; padding: 4px; text-align: left; }
 }
