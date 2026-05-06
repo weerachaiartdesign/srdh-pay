@@ -1,0 +1,36 @@
+<!-- version 00106 -->
+<div class="max-w-full">
+  <h2 class="text-2xl font-bold mb-4">บันทึกรายการ</h2>
+  <div id="approve-actions" class="flex gap-2 mb-4 flex-wrap"></div>
+  <div class="flex flex-wrap gap-2 mb-4">
+    <select id="approve-filter-type" class="border rounded-lg px-2 py-2 text-sm" onchange="applyApproveFilters()">
+      <option value="">ทุกประเภท</option>
+    </select>
+    <select id="approve-filter-dept" class="border rounded-lg px-2 py-2 text-sm" onchange="applyApproveFilters()">
+      <option value="">ทุกหน่วยงาน</option>
+    </select>
+    <select id="approve-filter-status" class="border rounded-lg px-2 py-2 text-sm" onchange="applyApproveFilters()">
+      <option value="">ทุกสถานะ</option>
+    </select>
+    <select id="approve-filter-sender" class="border rounded-lg px-2 py-2 text-sm" onchange="applyApproveFilters()">
+      <option value="">ทุกผู้ส่ง</option>
+    </select>
+    <select id="approve-filter-checker" class="border rounded-lg px-2 py-2 text-sm" onchange="applyApproveFilters()">
+      <option value="">ทุกผู้ตรวจ</option>
+    </select>
+    <button onclick="clearApproveFilters()" class="px-3 py-2 bg-purple-100 text-purple-600 rounded-lg text-sm">ล้าง</button>
+  </div>
+  <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-purple-600 text-white">
+        <tr>
+          <th class="px-4 py-3">/</th><th class="px-4 py-3">ลำดับ</th><th class="px-4 py-3">สถานะ</th>
+          <th class="px-4 py-3">ฎีกา/ใบขอเบิก</th><th class="px-4 py-3">เจ้าหนี้</th>
+          <th class="px-4 py-3">รายการ</th><th class="px-4 py-3 text-right">จำนวนเงิน</th>
+          <th class="px-4 py-3">ประเภท/หน่วยงาน</th>
+        </tr>
+      </thead>
+      <tbody id="approve-tbody" class="divide-y divide-gray-100"></tbody>
+    </table>
+  </div>
+</div>
