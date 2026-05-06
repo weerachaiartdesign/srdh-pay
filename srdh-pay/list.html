@@ -1,84 +1,45 @@
 <!-- ==========================================
-     ไฟล์ : list.html (หน้า ทะเบียนฎีกา) Version : 00105
+     ไฟล์ : list.html (หน้า ทะเบียนฎีกา) Version : 00106
      ========================================== -->
 
-<div id="page-list" class="page-view hidden animate-fade-in">
-          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4 flex flex-col lg:flex-row gap-4 justify-between items-center">
-             <div class="relative w-full lg:w-96">
-               <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-               <input type="text" id="list-search" oninput="renderTable()" placeholder="ค้นหา (เลขรับ, เจ้าหนี้, รายการ...)" class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition">
-             </div>
-             <div class="flex flex-wrap gap-2 w-full lg:w-auto">
-               <select id="list-filter-type" onchange="renderTable()" class="flex-1 border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none"><option value="">ทุกประเภทเงิน</option></select>
-               <select id="list-filter-dept" onchange="renderTable()" class="flex-1 border rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none"><option value="">ทุกหน่วยงาน</option></select>
-               <select id="list-limit" onchange="renderTable()" class="border rounded-lg px-2 text-sm bg-gray-50">
-                 <option value="50">50</option><option value="100">100</option>
-               </select>
-             </div>
-          </div>
-          
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-sm mobile-card-table whitespace-nowrap">
-                <thead class="bg-purple-600 text-white font-medium">
-                  <tr>
-                    <th class="px-4 py-3">ลำดับ</th>
-                    <th class="px-4 py-3">สถานะ</th>
-                    <th class="px-4 py-3">ฎีกา/ใบขอเบิก</th>
-                    <th class="px-4 py-3">ชื่อเจ้าหนี้</th>
-                    <th class="px-4 py-3 w-1/4">รายการ</th>
-                    <th class="px-4 py-3 text-right">จำนวนเงิน</th>
-                    <th class="px-4 py-3">ประเภท/หน่วยงาน</th>
-                  </tr>
-                </thead>
-                <tbody id="list-tbody" class="divide-y divide-gray-100 text-gray-700"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- โครงสร้างสำหรับหน้าอื่นๆ ที่ยังกำลังพัฒนา -->
-        <div id="page-import" class="page-view hidden">
-           <div class="bg-white p-10 rounded-xl shadow-sm text-center border-2 border-dashed border-gray-200">
-             <i class="ph ph-file-plus text-6xl text-purple-300 mb-4 inline-block"></i>
-             <h3 class="text-xl font-bold text-gray-800">หน้าต่างนำเข้าข้อมูลใหม่</h3>
-             <p class="text-gray-500 mt-2">ฟังก์ชันการเพิ่มข้อมูลใหม่เข้าสู่ Google Sheets จะอยู่ในส่วนนี้</p>
-           </div>
-        </div>
-        <div id="page-approve" class="page-view hidden">
-          <div class="bg-white p-10 rounded-xl shadow-sm text-center border-2 border-dashed border-gray-200">
-             <i class="ph ph-check-square-offset text-6xl text-purple-300 mb-4 inline-block"></i>
-             <h3 class="text-xl font-bold text-gray-800">หน้าต่างบันทึกรายการและพิมพ์</h3>
-             <p class="text-gray-500 mt-2">ระบบเปลี่ยนสถานะทีละหลายรายการ และสร้าง PDF</p>
-           </div>
-        </div>
-        <div id="page-settings" class="page-view hidden">
-           <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-             <h3 class="font-bold text-lg text-gray-800 mb-4 border-b pb-2"><i class="ph ph-gear mr-2 text-purple-600"></i>ตั้งค่าระบบ</h3>
-             <p class="text-sm text-gray-500">ส่วนนี้สงวนไว้สำหรับ Admin เพื่อจัดการระยะเวลาปีงบประมาณและรายชื่อหน่วยงาน</p>
-           </div>
-        </div>
-
-<!-- ==========================================
-       ส่วนที่ 3: Modal แสดงรายละเอียด (Pop up)
-       ========================================== -->
-  <div id="modal-detail" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col transform transition-all duration-300 scale-95" id="modal-content">
-      <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-purple-50 rounded-t-2xl">
-        <div class="flex items-center gap-3">
-          <div class="bg-white p-1.5 rounded-lg text-purple-600 shadow-sm"><i class="ph ph-file-text text-xl"></i></div>
-          <h3 class="font-bold text-lg text-purple-900">รายละเอียดฎีกาเบิกจ่าย</h3>
-        </div>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 transition bg-white rounded-full p-1 shadow-sm"><i class="ph ph-x text-xl"></i></button>
-      </div>
-      
-      <div class="p-6 overflow-y-auto flex-1" id="modal-detail-body">
-        <!-- ข้อมูลรายละเอียดจะถูกแทรกที่นี่ด้วย JS -->
-      </div>
-      
-      <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end gap-3" id="modal-detail-actions">
-        <!-- ปุ่ม Actions จะเปลี่ยนไปตามสิทธิ์ผู้ใช้งาน -->
-        <button onclick="closeModal()" class="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition font-medium shadow-sm">ปิดหน้าต่าง</button>
-      </div>
-    </div>
+<div class="max-w-full">
+  <h2 class="text-2xl font-bold mb-4">ทะเบียนฎีกาเบิกจ่ายเงิน</h2>
+  <div class="flex flex-col md:flex-row gap-3 mb-4">
+    <input type="text" id="list-search" placeholder="ค้นหา..." class="w-full md:w-64 px-3 py-2 border rounded-lg text-sm" oninput="applyFilters()">
+    <select id="list-limit" class="border rounded-lg px-2 py-2 text-sm bg-white" onchange="applyFilters()">
+      <option value="50">50</option><option value="100">100</option><option value="200">200</option><option value="500">500</option>
+    </select>
+    <select id="list-filter-type" class="border rounded-lg px-2 py-2 text-sm bg-white" onchange="applyFilters()">
+      <option value="">ทุกประเภท</option>
+    </select>
+    <select id="list-filter-dept" class="border rounded-lg px-2 py-2 text-sm bg-white" onchange="applyFilters()">
+      <option value="">ทุกหน่วยงาน</option>
+    </select>
+    <select id="list-filter-status" class="border rounded-lg px-2 py-2 text-sm bg-white" onchange="applyFilters()">
+      <option value="">ทุกสถานะ</option>
+      <option value="รอเอกสาร">รอเอกสาร</option>
+      <option value="รับเข้าหน่วยงาน">รับเข้าหน่วยงาน</option>
+      <option value="ตรวจสอบ">ตรวจสอบ</option>
+      <option value="ส่งแก้ไข">ส่งแก้ไข</option>
+      <option value="ตรวจผ่าน">ตรวจผ่าน</option>
+      <option value="ส่งเสนอ">ส่งเสนอ</option>
+      <option value="อนุมัติ">อนุมัติ</option>
+      <option value="จ่ายแล้ว">จ่ายแล้ว</option>
+      <option value="ยกเลิก">ยกเลิก</option>
+    </select>
+    <button onclick="clearFilters()" class="px-3 py-2 bg-purple-100 text-purple-600 rounded-lg text-sm">ล้างตัวกรอง</button>
   </div>
+  <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
+    <table class="w-full text-left text-sm mobile-card-table">
+      <thead class="bg-purple-600 text-white">
+        <tr>
+          <th class="px-4 py-3">ลำดับ</th><th class="px-4 py-3">สถานะ</th><th class="px-4 py-3">ฎีกา/ใบขอเบิก</th>
+          <th class="px-4 py-3">เจ้าหนี้</th><th class="px-4 py-3">รายการ</th><th class="px-4 py-3 text-right">จำนวนเงิน</th>
+          <th class="px-4 py-3">ประเภท/หน่วยงาน</th>
+        </tr>
+      </thead>
+      <tbody id="list-tbody" class="divide-y divide-gray-100"></tbody>
+    </table>
+  </div>
+  <div class="flex justify-between items-center mt-3 text-sm text-gray-500" id="list-pagination"></div>
+</div>
