@@ -16,3 +16,10 @@ function attachSettingsEvents() {
     google.script.run.withSuccessHandler(()=>alert('บันทึกสำเร็จ')).setSystemDates(start,end); 
   });
 }
+function convertToYyyyMmDd(dateStr) {
+    // dateStr format dd/mm/yyyy -> yyyy-mm-dd
+    if (!dateStr) return '';
+    const parts = dateStr.split('/');
+    if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    return dateStr;
+}
