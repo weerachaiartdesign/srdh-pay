@@ -1,9 +1,9 @@
 {
-  "//": "version : 00108",
+  "//": "version : 00109",
   "name": "ทะเบียนฎีกาเบิกจ่ายเงิน รพส.",
   "short_name": "Srdh Pay",
   "description": "ระบบทะเบียนฎีกาเบิกจ่ายเงิน โรงพยาบาล (Srdh Pay)",
-  "start_url": ".",
+  "start_url": ".index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#fcf9fc",
