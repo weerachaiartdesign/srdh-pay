@@ -2,7 +2,7 @@
 
 const CONFIG = {
   // URL จากการ Deploy Google Apps Script (ต้องเป็นแบบ Web App และตั้งค่า Access เป็น Anyone)
-  API_URL: 'https://script.google.com/macros/s/AKfycbzhVtjrV5FwlOI8Gj-HCCBD3ayeNbXZ4zROGOsx2-dXwYZuZ-NKzCkD2sRf6EK3ugpwWA/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbzFSv0aIDsy5efmK9WhAWboNBm5JhytKS0ClfQ87vVvVvcLlRBKrIK3tqspibd_XvAA2g/exec',
   SHEET_ID: '14XoNe8jsygjaH3y0uz5c2VeNKpKubgxu8KT7TZBXu4A'
 };
 
