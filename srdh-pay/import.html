@@ -1,4 +1,18 @@
-<!-- version 00106 -->
-<div class="max-w-5xl mx-auto" id="import-container">
-  <!-- Rendered dynamically via import.js -->
+<!-- import.html - (หน้านำเข้าข้อมูล) - version 00108 -->
+
+<div>
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">นำเข้าข้อมูล</h2>
+        <div class="flex gap-2">
+            <button id="addRecordBtn" class="bg-green-600 text-white px-4 py-2 rounded"><i class="fas fa-plus"></i> เพิ่มข้อมูล</button>
+            <button id="registerBtn" class="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50" disabled>ลงทะเบียน</button>
+            <button id="printRegisterBtn" class="bg-gray-600 text-white px-4 py-2 rounded">พิมพ์ใบลงทะเบียน</button>
+        </div>
+    </div>
+    <div id="pendingTable" class="overflow-x-auto"></div>
 </div>
+<script>
+    let pendingRecords = [];
+    let batchId = null;
+    // ส่วนเพิ่มฟอร์ม popup, บันทึก, พิมพ์
+</script>
