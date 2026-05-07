@@ -1,6 +1,6 @@
 /*<!-- api-config.js - (กำหนด endpoints สำหรับเรียก Google Apps Script) - Version : 00108 -->*/
 
-const API_URL = 'https://script.google.com/macros/s/AKfycby-XR_SrrYRPgtaB8B0AUxEa9B0FLh7PdSVvT6eYGSJc3lIriP4WtABLwGQdSq5peKI5w/exec'; // ต้องแทนที่ด้วย URL ของการ deploy จริง
+const API_URL = 'https://script.google.com/macros/s/AKfycbxkU2k3RhmHNI-cXE_0ikk0xr4q4CxIaRXSPUbyyBVEn9emCmXlfY2YtucqfcsNaqwegA/exec'; // ต้องแทนที่ด้วย URL ของการ deploy จริง
 const SHEET_ID = '14XoNe8jsygjaH3y0uz5c2VeNKpKubgxu8KT7TZBXu4A';
 
 // ฟังก์ชันเรียก GAS โดยใช้ google.script.run (เมื่อรันใน environment ของ GAS Web App)
