@@ -1,7 +1,8 @@
-<!-- version 00106 -->
-<div class="max-w-4xl mx-auto bg-white p-8" id="printout-content">
-  <!-- Dynamically filled -->
+<!-- printout.html - (สำหรับ print preview) - version 00108 -->
+
+<div class="a4-container p-4">
+    <div class="text-center mb-4"><h1 id="printTitle" class="text-2xl font-bold"></h1><p id="printDate"></p></div>
+    <div id="printContent"></div>
+    <div class="text-center mt-8"><button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded">พิมพ์</button></div>
 </div>
-<div class="text-center mt-4 print:hidden">
-  <button onclick="printPage()" class="bg-purple-600 text-white px-4 py-2 rounded-lg"><i class="ph ph-printer mr-2"></i>พิมพ์</button>
-</div>
+<style>@media print { button { display: none; } }</style>
