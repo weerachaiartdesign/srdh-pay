@@ -3,7 +3,7 @@
   "name": "ทะเบียนฎีกาเบิกจ่ายเงิน รพส.",
   "short_name": "Srdh Pay",
   "description": "ระบบทะเบียนฎีกาเบิกจ่ายเงิน โรงพยาบาล (Srdh Pay)",
-  "start_url": ".index.html",
+  "start_url": "index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#fcf9fc",
