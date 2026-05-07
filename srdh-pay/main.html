@@ -1,100 +1,167 @@
-<!-- ==========================================
-       ไฟล์: main.html (โครงสร้าง App หลัก) version : 00106
-       ========================================== -->
+<!-- main.html (โครงสร้าง App หลัก) version : 00108 -->
 
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ทะเบียนฎีกาเบิกจ่ายเงิน รพส.</title>
-  <link rel="manifest" href="manifest.json">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="css/main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ทะเบียนฎีกาเบิกจ่ายเงิน รพส. (Srdh Pay)</title>
+    <!-- Tailwind CSS + Purple Pastel Theme -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Custom CSS (รวม dark mode) -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Apps Script API และ JS modules -->
+    <script src="js/api-config.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/list.js"></script>
+    <script src="js/import.js"></script>
+    <script src="js/approve.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/report.js"></script>
+    <script src="js/printout.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        purpleLight: '#f3e8ff',
+                        purplePastel: '#e9d5ff',
+                        purpleDark: '#6b21a5',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="flex h-screen overflow-hidden font-sarabun">
-  <!-- Auth view (login) -->
-  <div id="auth-view" class="w-full h-full absolute inset-0 z-50 flex items-center justify-center bg-purple-50 hidden"></div>
-
-  <!-- App view -->
-  <div id="app-view" class="w-full h-full flex flex-col md:flex-row overflow-hidden hidden">
-    <!-- Sidebar -->
-    <aside id="sidebar" class="w-64 bg-white shadow-lg flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0 fixed md:relative z-40 h-full">
-      <div class="p-4 border-b border-gray-100 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <img src="icons/register_acc-512.png" alt="Logo" class="w-10 h-10 rounded-lg">
-          <div>
-            <h1 class="font-bold text-gray-800 leading-tight">Srdh Pay</h1>
-            <p class="text-[10px] text-gray-400">ระบบเบิกจ่าย</p>
-          </div>
-        </div>
-        <button onclick="toggleSidebar()" class="md:hidden text-gray-500"><i class="ph ph-x text-xl"></i></button>
-      </div>
-      <nav class="flex-1 py-4 overflow-y-auto" id="main-nav"></nav>
-      <div class="p-4 border-t border-gray-100 text-xs text-center text-gray-400">Version 00105</div>
-    </aside>
-
-    <!-- Main content area -->
-    <div class="flex-1 flex flex-col h-full overflow-hidden w-full relative">
-      <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 z-30">
-        <div class="flex items-center gap-4">
-          <button onclick="toggleSidebar()" class="text-gray-600 hover:text-purple-600 text-2xl"><i class="ph ph-list"></i></button>
-          <h2 id="header-title" class="text-lg font-bold text-gray-800 hidden md:block">แดชบอร์ด</h2>
-        </div>
-        <div class="flex items-center gap-4">
-          <div class="text-right hidden sm:block">
-            <div id="user-name" class="text-sm font-bold text-gray-800">-</div>
-            <div id="user-role" class="text-xs text-gray-500">-</div>
-          </div>
-          <div class="relative">
-            <button onclick="toggleProfileMenu()" class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl shadow-sm border border-purple-200">
-              <i class="ph-fill ph-user"></i>
-            </button>
-            <div id="profile-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
-              <button id="btn-profile-settings" onclick="showProfileSettings()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50"><i class="ph ph-gear mr-2"></i>ตั้งค่าผู้ใช้งาน</button>
-              <button onclick="logout()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="ph ph-sign-out mr-2"></i>ออกจากระบบ</button>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-200">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar (mobile: hidden, desktop: block) -->
+        <aside id="sidebar" class="bg-purplePastel dark:bg-purple-900 w-64 flex-shrink-0 transition-all duration-300 shadow-lg z-20 fixed md:relative h-full overflow-y-auto transform -translate-x-full md:translate-x-0">
+            <div class="p-4 flex flex-col h-full">
+                <div class="flex items-center justify-center mb-8 mt-2">
+                    <img src="icons/register_acc-512.png" alt="Logo" class="h-12 w-12 mr-2">
+                    <span class="text-xl font-bold text-purple-800 dark:text-purple-200">Srdh Pay</span>
+                </div>
+                <nav class="flex-1">
+                    <ul class="space-y-2">
+                        <li><a href="#" data-page="dashboard" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-purple-300 dark:hover:bg-purple-700"><i class="fas fa-chart-line w-6"></i><span>Dashboard</span></a></li>
+                        <li><a href="#" data-page="list" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-purple-300 dark:hover:bg-purple-700"><i class="fas fa-list w-6"></i><span>ทะเบียนฎีกา</span></a></li>
+                        <li><a href="#" data-page="import" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-purple-300 dark:hover:bg-purple-700"><i class="fas fa-upload w-6"></i><span>นำเข้าข้อมูล</span></a></li>
+                        <li><a href="#" data-page="approve" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-purple-300 dark:hover:bg-purple-700"><i class="fas fa-check-double w-6"></i><span>บันทึกรายการ</span></a></li>
+                        <li><a href="#" data-page="report" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-purple-300 dark:hover:bg-purple-700"><i class="fas fa-file-alt w-6"></i><span>รายงาน</span></a></li>
+                        <li><a href="#" data-page="settings" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-purple-300 dark:hover:bg-purple-700"><i class="fas fa-cog w-6"></i><span>ตั้งค่าระบบ</span></a></li>
+                    </ul>
+                </nav>
+                <div class="mt-auto pt-4 text-xs text-center text-purple-700 dark:text-purple-300">
+                    v1.0 | รพส. Srdh Pay
+                </div>
             </div>
-          </div>
-        </div>
-      </header>
-      <main class="flex-1 overflow-y-auto p-4 md:p-6 relative bg-[#fcf9fc]" id="main-content">
-        <div id="app-loader" class="absolute inset-0 bg-white/80 z-40 flex flex-col items-center justify-center hidden">
-          <div class="loader mb-4"></div>
-          <p class="text-purple-600 font-medium">กำลังโหลดข้อมูล...</p>
-        </div>
-        <!-- Page containers -->
-        <div id="page-dashboard" class="page-view active hidden"></div>
-        <div id="page-list" class="page-view hidden"></div>
-        <div id="page-import" class="page-view hidden"></div>
-        <div id="page-approve" class="page-view hidden"></div>
-        <div id="page-settings" class="page-view hidden"></div>
-        <div id="page-printout" class="page-view hidden"></div>
-      </main>
-    </div>
-  </div>
+        </aside>
 
-  <!-- Modal detail (shared) -->
-  <div id="modal-detail" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-      <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
-        <h3 class="font-bold text-lg text-gray-800">รายละเอียดฎีกาเบิกจ่าย</h3>
-        <button onclick="closeModal()" class="text-gray-500 hover:text-red-500"><i class="ph ph-x text-xl"></i></button>
-      </div>
-      <div class="p-6 overflow-y-auto flex-1" id="modal-detail-body"></div>
-      <div class="p-4 border-t bg-gray-50 rounded-b-xl flex justify-end gap-2" id="modal-detail-actions"></div>
-    </div>
-  </div>
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white dark:bg-gray-800 shadow-md px-4 py-2 flex justify-between items-center">
+                <div class="flex items-center">
+                    <button id="hamburgerBtn" class="md:hidden text-purple-700 dark:text-purple-300 text-2xl mr-3">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="text-xl font-semibold text-purple-700 dark:text-purple-300">Srdh Pay</h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button id="darkModeToggle" class="text-gray-600 dark:text-gray-300 text-xl"><i class="fas fa-moon"></i></button>
+                    <div class="relative">
+                        <button id="userMenuBtn" class="flex items-center space-x-2 bg-purple-100 dark:bg-purple-800 rounded-full px-3 py-1">
+                            <i class="fas fa-user-circle text-purple-700 dark:text-purple-300 text-2xl"></i>
+                            <span id="userNameDisplay" class="text-sm font-medium">Guest</span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-30">
+                            <a href="#" id="userSettingsBtn" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-user-edit mr-2"></i>ตั้งค่าผู้ใช้งาน</a>
+                            <a href="#" id="logoutBtn" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-sign-out-alt mr-2"></i>ออกจากระบบ</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-  <script src="js/api-config.js"></script>
-  <script src="js/main.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/dashboard.js"></script>
-  <script src="js/list.js"></script>
-  <script src="js/import.js"></script>
-  <script src="js/approve.js"></script>
-  <script src="js/settings.js"></script>
-  <script src="js/printout.js"></script>
+            <!-- Dynamic Content Area -->
+            <main id="app-content" class="flex-1 overflow-y-auto p-4">
+                <!-- เนื้อหาจะถูก load จาก javascript -->
+                <div class="flex justify-center items-center h-full">กำลังโหลด...</div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Global Popup Modal (ใช้ร่วมกัน) -->
+    <div id="globalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl"></div>
+    </div>
+
+    <script>
+        // ตัวแปร global
+        let currentUser = null;  // { email, role, username, position, dept }
+        let currentPage = 'dashboard';
+
+        // ฟังก์ชัน load หน้า
+        function loadPage(pageName) {
+            fetch(`${pageName}.html`)
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById('app-content').innerHTML = html;
+                    currentPage = pageName;
+                    // เรียก init function ของแต่ละ page ถ้ามี
+                    if (pageName === 'dashboard' && typeof initDashboard === 'function') initDashboard();
+                    else if (pageName === 'list' && typeof initList === 'function') initList();
+                    else if (pageName === 'import' && typeof initImport === 'function') initImport();
+                    else if (pageName === 'approve' && typeof initApprove === 'function') initApprove();
+                    else if (pageName === 'settings' && typeof initSettings === 'function') initSettings();
+                    else if (pageName === 'report' && typeof initReport === 'function') initReport();
+                })
+                .catch(err => {
+                    document.getElementById('app-content').innerHTML = '<div class="text-red-500">โหลดหน้าไม่สำเร็จ</div>';
+                });
+        }
+
+        // Event listeners
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = link.dataset.page;
+                loadPage(page);
+                // close sidebar on mobile
+                if (window.innerWidth < 768) document.getElementById('sidebar').classList.add('-translate-x-full');
+            });
+        });
+        document.getElementById('hamburgerBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        });
+        // Dark mode toggle
+        const darkToggle = document.getElementById('darkModeToggle');
+        if (localStorage.getItem('darkMode') === 'true') document.documentElement.classList.add('dark');
+        darkToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+        });
+        // User menu
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userDropdown = document.getElementById('userDropdown');
+        userMenuBtn.addEventListener('click', () => userDropdown.classList.toggle('hidden'));
+        document.addEventListener('click', (e) => { if (!userMenuBtn.contains(e.target)) userDropdown.classList.add('hidden'); });
+        // logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if(confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) window.location.href = 'auth.html';
+        });
+        // ตรวจสอบ session (จำลอง: ควรเรียกจาก GAS)
+        window.onload = () => {
+            // ถ้ายังไม่มี user ให้ redirect ไป login (ในระบบจริงใช้ session)
+            // สำหรับตัวอย่างให้ load dashboard ทันที แต่ควรมีการ login ก่อน
+            loadPage('dashboard');
+        };
+    </script>
 </body>
 </html>
