@@ -1,0 +1,884 @@
+<!-- version 00109 -->
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ทะเบียนฎีกาเบิกจ่ายเงิน รพส. (Srdh Pay)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Phosphor Icons (ตามที่มีใน list.html ของ User) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        purpleLight: '#f3e8ff',
+                        purplePastel: '#e9d5ff',
+                        purpleDark: '#6b21a5',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* CSS Version 00109 */
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg-light: #f9fafb; --card-light: #ffffff; --text-light: #1f2937;
+            --bg-dark: #111827; --card-dark: #1f2937; --text-dark: #f3f4f6;
+            --purple-primary: #9333ea; --purple-secondary: #e9d5ff;
+        }
+        body { font-family: 'Sarabun', sans-serif; transition: background-color 0.2s, color 0.2s; }
+        .dark { background-color: var(--bg-dark); color: var(--text-dark); }
+        .dark .bg-white { background-color: var(--card-dark) !important; }
+        .dark .text-gray-800, .dark .text-gray-700 { color: var(--text-dark) !important; }
+        
+        .sidebar-link.active { background-color: var(--purple-secondary); color: var(--purple-primary); font-weight: bold; }
+        .dark .sidebar-link.active { background-color: #4c1d95; color: #e9d5ff; }
+        
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #9333ea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Print Styles */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: white; color: black; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+
+    <!-- Loading Overlay -->
+    <div id="app-loader" class="fixed inset-0 bg-white dark:bg-gray-900 z-[100] flex flex-col items-center justify-center hidden">
+        <div class="loader mb-4"></div>
+        <p class="text-purple-600 font-semibold">กำลังประมวลผลข้อมูล...</p>
+    </div>
+
+    <!-- Auth View -->
+    <div id="auth-view" class="fixed inset-0 bg-gradient-to-br from-purple-100 to-purple-300 dark:from-gray-900 dark:to-purple-900 flex items-center justify-center min-h-screen z-[60]">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-8 m-4">
+            <div class="text-center mb-6">
+                <i class="ph ph-receipt text-6xl text-purple-600 mb-2"></i>
+                <h2 class="text-2xl font-bold mt-2 text-purple-700 dark:text-purple-300">ทะเบียนฎีกาเบิกจ่ายเงิน</h2>
+                <p class="text-gray-500 dark:text-gray-400">รพส. Srdh Pay</p>
+            </div>
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label class="block text-gray-700 dark:text-gray-300 mb-2">อีเมล</label>
+                    <input type="email" id="auth-email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 dark:text-gray-300 mb-2">รหัสผ่าน</label>
+                    <input type="password" id="auth-password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600" required>
+                </div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg transition">เข้าสู่ระบบ</button>
+            </form>
+            <div class="mt-4 text-center">
+                <button id="guestBtn" class="text-purple-600 dark:text-purple-400 hover:underline text-sm">เข้าสู่ระบบแบบผู้เยี่ยมชม (Guest)</button>
+            </div>
+            <div id="guestEmailSection" class="mt-4 hidden">
+                <input type="email" id="guestEmail" placeholder="กรอกอีเมลของคุณ" class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 text-sm">
+                <button id="guestLoginBtn" class="mt-2 w-full bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg text-sm">ยืนยัน</button>
+            </div>
+            <div id="auth-message" class="mt-4 text-center text-red-500 text-sm"></div>
+        </div>
+    </div>
+
+    <!-- Main App View -->
+    <div id="app-view" class="flex h-screen overflow-hidden hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="bg-purplePastel dark:bg-purple-900 w-64 flex-shrink-0 transition-all duration-300 shadow-lg z-20 fixed md:relative h-full overflow-y-auto transform -translate-x-full md:translate-x-0">
+            <div class="p-4 flex flex-col h-full">
+                <div class="flex items-center justify-center mb-8 mt-2">
+                    <i class="ph ph-receipt text-4xl text-purple-800 dark:text-purple-200 mr-2"></i>
+                    <span class="text-xl font-bold text-purple-800 dark:text-purple-200">Srdh Pay</span>
+                </div>
+                <nav class="flex-1" id="main-nav">
+                    <!-- Nav items rendered by JS -->
+                </nav>
+                <div class="mt-auto pt-4 text-xs text-center text-purple-700 dark:text-purple-300">
+                    v1.0.9 | Srdh Pay
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden w-full">
+            <!-- Header -->
+            <header class="bg-white dark:bg-gray-800 shadow-md px-4 py-3 flex justify-between items-center z-10">
+                <div class="flex items-center">
+                    <button id="hamburgerBtn" class="md:hidden text-purple-700 dark:text-purple-300 text-2xl mr-3">
+                        <i class="ph ph-list"></i>
+                    </button>
+                    <h1 id="header-title" class="text-xl font-semibold text-purple-700 dark:text-purple-300">แดชบอร์ด</h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button id="darkModeToggle" class="text-gray-600 dark:text-gray-300 text-xl hover:text-purple-600 transition"><i class="ph ph-moon"></i></button>
+                    <div class="relative">
+                        <button id="userMenuBtn" class="flex items-center space-x-2 bg-purple-100 dark:bg-purple-800 rounded-full px-3 py-1 hover:bg-purple-200 transition">
+                            <i class="ph ph-user-circle text-purple-700 dark:text-purple-300 text-2xl"></i>
+                            <div class="text-left hidden md:block">
+                                <span id="user-name" class="text-sm font-medium block leading-tight">Guest</span>
+                                <span id="user-role" class="text-xs text-purple-600 dark:text-purple-300 block leading-tight">GUEST</span>
+                            </div>
+                            <i class="ph ph-caret-down text-xs"></i>
+                        </button>
+                        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-100 dark:border-gray-700">
+                            <a href="#" id="btn-profile-settings" class="block px-4 py-2 text-sm hover:bg-purple-50 dark:hover:bg-gray-700"><i class="ph ph-user-edit mr-2"></i>ตั้งค่าผู้ใช้งาน</a>
+                            <a href="#" onclick="logout()" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-gray-700"><i class="ph ph-sign-out mr-2"></i>ออกจากระบบ</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dynamic Pages -->
+            <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50 dark:bg-gray-900 relative">
+                
+                <!-- Dashboard Page -->
+                <div id="page-dashboard" class="page-view animate-fade-in space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="summaryCards"></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col justify-center items-center text-center">
+                            <h3 class="font-bold text-gray-500 mb-2">ระยะเวลาดำเนินการเฉลี่ย</h3>
+                            <div class="flex items-baseline gap-2">
+                                <span id="avgDays" class="text-5xl font-bold text-purple-600">0</span>
+                                <span class="text-xl text-gray-600 dark:text-gray-300">วัน</span>
+                            </div>
+                            <p class="text-sm text-gray-400 mt-2">(ตั้งแต่รับเรื่องจนถึงอนุมัติ)</p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-500 mb-4">อัตราความสำเร็จการเบิกจ่าย</h3>
+                            <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-6 overflow-hidden relative">
+                                <div id="successProgress" class="bg-gradient-to-r from-green-400 to-green-500 h-full transition-all duration-1000 flex items-center justify-end pr-2 text-white text-xs font-bold" style="width:0%"></div>
+                            </div>
+                            <p id="successPercent" class="text-center mt-3 font-semibold text-2xl text-green-600">0%</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
+                            <h3 class="font-bold mb-4 border-b pb-2">สถิติการเบิกจ่าย (ยอดเงินสูงสุด 4 อันดับ)</h3>
+                            <canvas id="deptChart" height="200"></canvas>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
+                            <h3 class="font-bold mb-4 border-b pb-2">จำนวนฎีกาแต่ละเดือน</h3>
+                            <canvas id="monthlyChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- List Page -->
+                <div id="page-list" class="page-view hidden animate-fade-in pb-10">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
+                        <div class="relative w-full lg:w-96">
+                            <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="tb-search" oninput="listApp.applyFilters()" placeholder="ค้นหาข้อมูลทั้งหมด..." class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 shadow-sm text-sm">
+                        </div>
+                        <button onclick="listApp.showAdvancedSearch()" class="text-sm bg-purple-100 text-purple-700 px-4 py-2.5 rounded-xl hover:bg-purple-200 font-medium whitespace-nowrap"><i class="ph ph-faders mr-1"></i> ค้นหาแบบละเอียด</button>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6 flex flex-wrap items-center gap-3">
+                        <select id="filter-type" onchange="listApp.applyFilters()" class="border border-gray-200 dark:border-gray-700 text-sm rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:border-purple-400">
+                            <option value="">-- ทุกประเภทเงิน --</option>
+                        </select>
+                        <select id="filter-dept" onchange="listApp.applyFilters()" class="border border-gray-200 dark:border-gray-700 text-sm rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:border-purple-400">
+                            <option value="">-- ทุกหน่วยงาน --</option>
+                        </select>
+                        <select id="filter-status" onchange="listApp.applyFilters()" class="border border-gray-200 dark:border-gray-700 text-sm rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-900 focus:outline-none focus:border-purple-400">
+                            <option value="">-- ทุกสถานะ --</option>
+                            <option value="รับเข้าระบบ">รับเข้าระบบ</option>
+                            <option value="ตรวจสอบ">ตรวจสอบ</option>
+                            <option value="ส่งแก้ไข">ส่งแก้ไข</option>
+                            <option value="ผ่านการตรวจ">ผ่านการตรวจ</option>
+                            <option value="ส่งเสนอ">ส่งเสนอ</option>
+                            <option value="อนุมัติจ่าย">อนุมัติจ่าย</option>
+                            <option value="จ่ายแล้ว">จ่ายแล้ว</option>
+                            <option value="ยกเลิก">ยกเลิก</option>
+                        </select>
+                        <button onclick="listApp.clearFilters()" class="px-3 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition"><i class="ph ph-arrows-counter-clockwise mr-1"></i>ล้างตัวกรอง</button>
+                        <div class="ml-auto flex items-center gap-2 text-sm text-gray-500">
+                            <span>แสดง</span>
+                            <select id="tb-limit" onchange="listApp.changeLimit()" class="border border-gray-200 rounded-lg px-2 py-1 bg-gray-50">
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="500">500</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="recordsContainer" class="w-full"></div>
+                    <div id="paginationContainer" class="mt-4 flex justify-end gap-1"></div>
+                </div>
+
+                <!-- Import Page -->
+                <div id="page-import" class="page-view hidden animate-fade-in">
+                    <div class="flex justify-between items-center mb-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
+                        <div>
+                            <h2 class="text-xl font-bold">ชุดข้อมูลนำเข้าใหม่</h2>
+                            <p class="text-sm text-gray-500">เพิ่มรายการสูงสุด 15 รายการต่อชุดการส่ง</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="addRecordBtn" onclick="importApp.showAddForm()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition shadow-sm"><i class="ph ph-plus font-bold mr-1"></i> เพิ่มรายการ</button>
+                            <button id="registerBtn" onclick="importApp.confirmRegister()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg disabled:opacity-50 transition shadow-sm" disabled><i class="ph ph-floppy-disk mr-1"></i> ลงทะเบียนส่งเรื่อง</button>
+                        </div>
+                    </div>
+                    <div id="pendingTable" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 overflow-hidden min-h-[300px]"></div>
+                </div>
+
+                <!-- Approve Page -->
+                <div id="page-approve" class="page-view hidden animate-fade-in">
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm mb-4 border border-gray-100 flex flex-wrap items-center gap-3 justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold text-gray-700 dark:text-gray-300 border-r pr-3">ดำเนินการ (เลือกรายการด้านล่าง)</span>
+                            <button onclick="approveApp.batchAction('receive')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-medium"><i class="ph ph-download-simple mr-1"></i> รับเอกสาร</button>
+                            <button onclick="approveApp.batchAction('edit')" class="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-4 py-2 rounded-lg font-medium"><i class="ph ph-pencil-simple mr-1"></i> ส่งแก้ไข</button>
+                            <button onclick="approveApp.batchAction('propose')" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-lg font-medium"><i class="ph ph-paper-plane-tilt mr-1"></i> ส่งเสนอ</button>
+                            <button onclick="approveApp.batchAction('pay')" class="bg-green-100 text-green-700 hover:bg-green-200 px-4 py-2 rounded-lg font-medium"><i class="ph ph-money mr-1"></i> จ่ายเช็ค</button>
+                        </div>
+                        <button onclick="approveApp.loadData()" class="text-gray-500 hover:text-purple-600"><i class="ph ph-arrows-clockwise text-xl"></i></button>
+                    </div>
+                    <div id="approveTableContainer" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 overflow-hidden"></div>
+                </div>
+
+                <!-- Settings Page -->
+                <div id="page-settings" class="page-view hidden animate-fade-in max-w-3xl mx-auto">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg mb-4 border-b pb-2"><i class="ph ph-calendar-blank mr-2"></i>กำหนดรอบเวลาปีงบประมาณ</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-sm text-gray-600 mb-1">วันที่เปิดรับฎีกา (เริ่มต้น)</label><input type="date" id="sys-startDate" class="border border-gray-300 rounded-lg p-2 w-full bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:border-purple-500"></div>
+                            <div><label class="block text-sm text-gray-600 mb-1">วันที่ปิดรับฎีกา (สิ้นสุด)</label><input type="date" id="sys-endDate" class="border border-gray-300 rounded-lg p-2 w-full bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:border-purple-500"></div>
+                        </div>
+                        <button onclick="settingsApp.saveDates()" class="mt-6 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg shadow-sm font-medium"><i class="ph ph-floppy-disk mr-1"></i> บันทึกการตั้งค่าเวลา</button>
+                    </div>
+                </div>
+
+                <!-- Report Page -->
+                <div id="page-report" class="page-view hidden animate-fade-in">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 mb-6 flex justify-between items-end">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">เลือกเดือน/ปี งบประมาณ</label>
+                            <input type="month" id="reportMonth" class="border rounded-lg p-2 bg-gray-50 dark:bg-gray-700 focus:outline-none focus:border-purple-500">
+                        </div>
+                        <button onclick="reportApp.exportExcel()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm"><i class="ph ph-microsoft-excel-logo mr-1"></i> ส่งออกข้อมูล (CSV)</button>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 text-center text-gray-500 py-12">
+                        <i class="ph ph-chart-pie-slice text-6xl mb-3 text-gray-300"></i>
+                        <p>ส่วนรายงานขั้นสูงแบบ Pivot จะแสดงผลที่นี่ในเวอร์ชันถัดไป</p>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Print Area (Hidden in normal view) -->
+    <div id="print-area" class="hidden"></div>
+
+    <!-- Global Modal -->
+    <div id="globalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col transform scale-95 transition-transform duration-200" id="globalModalContent">
+            <!-- Content injected here -->
+        </div>
+    </div>
+
+    <!-- MAIN JAVASCRIPT -->
+    <script>
+        // --- 1. CONFIG & API WRAPPER ---
+        const CONFIG = {
+            API_URL: 'https://script.google.com/macros/s/AKfycbxFA7uNqrHInT3I7SCssbOEd8E8eftXDClXqMe3G_Z6hM92IfwwYvYRpmF2CGZkHXWoZg/exec' // **เปลี่ยน URL นี้เมื่อ Deploy Backend ใหม่**
+        };
+
+        const api = {
+            call: async (action, body = {}) => {
+                body.action = action;
+                try {
+                    const response = await fetch(CONFIG.API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(body)
+                    });
+                    const result = await response.json();
+                    if (!result.success && result.success !== undefined) throw new Error(result.message || 'Server error');
+                    return result.data !== undefined ? result.data : result;
+                } catch (e) {
+                    console.error('API Error:', e);
+                    throw e;
+                }
+            }
+        };
+
+        // --- 2. GLOBAL STATE ---
+        let currentUser = null;
+        let allData = [];
+        let globalSettings = { vendors: [], checkers: [], moneyTypes: [] };
+        
+        const COLORS = {
+            "เงินงบประมาณ": "bg-pink-100 text-pink-700 border-pink-200",
+            "เงินบำรุง": "bg-yellow-100 text-yellow-700 border-yellow-200",
+            "เงินประกันสุขภาพ": "bg-orange-100 text-orange-700 border-orange-200",
+            "เงินอุดหนุน": "bg-red-100 text-red-700 border-red-200",
+            "เงินแพทยศาสตร์": "bg-amber-100 text-amber-700 border-amber-200",
+            "เงินอื่น": "bg-gray-200 text-gray-700 border-gray-300"
+        };
+
+        // --- 3. INIT & CORE LOGIC ---
+        window.onload = () => {
+            const savedUser = localStorage.getItem('srdh_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                initApp();
+            } else {
+                document.getElementById('auth-view').classList.remove('hidden');
+            }
+        };
+
+        async function initApp() {
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('app-view').classList.remove('hidden');
+            
+            document.getElementById('user-name').innerText = currentUser.username;
+            document.getElementById('user-role').innerText = currentUser.role.toUpperCase();
+            if (currentUser.role === 'guest') document.getElementById('btn-profile-settings').classList.add('hidden');
+
+            renderSidebar();
+            
+            showLoader(true);
+            try {
+                // Fetch basic necessary data concurrently
+                const [dataRes, setsRes] = await Promise.all([
+                    api.call('getRegisterData'),
+                    api.call('getSettings')
+                ]);
+                allData = dataRes || [];
+                globalSettings = setsRes || { vendors: [], checkers: [], moneyTypes: [] };
+                
+                populateSelects();
+                navigate('dashboard');
+            } catch (e) {
+                alert('ไม่สามารถเชื่อมต่อฐานข้อมูลได้: ' + e.message);
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        function renderSidebar() {
+            const nav = document.getElementById('main-nav');
+            const role = currentUser.role;
+            let html = `<a href="#" onclick="navigate('dashboard')" id="nav-dashboard" class="sidebar-link flex items-center p-3 mb-1 rounded-xl transition-colors"><i class="ph ph-squares-four text-xl mr-3"></i>แดชบอร์ด</a>
+                        <a href="#" onclick="navigate('list')" id="nav-list" class="sidebar-link flex items-center p-3 mb-1 rounded-xl transition-colors"><i class="ph ph-list-dashes text-xl mr-3"></i>ทะเบียนฎีกา</a>`;
+            if (['admin','staff'].includes(role)) {
+                html += `<a href="#" onclick="navigate('import')" id="nav-import" class="sidebar-link flex items-center p-3 mb-1 rounded-xl transition-colors"><i class="ph ph-file-plus text-xl mr-3"></i>นำเข้าข้อมูล</a>`;
+            }
+            if (['admin','checker'].includes(role)) {
+                html += `<a href="#" onclick="navigate('approve')" id="nav-approve" class="sidebar-link flex items-center p-3 mb-1 rounded-xl transition-colors"><i class="ph ph-check-square-offset text-xl mr-3"></i>บันทึกรายการ</a>`;
+            }
+            if (['admin','editor'].includes(role)) {
+                html += `<a href="#" onclick="navigate('report')" id="nav-report" class="sidebar-link flex items-center p-3 mb-1 rounded-xl transition-colors"><i class="ph ph-chart-bar text-xl mr-3"></i>รายงาน</a>`;
+            }
+            if (role === 'admin') {
+                html += `<a href="#" onclick="navigate('settings')" id="nav-settings" class="sidebar-link flex items-center p-3 mb-1 rounded-xl transition-colors"><i class="ph ph-gear text-xl mr-3"></i>ตั้งค่าระบบ</a>`;
+            }
+            nav.innerHTML = html;
+        }
+
+        function navigate(page) {
+            document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`page-${page}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active', 'bg-purple-100', 'dark:bg-purple-800'));
+            const activeNav = document.getElementById(`nav-${page}`);
+            if(activeNav) activeNav.classList.add('active', 'bg-purple-100', 'dark:bg-purple-800');
+
+            const titles = { dashboard: 'แดชบอร์ดสรุปผล', list: 'ทะเบียนฎีกาเบิกจ่ายเงิน', import: 'นำเข้าข้อมูลใหม่', approve: 'บันทึกรายการ (รับเรื่อง/อนุมัติ)', settings: 'ตั้งค่าระบบ', report: 'รายงานการเบิกจ่าย' };
+            document.getElementById('header-title').innerText = titles[page] || '';
+
+            if (window.innerWidth < 768) document.getElementById('sidebar').classList.add('-translate-x-full');
+
+            if (page === 'dashboard') dashboardApp.init();
+            if (page === 'list') listApp.init();
+            if (page === 'import') importApp.init();
+            if (page === 'approve') approveApp.init();
+            if (page === 'settings') settingsApp.init();
+        }
+
+        function populateSelects() {
+            const mSelects = ['filter-type', 'moneyType'];
+            mSelects.forEach(id => {
+                const el = document.getElementById(id);
+                if(el && globalSettings.moneyTypes) {
+                    globalSettings.moneyTypes.forEach(t => el.add(new Option(t, t)));
+                }
+            });
+            const dSelect = document.getElementById('filter-dept');
+            if(dSelect) {
+                const depts = [...new Set(allData.map(r => r['หน่วยงาน']).filter(d => d))];
+                depts.forEach(d => dSelect.add(new Option(d, d)));
+            }
+        }
+
+        function showLoader(show) { document.getElementById('app-loader').classList.toggle('hidden', !show); }
+        function logout() { if (confirm('ยืนยันการออกจากระบบ?')) { localStorage.removeItem('srdh_user'); location.reload(); } }
+        
+        function formatNumber(num) { return new Intl.NumberFormat().format(num || 0); }
+        function formatDate(d) { if(!d) return '-'; let date = new Date(d); return date.toLocaleDateString('th-TH'); }
+        function getMoneyTypeClass(type) { return COLORS[type] || 'bg-gray-100 text-gray-700'; }
+
+        // --- AUTH LOGIC ---
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            try {
+                showLoader(true);
+                const result = await api.call('login', { email, password });
+                if(result.success) { localStorage.setItem('srdh_user', JSON.stringify(result)); location.reload(); }
+                else document.getElementById('auth-message').innerText = result.message;
+            } catch(e) { document.getElementById('auth-message').innerText = 'การเชื่อมต่อขัดข้อง'; } finally { showLoader(false); }
+        });
+        document.getElementById('guestBtn').addEventListener('click', () => document.getElementById('guestEmailSection').classList.toggle('hidden'));
+        document.getElementById('guestLoginBtn').addEventListener('click', async () => {
+            const email = document.getElementById('guestEmail').value;
+            if(!email) return;
+            try {
+                showLoader(true);
+                const result = await api.call('guestLogin', { email });
+                if(result.success) { localStorage.setItem('srdh_user', JSON.stringify(result)); location.reload(); }
+                else document.getElementById('auth-message').innerText = result.message;
+            } catch(e) { document.getElementById('auth-message').innerText = 'การเชื่อมต่อขัดข้อง'; } finally { showLoader(false); }
+        });
+
+        // Toggle UI
+        document.getElementById('hamburgerBtn').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('-translate-x-full'));
+        document.getElementById('darkModeToggle').addEventListener('click', () => { document.documentElement.classList.toggle('dark'); });
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        userMenuBtn.addEventListener('click', () => document.getElementById('userDropdown').classList.toggle('hidden'));
+
+        // --- DASHBOARD APP ---
+        const dashboardApp = {
+            chartDept: null, chartMonth: null,
+            init: async function() {
+                try {
+                    showLoader(true);
+                    const data = await api.call('getDashboardData');
+                    this.renderSummary(data.summary);
+                    document.getElementById('avgDays').innerText = data.avgDays;
+                    const percent = data.successPercent.toFixed(1);
+                    document.getElementById('successProgress').style.width = percent + '%';
+                    document.getElementById('successPercent').innerText = percent + '%';
+                    this.renderCharts(data.deptChartData, data.monthlyData);
+                } catch(e) { console.error(e); } finally { showLoader(false); }
+            },
+            renderSummary: function(summary) {
+                const container = document.getElementById('summaryCards');
+                container.innerHTML = '';
+                summary.forEach(s => {
+                    const colorClass = getMoneyTypeClass(s.type);
+                    container.innerHTML += `
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 relative overflow-hidden group">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 ${colorClass.split(' ')[0]}"></div>
+                            <div class="flex justify-between items-start mb-2 pl-2">
+                                <span class="font-bold text-gray-700 dark:text-gray-300">${s.type}</span>
+                                <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full text-gray-500">${s.approvedCount}/${s.totalCount} ฎีกา</span>
+                            </div>
+                            <div class="pl-2">
+                                <div class="flex justify-between items-end mb-1">
+                                    <span class="text-sm text-gray-500">เบิกแล้ว</span>
+                                    <span class="text-green-600 font-bold text-2xl">${formatNumber(s.approvedAmount)}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm mb-1">
+                                    <span class="text-gray-500">รอตรวจสอบ</span>
+                                    <span class="text-orange-400 font-medium">${formatNumber(s.pendingAmount)}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm pt-2 border-t border-gray-50 dark:border-gray-700 mt-2">
+                                    <span class="text-gray-500">รวมขอเบิก</span>
+                                    <span class="font-bold text-gray-700 dark:text-gray-300">${formatNumber(s.totalAmount)}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+            },
+            renderCharts: function(deptData, monthData) {
+                if(this.chartDept) this.chartDept.destroy();
+                if(this.chartMonth) this.chartMonth.destroy();
+                
+                const ctxDept = document.getElementById('deptChart').getContext('2d');
+                this.chartDept = new Chart(ctxDept, {
+                    type: 'bar',
+                    data: { labels: deptData.labels, datasets: [{ label: 'จำนวนเงิน (บาท)', data: deptData.values, backgroundColor: '#a855f7', borderRadius: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+
+                const ctxMonth = document.getElementById('monthlyChart').getContext('2d');
+                this.chartMonth = new Chart(ctxMonth, {
+                    type: 'line',
+                    data: { labels: monthData.labels, datasets: [{ label: 'ปีปัจจุบัน', data: monthData.currentYear, borderColor: '#f97316', tension: 0.4 }, { label: 'ปีก่อน', data: monthData.prevYear, borderColor: '#94a3b8', tension: 0.4, borderDash: [5, 5] }] },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        };
+
+        // --- LIST APP ---
+        const listApp = {
+            records: [], page: 1, limit: 50,
+            init: function() { this.records = allData; this.renderTable(); },
+            applyFilters: function() {
+                const search = document.getElementById('tb-search').value.toLowerCase();
+                const type = document.getElementById('filter-type').value;
+                const dept = document.getElementById('filter-dept').value;
+                const status = document.getElementById('filter-status').value;
+                
+                this.records = allData.filter(r => {
+                    let match = true;
+                    if(type && r['ประเภทเงิน'] !== type) match = false;
+                    if(dept && r['หน่วยงาน'] !== dept) match = false;
+                    if(status && this.getStatus(r) !== status) match = false;
+                    if(search) {
+                        match = match && Object.values(r).some(v => String(v).toLowerCase().includes(search));
+                    }
+                    return match;
+                });
+                this.page = 1;
+                this.renderTable();
+            },
+            clearFilters: function() {
+                document.getElementById('tb-search').value = '';
+                document.getElementById('filter-type').value = '';
+                document.getElementById('filter-dept').value = '';
+                document.getElementById('filter-status').value = '';
+                this.applyFilters();
+            },
+            changeLimit: function() { this.limit = parseInt(document.getElementById('tb-limit').value); this.page = 1; this.renderTable(); },
+            getStatus: function(r) {
+                if (r['วันที่ยกเลิก']) return 'ยกเลิก'; if (r['วันที่จ่ายเช็ค']) return 'จ่ายแล้ว'; if (r['วันที่อนุมัติ']) return 'อนุมัติจ่าย';
+                if (r['วันที่เสนอ']) return 'ส่งเสนอ'; if (r['วันที่ตรวจผ่าน']) return 'ผ่านการตรวจ'; if (r['วันที่รับคืน']) return 'ตรวจสอบ';
+                if (r['วันที่แก้ไข']) return 'ส่งแก้ไข'; if (r['ผู้ตรวจ']) return 'ตรวจสอบ'; if (r['วันที่รับเอกสาร']) return 'รับเข้าระบบ';
+                if (r['วันที่ลงทะเบียน']) return 'รอเอกสาร'; return 'ไม่ระบุ';
+            },
+            getStatusColor: function(s) {
+                const map = { 'ยกเลิก':'bg-red-100 text-red-700', 'จ่ายแล้ว':'bg-green-100 text-green-700', 'อนุมัติจ่าย':'bg-blue-100 text-blue-700', 'ส่งเสนอ':'bg-purple-100 text-purple-700', 'ผ่านการตรวจ':'bg-teal-100 text-teal-700', 'ตรวจสอบ':'bg-yellow-100 text-yellow-700', 'ส่งแก้ไข':'bg-orange-100 text-orange-700', 'รับเข้าระบบ':'bg-indigo-100 text-indigo-700', 'รอเอกสาร':'bg-gray-100 text-gray-700' };
+                return map[s] || 'bg-gray-100 text-gray-700';
+            },
+            renderTable: function() {
+                const start = (this.page - 1) * this.limit;
+                const paginated = this.records.slice(start, start + this.limit);
+                const isMobile = window.innerWidth < 768;
+                const container = document.getElementById('recordsContainer');
+                
+                if(paginated.length === 0) { container.innerHTML = '<div class="text-center py-10 text-gray-500">ไม่พบข้อมูลที่ตรงกับเงื่อนไข</div>'; document.getElementById('paginationContainer').innerHTML=''; return; }
+
+                if(isMobile) {
+                    let html = '<div class="space-y-3">';
+                    paginated.forEach(r => {
+                        const status = this.getStatus(r);
+                        html += `<div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 active:bg-gray-50 cursor-pointer" onclick='listApp.showDetail(${JSON.stringify(r).replace(/'/g,"&apos;")})'>
+                            <div class="flex justify-between items-start mb-2"><div class="font-bold text-gray-800 dark:text-gray-200">${r['ชื่อเจ้าหนี้/ชื่อบริษัท']||'-'}</div><span class="text-xs px-2 py-1 rounded-full ${this.getStatusColor(status)}">${status}</span></div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400 mb-2 truncate">${r['รายการ']||'-'}</div>
+                            <div class="flex justify-between items-end"><div class="text-xs text-gray-500">รับ: ${formatDate(r['วันที่รับเอกสาร'])}</div><div class="font-bold text-purple-600">${formatNumber(r['จำนวนเงินขอเบิก'])} ฿</div></div>
+                        </div>`;
+                    });
+                    container.innerHTML = html + '</div>';
+                } else {
+                    let html = '<div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"><table class="w-full text-left text-sm"><thead class="bg-purple-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-400"><tr><th class="p-3 font-medium">เลขรับ/วันที่</th><th class="p-3 font-medium">สถานะ</th><th class="p-3 font-medium">ฎีกา/ใบขอเบิก</th><th class="p-3 font-medium">เจ้าหนี้</th><th class="p-3 font-medium w-1/3">รายการ</th><th class="p-3 font-medium text-right">จำนวนเงิน</th><th class="p-3 font-medium">ประเภทเงิน</th></tr></thead><tbody class="divide-y divide-gray-100 dark:divide-gray-700">';
+                    paginated.forEach(r => {
+                        const status = this.getStatus(r);
+                        const mClass = getMoneyTypeClass(r['ประเภทเงิน']);
+                        html += `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors" onclick='listApp.showDetail(${JSON.stringify(r).replace(/'/g,"&apos;")})'>
+                            <td class="p-3"><div>${formatDate(r['วันที่รับเอกสาร'])}</div><div class="text-xs text-gray-400">${r['เลขที่รับ']||'-'}</div></td>
+                            <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${this.getStatusColor(status)}">${status}</span></td>
+                            <td class="p-3"><div>${r['เลขที่ฎีกา']||'-'}</div><div class="text-xs text-gray-400">${r['เลขที่ใบขอเบิก']||'-'}</div></td>
+                            <td class="p-3 font-semibold text-gray-800 dark:text-gray-200">${r['ชื่อเจ้าหนี้/ชื่อบริษัท']||'-'}</td>
+                            <td class="p-3"><div class="truncate max-w-xs">${r['รายการ']||'-'}</div></td>
+                            <td class="p-3 text-right font-bold">${formatNumber(r['จำนวนเงินขอเบิก'])}</td>
+                            <td class="p-3"><div class="inline-block px-2 py-1 rounded-md text-xs border ${mClass}">${r['ประเภทเงิน']}</div><div class="text-xs text-gray-400 mt-1">${r['หน่วยงาน']||'-'}</div></td>
+                        </tr>`;
+                    });
+                    container.innerHTML = html + '</tbody></table></div>';
+                }
+                
+                // Pagination
+                const totalPages = Math.ceil(this.records.length / this.limit);
+                let pHTML = '';
+                for(let i=1; i<=Math.min(totalPages,5); i++) {
+                    pHTML += `<button onclick="listApp.page=${i}; listApp.renderTable()" class="px-3 py-1 rounded-lg text-sm ${this.page===i?'bg-purple-600 text-white':'bg-white text-gray-600 border'}">${i}</button>`;
+                }
+                document.getElementById('paginationContainer').innerHTML = pHTML;
+            },
+            showDetail: function(r) {
+                const content = document.getElementById('globalModalContent');
+                const status = this.getStatus(r);
+                let html = `
+                    <div class="p-4 bg-purple-50 dark:bg-gray-900 border-b dark:border-gray-700 flex justify-between items-center">
+                        <h3 class="font-bold text-lg text-purple-800 dark:text-purple-300">รายละเอียดข้อมูลฎีกา</h3>
+                        <button onclick="document.getElementById('globalModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i class="ph ph-x text-xl"></i></button>
+                    </div>
+                    <div class="p-6 overflow-y-auto" style="max-height: 70vh;">
+                        <div class="flex justify-between items-center mb-6">
+                            <div><span class="text-gray-500 text-sm">สถานะปัจจุบัน:</span> <span class="px-3 py-1 rounded-full text-sm font-medium ${this.getStatusColor(status)}">${status}</span></div>
+                            <div class="text-right"><div class="text-sm text-gray-500">เลขที่รับ</div><div class="font-bold text-xl">${r['เลขที่รับ']||'-'}</div></div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                            <div><span class="text-gray-500 block">ชื่อเจ้าหนี้/บริษัท</span><strong class="text-base">${r['ชื่อเจ้าหนี้/ชื่อบริษัท']||'-'}</strong></div>
+                            <div><span class="text-gray-500 block">จำนวนเงินขอเบิก</span><strong class="text-lg text-purple-600">${formatNumber(r['จำนวนเงินขอเบิก'])} บาท</strong></div>
+                            <div class="md:col-span-2"><span class="text-gray-500 block">รายการ</span><div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border">${r['รายการ']||'-'}</div></div>
+                            
+                            <div><span class="text-gray-500 block">ประเภทเงิน / หน่วยงาน</span><span class="font-medium">${r['ประเภทเงิน']}</span> <br><span class="text-gray-600">${r['หน่วยงาน']}</span></div>
+                            <div><span class="text-gray-500 block">เอกสารอ้างอิง</span>ใบขอเบิก: ${r['เลขที่ใบขอเบิก']||'-'} <br>ฎีกา: ${r['เลขที่ฎีกา']||'-'} <br>ใบกันเงิน: ${r['เลขที่ใบกัน']||'-'}</div>
+                            
+                            <div class="md:col-span-2 pt-4 border-t mt-2">
+                                <h4 class="font-bold mb-2 text-gray-700">ลำดับเวลา</h4>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                                    <div class="bg-gray-50 p-2 rounded border border-gray-100">ลงทะเบียน: <br><b>${formatDate(r['วันที่ลงทะเบียน'])}</b></div>
+                                    <div class="bg-indigo-50 p-2 rounded border border-indigo-100">รับเอกสาร: <br><b>${formatDate(r['วันที่รับเอกสาร'])}</b></div>
+                                    <div class="bg-blue-50 p-2 rounded border border-blue-100">อนุมัติ: <br><b>${formatDate(r['วันที่อนุมัติ'])}</b></div>
+                                    <div class="bg-green-50 p-2 rounded border border-green-100">จ่ายเช็ค: <br><b>${formatDate(r['วันที่จ่ายเช็ค'])}</b></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                content.innerHTML = html;
+                document.getElementById('globalModal').classList.remove('hidden');
+                document.getElementById('globalModal').classList.add('flex');
+            },
+            showAdvancedSearch: function() {
+                alert('เปิดหน้าต่างค้นหาแบบละเอียด (กำหนดช่วงวันที่/จำนวนเงิน) จะพร้อมใช้งานในส่วนเสริมถัดไป');
+            }
+        };
+
+        // --- IMPORT APP ---
+        const importApp = {
+            pending: [],
+            init: function() { this.renderTable(); },
+            showAddForm: function() {
+                if(this.pending.length >= 15) { alert('เพิ่มได้สูงสุด 15 รายการต่อชุด'); return; }
+                const content = document.getElementById('globalModalContent');
+                content.innerHTML = `
+                    <div class="p-4 bg-green-50 border-b flex justify-between items-center">
+                        <h3 class="font-bold text-lg text-green-800">เพิ่มรายการเบิกจ่ายใหม่</h3>
+                        <button onclick="document.getElementById('globalModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i class="ph ph-x text-xl"></i></button>
+                    </div>
+                    <form id="importForm" class="p-6 space-y-4" onsubmit="importApp.saveRecord(event)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-sm mb-1 text-gray-600">ประเภทเงิน *</label><select id="inp-money" required class="w-full border rounded-lg p-2 bg-gray-50">${globalSettings.moneyTypes.map(t=>`<option value="${t}">${t}</option>`).join('')}</select></div>
+                            <div><label class="block text-sm mb-1 text-gray-600">ชื่อเจ้าหนี้/บริษัท *</label><input id="inp-vendor" required list="vendors-list" class="w-full border rounded-lg p-2 focus:border-purple-500"><datalist id="vendors-list">${globalSettings.vendors.map(v=>`<option value="${v}">`).join('')}</datalist></div>
+                            <div class="md:col-span-2"><label class="block text-sm mb-1 text-gray-600">รายการ *</label><textarea id="inp-desc" required rows="2" class="w-full border rounded-lg p-2 focus:border-purple-500"></textarea></div>
+                            <div><label class="block text-sm mb-1 text-gray-600">จำนวนเงินขอเบิก (บาท) *</label><input type="number" step="0.01" id="inp-amt" required class="w-full border rounded-lg p-2 focus:border-purple-500"></div>
+                            <div><label class="block text-sm mb-1 text-gray-600">เลขที่ใบกันเงิน (ถ้ามี)</label><input id="inp-resNo" class="w-full border rounded-lg p-2 focus:border-purple-500"></div>
+                        </div>
+                        <div class="pt-4 border-t flex justify-end gap-2">
+                            <button type="button" onclick="document.getElementById('globalModal').classList.add('hidden')" class="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">ยกเลิก</button>
+                            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm"><i class="ph ph-check mr-1"></i> ยืนยันเพิ่มรายการ</button>
+                        </div>
+                    </form>
+                `;
+                document.getElementById('globalModal').classList.remove('hidden');
+                document.getElementById('globalModal').classList.add('flex');
+            },
+            saveRecord: function(e) {
+                e.preventDefault();
+                this.pending.push({
+                    moneyType: document.getElementById('inp-money').value,
+                    vendor: document.getElementById('inp-vendor').value,
+                    description: document.getElementById('inp-desc').value,
+                    amount: document.getElementById('inp-amt').value,
+                    reserveNo: document.getElementById('inp-resNo').value,
+                    registerDate: new Date().toLocaleDateString('en-GB'), // dd/mm/yyyy
+                    dept: currentUser.dept,
+                    sender: currentUser.username
+                });
+                document.getElementById('globalModal').classList.add('hidden');
+                this.renderTable();
+            },
+            removeRecord: function(idx) { this.pending.splice(idx,1); this.renderTable(); },
+            renderTable: function() {
+                const container = document.getElementById('pendingTable');
+                if(this.pending.length === 0) {
+                    container.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="ph ph-tray text-4xl mb-2 block"></i>ยังไม่มีรายการ รอกดเพิ่มข้อมูล</div>';
+                    document.getElementById('registerBtn').disabled = true;
+                    return;
+                }
+                document.getElementById('registerBtn').disabled = false;
+                let html = '<table class="w-full text-left text-sm"><thead class="bg-gray-50 border-b"><tr><th class="p-3">#</th><th class="p-3">ประเภทเงิน</th><th class="p-3">เจ้าหนี้</th><th class="p-3 w-1/3">รายการ</th><th class="p-3 text-right">จำนวนเงิน</th><th class="p-3"></th></tr></thead><tbody class="divide-y divide-gray-100">';
+                this.pending.forEach((r, idx) => {
+                    html += `<tr><td class="p-3 text-gray-500">${idx+1}</td><td class="p-3"><span class="px-2 py-1 rounded text-xs ${getMoneyTypeClass(r.moneyType)}">${r.moneyType}</span></td><td class="p-3 font-medium">${r.vendor}</td><td class="p-3 truncate max-w-xs">${r.description}</td><td class="p-3 text-right font-bold">${formatNumber(r.amount)}</td><td class="p-3 text-right"><button onclick="importApp.removeRecord(${idx})" class="text-red-500 hover:bg-red-50 p-1 rounded"><i class="ph ph-trash"></i></button></td></tr>`;
+                });
+                container.innerHTML = html + '</tbody></table>';
+            },
+            confirmRegister: async function() {
+                if(this.pending.length===0) return;
+                if(!confirm(`ยืนยันการลงทะเบียนส่งเอกสาร จำนวน ${this.pending.length} รายการ?`)) return;
+                const batchId = 'REG-' + Date.now().toString().slice(-6);
+                try {
+                    showLoader(true);
+                    const res = await api.call('batchInsertRegister', { records: this.pending, batchId, userEmail: currentUser.email, userDept: currentUser.dept });
+                    if(res.success) {
+                        alert(`ส่งข้อมูลสำเร็จ! เลขที่ลงทะเบียน: ${res.batchId}`);
+                        printOutApp.printRegister(res.batchId, this.pending); // พิมพ์ใบนำส่งทันที
+                        this.pending = [];
+                        this.renderTable();
+                        // reload global data
+                        allData = await api.call('getRegisterData');
+                    } else alert('เกิดข้อผิดพลาด: ' + res.message);
+                } catch(e) { alert('การเชื่อมต่อขัดข้อง'); } finally { showLoader(false); }
+            }
+        };
+
+        // --- APPROVE APP ---
+        const approveApp = {
+            records: [], selected: new Set(),
+            init: function() { this.loadData(); },
+            loadData: async function() {
+                try {
+                    showLoader(true);
+                    this.records = await api.call('getRegisterData');
+                    // update global too
+                    allData = this.records; 
+                    this.selected.clear();
+                    this.renderTable();
+                } catch(e) {} finally { showLoader(false); }
+            },
+            renderTable: function() {
+                // Filter only items not fully completed/canceled to show in approve list (simplified logic: show all for now, ordered by date)
+                const pending = this.records.filter(r => !['ยกเลิก','จ่ายแล้ว'].includes(listApp.getStatus(r))).sort((a,b) => b._rowIndex - a._rowIndex);
+                const container = document.getElementById('approveTableContainer');
+                if(pending.length === 0) { container.innerHTML = '<div class="text-center py-10 text-gray-500">ไม่มีรายการค้างดำเนินการ</div>'; return; }
+
+                let html = '<div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-gray-50 border-b text-gray-600"><tr><th class="p-3 w-10"><input type="checkbox" id="cb-all" class="rounded"></th><th class="p-3">ลำดับ/สถานะ</th><th class="p-3">เจ้าหนี้/บริษัท</th><th class="p-3 w-1/3">รายการ</th><th class="p-3 text-right">จำนวนเงิน</th><th class="p-3">ประเภทเงิน/หน่วยงาน</th></tr></thead><tbody class="divide-y divide-gray-100 dark:divide-gray-700">';
+                pending.forEach((r) => {
+                    const idx = r._rowIndex;
+                    const status = listApp.getStatus(r);
+                    html += `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"><td class="p-3"><input type="checkbox" class="cb-row rounded" data-idx="${idx}"></td>
+                        <td class="p-3"><div>${formatDate(r['วันที่รับเอกสาร'])} <span class="text-xs text-gray-400 ml-1">K:${r['เลขที่รับ']||'-'}</span></div><div class="mt-1"><span class="px-2 py-0.5 rounded-full text-xs ${listApp.getStatusColor(status)}">${status}</span></div></td>
+                        <td class="p-3 font-semibold">${r['ชื่อเจ้าหนี้/ชื่อบริษัท']}</td>
+                        <td class="p-3"><div class="truncate max-w-xs">${r['รายการ']}</div></td>
+                        <td class="p-3 text-right font-bold text-gray-700 dark:text-gray-200">${formatNumber(r['จำนวนเงินขอเบิก'])}</td>
+                        <td class="p-3 text-xs"><div class="font-medium text-gray-700 dark:text-gray-300">${r['ประเภทเงิน']}</div><div class="text-gray-500">${r['หน่วยงาน']}</div></td></tr>`;
+                });
+                container.innerHTML = html + '</tbody></table></div>';
+                
+                document.getElementById('cb-all')?.addEventListener('change', e => {
+                    document.querySelectorAll('.cb-row').forEach(cb => { cb.checked = e.target.checked; if(e.target.checked) this.selected.add(parseInt(cb.dataset.idx)); else this.selected.clear(); });
+                });
+                document.querySelectorAll('.cb-row').forEach(cb => {
+                    cb.addEventListener('change', e => { const i = parseInt(e.target.dataset.idx); if(e.target.checked) this.selected.add(i); else this.selected.delete(i); });
+                });
+            },
+            batchAction: async function(actionType) {
+                if(this.selected.size === 0) { alert('กรุณาเลือกรายการอย่างน้อย 1 รายการโดยติ๊กเครื่องหมายถูกด้านหน้า'); return; }
+                const indices = Array.from(this.selected);
+                const selRecords = this.records.filter(r => indices.includes(r._rowIndex));
+                
+                let promptMsg = ''; let actApi = ''; let updates = {}; let printType = '';
+                const today = new Date().toLocaleDateString('en-GB'); // dd/mm/yyyy
+                
+                if (actionType === 'receive') { promptMsg = 'วันที่รับเข้าหน่วยงาน'; actApi = 'updateReceiveInfo'; }
+                else if (actionType === 'edit') { promptMsg = 'วันที่ส่งแก้ไข'; actApi = 'updateFields'; printType = 'ใบนำส่งแก้ไขเอกสาร'; }
+                else if (actionType === 'propose') { promptMsg = 'วันที่ส่งเสนออนุมัติ'; actApi = 'updateFields'; printType = 'รายละเอียดการเสนอฎีกา'; }
+                else if (actionType === 'pay') { promptMsg = 'วันที่จ่ายเช็ค'; actApi = 'updateFields'; printType = 'รายละเอียดการจ่ายเช็ค'; }
+
+                const inputDate = prompt(`กรุณาระบุ ${promptMsg} (รูปแบบ วว/ดด/ปปปป หรือ yyyy-mm-dd):`, today);
+                if(!inputDate) return;
+
+                try {
+                    showLoader(true);
+                    let res;
+                    if(actApi === 'updateReceiveInfo') res = await api.call('updateReceiveInfo', { rowsIndices: indices, receiveDate: inputDate, userEmail: currentUser.email });
+                    else {
+                        if (actionType === 'edit') updates = { R: inputDate };
+                        else if (actionType === 'propose') updates = { U: inputDate };
+                        else if (actionType === 'pay') updates = { W: inputDate };
+                        res = await api.call('updateFields', { rowsIndices: indices, updates, userEmail: currentUser.email });
+                    }
+                    if(res.success) {
+                        alert('บันทึกข้อมูลเรียบร้อย');
+                        if(printType) printOutApp.printAction(printType, selRecords, inputDate);
+                        this.loadData(); // reload
+                    } else alert('เกิดข้อผิดพลาด: ' + res.message);
+                } catch(e) { alert('การเชื่อมต่อขัดข้อง'); } finally { showLoader(false); }
+            }
+        };
+
+        // --- SETTINGS & REPORT ---
+        const settingsApp = {
+            init: async function() {
+                try {
+                    showLoader(true);
+                    const res = await api.call('getSystemDates');
+                    if(res.startDate) document.getElementById('sys-startDate').value = res.startDate;
+                    if(res.endDate) document.getElementById('sys-endDate').value = res.endDate;
+                } catch(e){} finally { showLoader(false); }
+            },
+            saveDates: async function() {
+                const s = document.getElementById('sys-startDate').value;
+                const e = document.getElementById('sys-endDate').value;
+                if(!s || !e) { alert('กรุณาระบุวันที่ให้ครบ'); return; }
+                try {
+                    showLoader(true);
+                    const res = await api.call('setSystemDates', {start: s, end: e, userEmail: currentUser.email});
+                    if(res.success) alert('บันทึกการตั้งค่าเวลาสำเร็จ');
+                } catch(err){} finally { showLoader(false); }
+            }
+        };
+
+        const reportApp = {
+            exportExcel: function() {
+                // สร้าง CSV อย่างง่ายจาก allData
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+                const headers = ["วันที่รับเอกสาร", "สถานะ", "เลขที่รับ", "เลขที่ใบขอเบิก", "เลขที่ฎีกา", "ประเภทเงิน", "หน่วยงาน", "ชื่อเจ้าหนี้/บริษัท", "รายการ", "จำนวนเงินขอเบิก"];
+                csvContent += headers.join(",") + "\n";
+                
+                allData.forEach(r => {
+                    const row = [ r['วันที่รับเอกสาร'], listApp.getStatus(r), r['เลขที่รับ'], r['เลขที่ใบขอเบิก'], r['เลขที่ฎีกา'], r['ประเภทเงิน'], r['หน่วยงาน'], `"${r['ชื่อเจ้าหนี้/ชื่อบริษัท']||''}"`, `"${r['รายการ']||''}"`, r['จำนวนเงินขอเบิก'] ];
+                    csvContent += row.join(",") + "\n";
+                });
+                
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `SrdhPay_Report_${new Date().toISOString().slice(0,10)}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        };
+
+        // --- PRINTOUT APP ---
+        const printOutApp = {
+            printRegister: function(batchId, records) {
+                const pa = document.getElementById('print-area');
+                let html = `<div class="text-center mb-6"><h2 class="text-2xl font-bold">ใบนำส่งเอกสารเบิกจ่าย</h2><p class="text-gray-600">เลขลงทะเบียนชุด: <b>${batchId}</b> | วันที่: ${records[0].registerDate}</p></div>`;
+                html += `<table class="w-full text-left text-sm border-collapse border border-gray-400"><thead><tr class="bg-gray-100"><th class="border border-gray-400 p-2">ลำดับ</th><th class="border border-gray-400 p-2">ประเภทเงิน</th><th class="border border-gray-400 p-2">ชื่อเจ้าหนี้/บริษัท</th><th class="border border-gray-400 p-2">รายการ</th><th class="border border-gray-400 p-2 text-right">จำนวนเงิน</th></tr></thead><tbody>`;
+                records.forEach((r, i) => { html += `<tr><td class="border border-gray-400 p-2 text-center">${i+1}</td><td class="border border-gray-400 p-2">${r.moneyType}</td><td class="border border-gray-400 p-2">${r.vendor}</td><td class="border border-gray-400 p-2">${r.description}</td><td class="border border-gray-400 p-2 text-right">${formatNumber(r.amount)}</td></tr>`; });
+                html += `</tbody></table><div class="mt-16 flex justify-between px-10"><div class="text-center"><p>ลงชื่อ......................................................ผู้ส่งเอกสาร</p><p class="mt-2">( ${records[0].sender} )</p></div><div class="text-center"><p>ลงชื่อ......................................................ผู้รับเอกสาร</p><p class="mt-2">( ...................................................... )</p></div></div>`;
+                pa.innerHTML = html;
+                window.print();
+            },
+            printAction: function(title, records, dateStr) {
+                const pa = document.getElementById('print-area');
+                let html = `<div class="text-center mb-6"><h2 class="text-2xl font-bold">${title}</h2><p class="text-gray-600">วันที่ดำเนินการ: ${dateStr}</p></div>`;
+                html += `<table class="w-full text-left text-sm border-collapse border border-gray-400"><thead><tr class="bg-gray-100"><th class="border border-gray-400 p-2">ลำดับที่</th><th class="border border-gray-400 p-2">เลขที่รับ</th><th class="border border-gray-400 p-2">ประเภทเงิน</th><th class="border border-gray-400 p-2">ชื่อเจ้าหนี้</th><th class="border border-gray-400 p-2">รายการ</th><th class="border border-gray-400 p-2 text-right">จำนวนเงิน</th><th class="border border-gray-400 p-2">หน่วยงานเบิก</th></tr></thead><tbody>`;
+                let total = 0;
+                records.forEach((r, i) => {
+                    total += Number(r['จำนวนเงินขอเบิก']||0);
+                    html += `<tr><td class="border border-gray-400 p-2 text-center">${i+1}</td><td class="border border-gray-400 p-2 text-center">${r['เลขที่รับ']||'-'}</td><td class="border border-gray-400 p-2">${r['ประเภทเงิน']}</td><td class="border border-gray-400 p-2">${r['ชื่อเจ้าหนี้/ชื่อบริษัท']}</td><td class="border border-gray-400 p-2">${r['รายการ']}</td><td class="border border-gray-400 p-2 text-right">${formatNumber(r['จำนวนเงินขอเบิก'])}</td><td class="border border-gray-400 p-2 text-xs">${r['หน่วยงาน']}</td></tr>`;
+                });
+                html += `<tr><td colspan="5" class="border border-gray-400 p-2 text-right font-bold">รวมทั้งสิ้น</td><td class="border border-gray-400 p-2 text-right font-bold">${formatNumber(total)}</td><td class="border border-gray-400"></td></tr>`;
+                html += `</tbody></table>`;
+                pa.innerHTML = html;
+                window.print();
+            }
+        };
+
+    </script>
+</body>
+</html>
