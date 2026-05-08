@@ -2,5 +2,5 @@
 
 var CONFIG = {
   // เปลี่ยนเป็น URL ของ Web App หลัง Deploy แล้ว
-  API_URL: "https://script.google.com/macros/s/AKfycbz4HKulhw-X9raSn8alL0fxmkpcrKJXw9EkpFwygNu6tIWnubrFYX78RJHbGaAhjG5q2A/exec"
+  API_URL: "https://script.google.com/macros/s/AKfycbzPWf9G0JmSnzufFNfMyQxgg0JHjayN4gF7jZngjZ8hVD9qwu0cXBk5U0If2OSSFSZa2Q/exec"
 };
