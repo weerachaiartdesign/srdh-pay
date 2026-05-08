@@ -1,4 +1,4 @@
-<!-- version 00111 -->
+<!-- version 00112 -->
 
 <!DOCTYPE html>
 <html lang="th">
@@ -12,7 +12,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- แก้ไขเส้นทางการโหลดไฟล์ให้ถูกต้อง และโหลดเป็นลำดับแรก -->
     <script src="่js/api-config.js"></script>
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -20,382 +23,668 @@
                 extend: {
                     fontFamily: { sans: ['Prompt', 'sans-serif'] },
                     colors: {
-                        midnight: { 50:'#f4f3f8',100:'#e9e6f2',200:'#d0c9e2',300:'#ada0cc',400:'#8672b1',500:'#645097',600:'#4e3e7a',700:'#3e3162',800:'#271f40',900:'#1a142c',950:'#0f0b1a' },
-                        navy: { 800:'#1e3a8a',900:'#1e3a8a' },
-                        darkbg: '#1a1a2e',
-                        darkcard: '#16213e',
-                        money: { budget:'#FFCCFF', maintenance:'#FFFF99', insurance:'#F8CBAD', subsidy:'#FF9999', medical:'#FFF2CC', other:'#808080' }
+                        midnight: { 50:'#f4f3f8',100:'#e9e6f2',200:'#d0c9e2',300:'#ada0cc',400:'#8672b1',500:'#645094',600:'#4d3d75',700:'#3a2e58',800:'#271f3a',900:'#13101d' },
+                        darkbg: '#0f172a',
+                        darkcard: '#1e293b'
                     }
                 }
             }
         }
     </script>
     <style>
-        ::-webkit-scrollbar { width:6px; height:6px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:#8672b1; border-radius:4px; } .dark ::-webkit-scrollbar-thumb { background:#4e3e7a; }
-        body { transition: background-color 0.3s, color 0.3s; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; } @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scroll::-webkit-scrollbar-thumb { background: #475569; }
+        .loading-spinner { border: 3px solid rgba(0,0,0,0.1); border-top: 3px solid #645094; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 dark:bg-darkbg dark:text-gray-200 font-sans">
+<body class="bg-slate-50 dark:bg-darkbg text-slate-800 dark:text-slate-200 min-h-screen font-sans transition-colors duration-300">
 
-<!-- LOGIN VIEW -->
-<div id="login-view" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-midnight-800 to-navy-900 dark:from-gray-900 dark:to-midnight-950">
-    <div class="bg-white dark:bg-darkcard rounded-2xl shadow-2xl w-full max-w-md p-8 fade-in relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-purple-500 to-blue-500"></div>
+<!-- Login Screen -->
+<div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-100 dark:bg-darkbg p-4">
+    <div class="bg-white dark:bg-darkcard p-8 rounded-2xl shadow-2xl w-full max-w-md border border-slate-200 dark:border-slate-700">
         <div class="text-center mb-8">
-            <div class="w-20 h-20 bg-midnight-100 dark:bg-midnight-800 rounded-full flex items-center justify-center mx-auto mb-4 text-midnight-600 dark:text-midnight-300 text-3xl shadow-inner">
-                <i class="fa-solid fa-file-invoice-dollar"></i>
+            <div class="w-16 h-16 bg-midnight-500 rounded-2xl flex items-center justify-center text-white text-3xl mx-auto mb-4 shadow-lg">
+                <i class="fas fa-wallet"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Srdh Pay</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">ระบบทะเบียนฎีกาเบิกจ่ายเงิน รพส.</p>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Srdh Pay Login</h1>
+            <p class="text-slate-500 dark:text-slate-400">ระบบทะเบียนฎีกาเบิกจ่ายเงิน</p>
         </div>
-        <form id="login-form" class="space-y-5" onsubmit="handleLogin(event)">
+        <div class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">อีเมล</label>
+                <label class="block text-sm font-medium mb-1">อีเมล</label>
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><i class="fa-regular fa-envelope"></i></div>
-                    <input type="email" id="email" required class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-midnight-500 focus:border-midnight-500 bg-gray-50 dark:bg-gray-800 dark:text-white" placeholder="user@srdh.go.th">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                        <i class="fas fa-envelope"></i>
+                    </span>
+                    <input type="email" id="login-email" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-midnight-500 outline-none transition-all" placeholder="name@example.com">
                 </div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">รหัสผ่าน</label>
+                <label class="block text-sm font-medium mb-1">รหัสผ่าน</label>
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><i class="fa-solid fa-lock"></i></div>
-                    <input type="password" id="password" class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-midnight-500 focus:border-midnight-500 bg-gray-50 dark:bg-gray-800 dark:text-white" placeholder="••••••••">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                    <input type="password" id="login-password" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-midnight-500 outline-none transition-all" placeholder="••••••••">
                 </div>
             </div>
-            <button type="submit" class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-midnight-800 hover:bg-midnight-700 transition">เข้าสู่ระบบ</button>
-        </form>
-        <div class="mt-6 relative">
-            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300 dark:border-gray-700"></div></div>
-            <div class="relative flex justify-center text-sm"><span class="px-2 bg-white dark:bg-darkcard text-gray-500">หรือ</span></div>
+            <button id="btn-login" class="w-full bg-midnight-600 hover:bg-midnight-700 text-white font-semibold py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2">
+                <span>เข้าสู่ระบบ</span>
+                <i class="fas fa-sign-in-alt"></i>
+            </button>
+            <div class="relative py-2">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200 dark:border-slate-700"></div></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white dark:bg-darkcard px-2 text-slate-500">หรือ</span></div>
+            </div>
+            <button id="btn-guest" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 font-medium py-2.5 rounded-lg transition-all flex items-center justify-center space-x-2">
+                <i class="fas fa-user-clock"></i>
+                <span>เข้าสู่ระบบเพื่อติดตามสถานะ</span>
+            </button>
         </div>
-        <button onclick="loginGuest()" class="mt-6 w-full flex justify-center items-center py-2.5 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-            <i class="fa-regular fa-user mr-2"></i> เข้าใช้งานแบบผู้เยี่ยมชม (Guest)
-        </button>
-        <div id="login-error" class="text-red-500 text-sm mt-2 text-center hidden"></div>
+        <p id="login-msg" class="mt-4 text-center text-sm text-red-500 hidden"></p>
     </div>
 </div>
 
-<!-- MAIN APP LAYOUT -->
-<div id="app-layout" class="hidden flex h-screen bg-gray-50 dark:bg-darkbg">
-    <!-- Sidebar -->
-    <aside class="hidden md:flex flex-col w-64 bg-white dark:bg-darkcard border-r border-gray-200 dark:border-gray-800 transition-colors z-20">
-        <div class="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-800">
-            <div class="text-midnight-800 dark:text-midnight-300 text-xl mr-3"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-            <h1 class="text-lg font-bold text-gray-900 dark:text-white truncate">Srdh Pay</h1>
-        </div>
-        <div class="flex-1 overflow-y-auto py-4">
-            <nav class="px-3 space-y-1" id="sidebar-nav"></nav>
-        </div>
-        <div class="p-4 border-t border-gray-200 dark:border-gray-800">
-            <div class="flex items-center">
-                <div class="w-8 h-8 rounded-full bg-midnight-100 dark:bg-midnight-800 flex items-center justify-center text-midnight-800 dark:text-white font-bold" id="user-avatar-initial">U</div>
-                <div class="ml-3 truncate">
-                    <p class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate" id="user-name-display">User</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate" id="user-role-display">Role</p>
-                </div>
+<!-- Main App Layout (Hidden by default) -->
+<div id="main-app" class="hidden flex h-screen overflow-hidden">
+    <!-- Sidebar (Desktop) -->
+    <aside class="hidden md:flex flex-col w-64 bg-white dark:bg-darkcard border-r border-slate-200 dark:border-slate-700 transition-all duration-300">
+        <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center space-x-3">
+            <div class="w-8 h-8 bg-midnight-600 rounded-lg flex items-center justify-center text-white text-lg">
+                <i class="fas fa-wallet"></i>
             </div>
+            <span class="font-bold text-xl tracking-tight text-midnight-700 dark:text-midnight-400">Srdh Pay</span>
+        </div>
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+            <a href="#" onclick="switchView('dashboard')" class="nav-link active flex items-center space-x-3 p-3 rounded-xl transition-all" data-view="dashboard">
+                <i class="fas fa-chart-line w-5 text-center"></i>
+                <span>แดชบอร์ด</span>
+            </a>
+            <a href="#" onclick="switchView('register')" class="nav-link flex items-center space-x-3 p-3 rounded-xl transition-all" data-view="register">
+                <i class="fas fa-list-check w-5 text-center"></i>
+                <span>ทะเบียนฎีกา</span>
+            </a>
+            <a href="#" onclick="switchView('import')" id="nav-import" class="nav-link flex items-center space-x-3 p-3 rounded-xl transition-all hidden" data-view="import">
+                <i class="fas fa-file-import w-5 text-center"></i>
+                <span>ส่งข้อมูลเบิก</span>
+            </a>
+            <a href="#" onclick="switchView('receive')" id="nav-receive" class="nav-link flex items-center space-x-3 p-3 rounded-xl transition-all hidden" data-view="receive">
+                <i class="fas fa-file-signature w-5 text-center"></i>
+                <span>รับเอกสาร</span>
+            </a>
+            <div class="pt-4 pb-2 px-3"><span class="text-xs font-semibold text-slate-400 uppercase">ระบบ</span></div>
+            <a href="#" onclick="switchView('reports')" class="nav-link flex items-center space-x-3 p-3 rounded-xl transition-all" data-view="reports">
+                <i class="fas fa-file-invoice w-5 text-center"></i>
+                <span>รายงาน</span>
+            </a>
+            <a href="#" onclick="switchView('settings')" id="nav-settings" class="nav-link flex items-center space-x-3 p-3 rounded-xl transition-all hidden" data-view="settings">
+                <i class="fas fa-cog w-5 text-center"></i>
+                <span>ตั้งค่า</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-slate-200 dark:border-slate-700">
+            <button onclick="toggleDarkMode()" class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 transition-all">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                    <span class="text-sm font-medium">โหมดมืด</span>
+                </div>
+                <div class="w-10 h-5 bg-slate-300 dark:bg-midnight-600 rounded-full relative">
+                    <div class="absolute w-4 h-4 bg-white rounded-full top-0.5 left-0.5 dark:left-5.5 transition-all"></div>
+                </div>
+            </button>
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header class="h-16 bg-white dark:bg-darkcard border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 sm:px-6 z-10">
-            <div class="flex items-center">
-                <button class="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white p-2 -ml-2" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars text-xl"></i></button>
-                <h2 class="text-lg font-semibold text-gray-800 dark:text-white ml-2 md:ml-0" id="page-title">แดชบอร์ด</h2>
+    <!-- Content Area -->
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-darkbg relative">
+        <!-- Header -->
+        <header class="h-16 flex items-center justify-between px-4 md:px-8 bg-white dark:bg-darkcard border-b border-slate-200 dark:border-slate-700 z-10">
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-slate-600 dark:text-slate-400">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <h2 id="view-title" class="text-lg font-semibold">แดชบอร์ด</h2>
             </div>
             <div class="flex items-center space-x-4">
-                <button onclick="toggleDarkMode()" class="text-gray-500 hover:text-midnight-600 dark:text-gray-400 dark:hover:text-yellow-400 p-2 rounded-full">
-                    <i class="fa-solid fa-moon dark:hidden text-lg"></i><i class="fa-solid fa-sun hidden dark:block text-lg"></i>
-                </button>
-                <div class="relative">
-                    <button onclick="toggleUserMenu()" class="flex items-center">
-                        <img class="h-8 w-8 rounded-full border border-gray-200 dark:border-gray-700" id="header-avatar" alt="User">
+                <div id="loading-indicator" class="hidden"><div class="loading-spinner"></div></div>
+                <div class="relative group">
+                    <button id="header-avatar" onclick="toggleUserMenu()" class="flex items-center space-x-2 p-1 pl-3 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                        <div class="text-right hidden sm:block">
+                            <p id="user-name" class="text-xs font-bold leading-tight">User Name</p>
+                            <p id="user-role" class="text-[10px] text-slate-500 uppercase">Role</p>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-midnight-500 flex items-center justify-center text-white font-bold shadow-sm">
+                            <span id="user-initial">U</span>
+                        </div>
                     </button>
-                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 py-1 z-50">
-                        <a href="#" onclick="showView('settings')" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fa-solid fa-gear mr-2"></i> ตั้งค่า</a>
-                        <a href="#" onclick="logout()" class="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fa-solid fa-arrow-right-from-bracket mr-2"></i> ออกจากระบบ</a>
+                    <!-- User Dropdown -->
+                    <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white dark:bg-darkcard rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-2 hidden fade-in">
+                        <div class="px-4 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
+                            <p id="user-email" class="text-xs text-slate-500 truncate">user@email.com</p>
+                        </div>
+                        <a href="#" class="block px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"><i class="fas fa-id-card-clip mr-2 opacity-50"></i> โปรไฟล์</a>
+                        <button onclick="logout()" class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"><i class="fas fa-sign-out-alt mr-2"></i> ออกจากระบบ</button>
                     </div>
                 </div>
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8" id="main-content">
+        <!-- View Containers -->
+        <div id="content-views" class="flex-1 overflow-y-auto p-4 md:p-8 custom-scroll">
+            
             <!-- Dashboard View -->
-            <div id="view-dashboard" class="view-section fade-in"></div>
-            <!-- Registry View -->
-            <div id="view-registry" class="view-section hidden fade-in"></div>
+            <div id="view-dashboard" class="view-content space-y-6">
+                <!-- Summary Stats -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ฎีกาทั้งหมด</p>
+                            <h3 id="stat-total-count" class="text-2xl font-bold">0</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fas fa-check-double"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">อนุมัติแล้ว</p>
+                            <h3 id="stat-approved-count" class="text-2xl font-bold">0</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">เฉลี่ยต่อใบ (วัน)</p>
+                            <h3 id="stat-avg-days" class="text-2xl font-bold">0</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-midnight-100 dark:bg-midnight-900/30 text-midnight-600 dark:text-midnight-400 rounded-xl flex items-center justify-center text-xl">
+                            <i class="fas fa-percent"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">อัตราจ่ายตรงเวลา</p>
+                            <h3 id="stat-success-percent" class="text-2xl font-bold">0%</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-darkcard p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h4 class="font-bold mb-4 flex items-center"><i class="fas fa-chart-pie mr-2 text-midnight-500"></i> สัดส่วนงบประมาณตามหน่วยงาน</h4>
+                        <div class="h-64 flex items-center justify-center relative">
+                            <canvas id="chart-dept"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-darkcard p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h4 class="font-bold mb-4 flex items-center"><i class="fas fa-chart-area mr-2 text-midnight-500"></i> แนวโน้มการเบิกจ่ายรายเดือน</h4>
+                        <div class="h-64">
+                            <canvas id="chart-monthly"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Table -->
+                <div class="bg-white dark:bg-darkcard rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                        <h4 class="font-bold">สรุปยอดตามประเภทเงิน</h4>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase text-[10px] font-bold">
+                                <tr>
+                                    <th class="px-6 py-3">ประเภทเงิน</th>
+                                    <th class="px-6 py-3 text-center">จำนวน (ใบ)</th>
+                                    <th class="px-6 py-3 text-right">จำนวนเงินทั้งหมด</th>
+                                    <th class="px-6 py-3 text-right">อนุมัติแล้ว</th>
+                                    <th class="px-6 py-3 text-right text-orange-500">รอเบิกจ่าย</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summary-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Register View -->
+            <div id="view-register" class="view-content hidden space-y-4">
+                <div class="flex flex-col md:flex-row gap-4 items-end bg-white dark:bg-darkcard p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div class="flex-1 w-full space-y-1">
+                        <label class="text-xs font-semibold text-slate-500">ค้นหาข้อมูล</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" id="filter-search" onkeyup="if(event.key==='Enter') loadRegisterData()" class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-midnight-500" placeholder="เลขที่ฎีกา, บริษัท, รายการ...">
+                        </div>
+                    </div>
+                    <div class="w-full md:w-48 space-y-1">
+                        <label class="text-xs font-semibold text-slate-500">ประเภทเงิน</label>
+                        <select id="filter-moneyType" onchange="loadRegisterData()" class="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-midnight-500">
+                            <option value="">ทั้งหมด</option>
+                        </select>
+                    </div>
+                    <div class="w-full md:w-48 space-y-1">
+                        <label class="text-xs font-semibold text-slate-500">สถานะ</label>
+                        <select id="filter-status" onchange="loadRegisterData()" class="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-midnight-500">
+                            <option value="">ทั้งหมด</option>
+                            <option value="รอเอกสาร">รอเอกสาร</option>
+                            <option value="รับเข้าระบบ">รับเข้าระบบ</option>
+                            <option value="ตรวจสอบ">ตรวจสอบ</option>
+                            <option value="ส่งแก้ไข">ส่งแก้ไข</option>
+                            <option value="ผ่านการตรวจ">ผ่านการตรวจ</option>
+                            <option value="ส่งเสนอ">ส่งเสนอ</option>
+                            <option value="อนุมัติจ่าย">อนุมัติจ่าย</option>
+                            <option value="จ่ายแล้ว">จ่ายแล้ว</option>
+                            <option value="ยกเลิก">ยกเลิก</option>
+                        </select>
+                    </div>
+                    <button onclick="loadRegisterData()" class="bg-midnight-600 hover:bg-midnight-700 text-white px-4 py-2 rounded-lg text-sm transition-all"><i class="fas fa-sync-alt mr-2"></i> รีเฟรช</button>
+                </div>
+
+                <div class="bg-white dark:bg-darkcard rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="overflow-x-auto custom-scroll">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase text-[10px] font-bold">
+                                <tr>
+                                    <th class="px-4 py-3 border-b border-slate-200 dark:border-slate-700">ลำดับ</th>
+                                    <th class="px-4 py-3 border-b border-slate-200 dark:border-slate-700">สถานะ</th>
+                                    <th class="px-4 py-3 border-b border-slate-200 dark:border-slate-700">เลขที่รับ/ฎีกา</th>
+                                    <th class="px-4 py-3 border-b border-slate-200 dark:border-slate-700">หน่วยงาน/ผู้รับเงิน</th>
+                                    <th class="px-4 py-3 border-b border-slate-200 dark:border-slate-700">รายการ</th>
+                                    <th class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 text-right">จำนวนเงิน</th>
+                                    <th class="px-4 py-3 border-b border-slate-200 dark:border-slate-700">บันทึกล่าสุด</th>
+                                    <th class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 text-center">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="register-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-4 border-t border-slate-100 dark:border-slate-800 text-center">
+                        <p id="register-count" class="text-xs text-slate-400">แสดงผล 0 รายการ</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Import View -->
-            <div id="view-import" class="view-section hidden fade-in"></div>
-            <!-- Actions View -->
-            <div id="view-actions" class="view-section hidden fade-in"></div>
-            <!-- Settings View -->
-            <div id="view-settings" class="view-section hidden fade-in"></div>
-            <!-- Reports View -->
-            <div id="view-reports" class="view-section hidden fade-in"></div>
-        </main>
-    </div>
+            <div id="view-import" class="view-content hidden space-y-6">
+                <div class="bg-white dark:bg-darkcard p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center justify-between mb-6">
+                        <h4 class="font-bold text-lg">ส่งข้อมูลเบิก (ทะเบียนใหม่)</h4>
+                        <div class="flex space-x-2">
+                            <button onclick="addRowToImport()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
+                                <i class="fas fa-plus mr-1"></i> เพิ่มแถว
+                            </button>
+                            <button id="btn-submit-import" onclick="submitImport()" class="bg-midnight-600 hover:bg-midnight-700 text-white px-4 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-all">
+                                <i class="fas fa-paper-plane mr-1"></i> ส่งข้อมูลทั้งหมด
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto custom-scroll -mx-6 px-6">
+                        <table class="w-full text-xs min-w-[1000px]">
+                            <thead>
+                                <tr class="text-slate-500 font-bold border-b border-slate-100 dark:border-slate-800">
+                                    <th class="pb-3 text-left w-32">ประเภทเงิน</th>
+                                    <th id="th-dept" class="pb-3 text-left w-32">หน่วยงาน</th>
+                                    <th class="pb-3 text-left w-32">ผู้ส่งเอกสาร</th>
+                                    <th class="pb-3 text-left w-32">ผู้รับเงิน/บริษัท</th>
+                                    <th class="pb-3 text-left">รายการเบิก</th>
+                                    <th class="pb-3 text-right w-24">จำนวนเงิน</th>
+                                    <th class="pb-3 text-center w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="import-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <!-- Import rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 p-4 rounded-xl flex items-start space-x-3">
+                    <i class="fas fa-circle-info text-amber-500 mt-0.5"></i>
+                    <p class="text-xs text-amber-800 dark:text-amber-400">กรุณาตรวจสอบความถูกต้องของจำนวนเงินและชื่อบริษัทก่อนกดส่งข้อมูล หากส่งแล้วต้องการแก้ไขต้องติดต่อเจ้าหน้าที่กองคลังเท่านั้น</p>
+                </div>
+            </div>
+
+            <!-- Receive View -->
+            <div id="view-receive" class="view-content hidden space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <input type="date" id="receive-date" class="bg-white dark:bg-darkcard border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm">
+                        <button onclick="submitReceive()" class="bg-midnight-600 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md"><i class="fas fa-check mr-2"></i> บันทึกรับที่เลือก</button>
+                    </div>
+                    <p class="text-xs text-slate-500">เลือกรายการ "รอเอกสาร" เพื่อระบุวันที่รับเข้าระบบ</p>
+                </div>
+                <div class="bg-white dark:bg-darkcard rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-[10px] font-bold uppercase">
+                                <tr>
+                                    <th class="px-6 py-3 w-10"><input type="checkbox" onclick="toggleSelectAllReceive(this)"></th>
+                                    <th class="px-6 py-3">วันที่ลงทะเบียน</th>
+                                    <th class="px-6 py-3">หน่วยงาน</th>
+                                    <th class="px-6 py-3">บริษัท/ผู้รับเงิน</th>
+                                    <th class="px-6 py-3">รายการ</th>
+                                    <th class="px-6 py-3 text-right">จำนวนเงิน</th>
+                                </tr>
+                            </thead>
+                            <tbody id="receive-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings & Reports Placeholder -->
+            <div id="view-settings" class="view-content hidden"></div>
+            <div id="view-reports" class="view-content hidden"></div>
+        </div>
+    </main>
 </div>
 
+<!-- Scripts -->
 <script>
-// ==================== GLOBAL STATE ====================
 let currentUser = null;
-let currentTheme = localStorage.getItem('theme') || 'light';
-let stagingItems = []; // สำหรับหน้านำเข้า
-let chartsInstance = {};
-let allRegisterData = []; // cache ล่าสุดจาก server
+let currentTheme = 'light';
+let registerData = [];
+let settingsData = null;
+let deptChart = null;
+let monthlyChart = null;
 
-// ==================== API HELPER ====================
-async function apiCall(action, data = {}) {
+// ==================== API HELPERS ====================
+
+// ฟังก์ชันเรียก API กลางที่ทนทานต่อการผิดพลาด
+async function callAPI(action, data = {}) {
+    const loader = document.getElementById('loading-indicator');
+    if (loader) loader.classList.remove('hidden');
+    
+    // ตรวจสอบว่า CONFIG ถูกโหลดหรือยัง
+    if (typeof CONFIG === 'undefined' || !CONFIG.API_URL) {
+        console.error("API CONFIG is missing!");
+        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์: CONFIG is not defined\nกรุณาตรวจสอบการตั้งค่าไฟล์ api-config.js");
+        if (loader) loader.classList.add('hidden');
+        throw new Error("CONFIG undefined");
+    }
+
     try {
-        const res = await fetch(CONFIG.API_URL, {
+        const payload = { action, ...data };
+        const response = await fetch(CONFIG.API_URL, {
             method: 'POST',
-            mode: 'cors',
-            cache: 'no-cache',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ ...data, action })
+            body: JSON.stringify(payload)
         });
-        return await res.json();
-    } catch (error) {
-        return { success: false, message: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์: ' + error.message };
+        const result = await response.json();
+        if (loader) loader.classList.add('hidden');
+        return result;
+    } catch (err) {
+        if (loader) loader.classList.add('hidden');
+        console.error("API Error:", err);
+        throw err;
     }
 }
 
-// ==================== AUTH ====================
-async function handleLogin(e) {
-    e.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    const pass = document.getElementById('password').value;
-    const resp = await apiCall('login', { email, password: pass });
-    if (resp.success) {
-        loginSuccess(resp);
-    } else {
-        document.getElementById('login-error').textContent = resp.message || 'เข้าสู่ระบบล้มเหลว';
-        document.getElementById('login-error').classList.remove('hidden');
-    }
-}
-
-async function loginGuest() {
-    const email = prompt('กรุณากรอกอีเมลของคุณ:');
-    if (!email) return;
-    const resp = await apiCall('guestLogin', { email });
-    if (resp.success) {
-        loginSuccess({ ...resp, role: 'guest', username: 'ผู้เยี่ยมชม', dept: '', position: '-' });
-    } else {
-        alert(resp.message || 'เกิดข้อผิดพลาด');
-    }
-}
-
-function loginSuccess(user) {
-    currentUser = user;
-    sessionStorage.setItem('srdh_user', JSON.stringify(user));
-    document.getElementById('login-view').classList.add('hidden');
-    document.getElementById('app-layout').classList.remove('hidden');
-    document.getElementById('user-name-display').textContent = user.username;
-    document.getElementById('user-role-display').textContent = `${user.role} - ${user.dept || ''}`;
-    document.getElementById('user-avatar-initial').textContent = user.username.charAt(0);
-    document.getElementById('header-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=645097&color=fff`;
-    buildNavigation(user.role);
-    showView('dashboard');
-}
+// ==================== AUTH & SESSION ====================
 
 function checkAuthSession() {
-    const saved = sessionStorage.getItem('srdh_user');
-    if (saved) loginSuccess(JSON.parse(saved));
-}
-
-async function logout() {
-    if (confirm('ต้องการออกจากระบบใช่หรือไม่?')) {
-        await apiCall('guestLogin', { email: currentUser.email, action: 'guestLogin' }); // log logout
-        sessionStorage.removeItem('srdh_user');
-        currentUser = null;
-        location.reload();
+    const savedUser = localStorage.getItem('srdh_user');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        setupUIByRole();
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        initAppData();
     }
 }
 
-// ==================== NAVIGATION ====================
-function buildNavigation(role) {
-    const nav = document.getElementById('sidebar-nav');
-    const items = [
-        { id:'dashboard', icon:'fa-chart-pie', text:'แดชบอร์ด', roles:['admin','editor','checker','staff','guest'] },
-        { id:'registry', icon:'fa-table-list', text:'ทะเบียนฎีกา', roles:['admin','editor','checker','staff','guest'] },
-        { id:'import', icon:'fa-file-import', text:'นำเข้าข้อมูล', roles:['admin','staff'] },
-        { id:'actions', icon:'fa-tasks', text:'บันทึกสถานะ/จ่าย', roles:['admin','checker'] },
-        { id:'reports', icon:'fa-file-pdf', text:'รายงาน', roles:['admin','editor'] },
-        { id:'settings', icon:'fa-cog', text:'ตั้งค่าระบบ', roles:['admin'] }
-    ];
-    nav.innerHTML = items.filter(it => it.roles.includes(role)).map(it => `
-        <a href="#" onclick="showView('${it.id}')" id="nav-${it.id}" class="nav-item flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:bg-midnight-50 hover:text-midnight-700 dark:hover:bg-midnight-900/50 dark:hover:text-white mb-1">
-            <i class="fa-solid ${it.icon} text-gray-400 mr-3 w-5 text-center"></i>${it.text}
-        </a>
-    `).join('');
+document.getElementById('btn-login').onclick = async () => {
+    const email = document.getElementById('login-email').value;
+    const pass = document.getElementById('login-password').value;
+    if(!email || !pass) return;
+
+    try {
+        const res = await callAPI('login', { email, password: pass });
+        if (res.success) {
+            currentUser = res;
+            localStorage.setItem('srdh_user', JSON.stringify(res));
+            location.reload();
+        } else {
+            const msg = document.getElementById('login-msg');
+            msg.textContent = res.message;
+            msg.classList.remove('hidden');
+        }
+    } catch (e) { alert("เกิดข้อผิดพลาดในการเชื่อมต่อ"); }
+};
+
+document.getElementById('btn-guest').onclick = async () => {
+    const email = document.getElementById('login-email').value || 'guest@anonymous.com';
+    try {
+        const res = await callAPI('guestLogin', { email });
+        if (res.success) {
+            currentUser = res;
+            localStorage.setItem('srdh_user', JSON.stringify(res));
+            location.reload();
+        }
+    } catch (e) { alert("เกิดข้อผิดพลาด"); }
+};
+
+function logout() {
+    localStorage.removeItem('srdh_user');
+    location.reload();
 }
 
-function showView(viewId) {
-    document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('bg-midnight-50','text-midnight-700','dark:bg-midnight-900/50','dark:text-white'));
-    const viewEl = document.getElementById(`view-${viewId}`);
-    if (viewEl) viewEl.classList.remove('hidden');
-    const navEl = document.getElementById(`nav-${viewId}`);
-    if (navEl) navEl.classList.add('bg-midnight-50','text-midnight-700','dark:bg-midnight-900/50','dark:text-white');
-    const titles = { dashboard:'แดชบอร์ด', registry:'ทะเบียนฎีกา', import:'นำเข้าข้อมูล', actions:'บันทึกรายการ', settings:'ตั้งค่าระบบ', reports:'รายงาน' };
-    document.getElementById('page-title').textContent = titles[viewId] || 'Srdh Pay';
-    if (viewId === 'dashboard') renderDashboard();
-    else if (viewId === 'registry') renderRegistry();
-    else if (viewId === 'import') initImport();
-    else if (viewId === 'actions') renderActions();
-    else if (viewId === 'settings') renderSettings();
-    else if (viewId === 'reports') renderReports();
-}
+function setupUIByRole() {
+    if (!currentUser) return;
+    document.getElementById('user-name').textContent = currentUser.username;
+    document.getElementById('user-role').textContent = currentUser.role;
+    document.getElementById('user-initial').textContent = currentUser.username.charAt(0);
+    document.getElementById('user-email').textContent = currentUser.email;
 
-// ==================== DASHBOARD ====================
-async function renderDashboard() {
-    const container = document.getElementById('view-dashboard');
-    container.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-spinner fa-spin text-2xl"></i> กำลังโหลด...</div>';
-    const dashResp = await apiCall('getDashboardData');
-    if (!dashResp.success) {
-        container.innerHTML = `<p class="text-red-500">${dashResp.message}</p>`;
-        return;
+    const r = currentUser.role;
+    if (r === 'admin' || r === 'editor') {
+        document.getElementById('nav-import').classList.remove('hidden');
+        document.getElementById('nav-receive').classList.remove('hidden');
+        if (r === 'admin') document.getElementById('nav-settings').classList.remove('hidden');
+    } else if (r === 'staff') {
+        document.getElementById('nav-import').classList.remove('hidden');
     }
-    const dash = dashResp.data;
-    const moneyConf = {
-        'เงินงบประมาณ': '#FFCCFF', 'เงินบำรุง': '#FFFF99', 'เงินประกันสุขภาพ': '#F8CBAD', 'เงินอื่น': '#808080'
+}
+
+// ==================== DATA LOADING ====================
+
+async function initAppData() {
+    try {
+        const [sets, filters] = await Promise.all([
+            callAPI('getSettings'),
+            callAPI('getFilterOptions')
+        ]);
+        settingsData = sets.data;
+        
+        // Populate filters
+        const selMoney = document.getElementById('filter-moneyType');
+        settingsData.moneyTypes.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t; opt.textContent = t;
+            selMoney.appendChild(opt);
+        });
+
+        switchView('dashboard');
+    } catch (e) { console.error("Init Error", e); }
+}
+
+async function switchView(viewId) {
+    document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active', 'bg-midnight-50', 'dark:bg-midnight-900/20', 'text-midnight-600', 'dark:text-midnight-400', 'font-bold'));
+    
+    const activeView = document.getElementById(`view-${viewId}`);
+    if (activeView) activeView.classList.remove('hidden');
+    
+    const activeLink = document.querySelector(`.nav-link[data-view="${viewId}"]`);
+    if (activeLink) activeLink.classList.add('active', 'bg-midnight-50', 'dark:bg-midnight-900/20', 'text-midnight-600', 'dark:text-midnight-400', 'font-bold');
+
+    const titles = { dashboard: 'แดชบอร์ด', register: 'ทะเบียนฎีกา', import: 'ส่งข้อมูลเบิก', receive: 'รับเอกสาร', reports: 'รายงาน', settings: 'ตั้งค่าระบบ' };
+    document.getElementById('view-title').textContent = titles[viewId];
+
+    if (viewId === 'dashboard') loadDashboardData();
+    if (viewId === 'register') loadRegisterData();
+    if (viewId === 'import') prepareImportTable();
+    if (viewId === 'receive') loadReceiveData();
+    if (viewId === 'settings') renderSettings();
+    if (viewId === 'reports') renderReports();
+    
+    if (window.innerWidth < 768) toggleMobileMenu();
+}
+
+// ==================== DASHBOARD LOGIC ====================
+
+async function loadDashboardData() {
+    try {
+        const res = await callAPI('getDashboardData');
+        const d = res.data;
+        
+        document.getElementById('stat-total-count').textContent = d.summary.reduce((s,i)=>s+i.totalCount, 0).toLocaleString();
+        document.getElementById('stat-approved-count').textContent = d.summary.reduce((s,i)=>s+i.approvedCount, 0).toLocaleString();
+        document.getElementById('stat-avg-days').textContent = d.avgDays;
+        document.getElementById('stat-success-percent').textContent = Math.round(d.successPercent) + '%';
+
+        const tbody = document.getElementById('summary-table-body');
+        tbody.innerHTML = '';
+        d.summary.forEach(item => {
+            tbody.innerHTML += `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
+                    <td class="px-6 py-4 font-medium">${item.type}</td>
+                    <td class="px-6 py-4 text-center">${item.totalCount}</td>
+                    <td class="px-6 py-4 text-right font-mono">${item.totalAmount.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                    <td class="px-6 py-4 text-right font-mono text-emerald-500">${item.approvedAmount.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                    <td class="px-6 py-4 text-right font-mono text-orange-500">${item.pendingAmount.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                </tr>
+            `;
+        });
+
+        renderDashboardCharts(d);
+    } catch(e) {}
+}
+
+function renderDashboardCharts(data) {
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+    
+    if (deptChart) deptChart.destroy();
+    if (monthlyChart) monthlyChart.destroy();
+
+    const deptCtx = document.getElementById('chart-dept').getContext('2d');
+    deptChart = new Chart(deptCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [...data.deptChartData.labels, 'อื่นๆ'],
+            datasets: [{
+                data: [...data.deptChartData.values, data.deptChartData.others],
+                backgroundColor: ['#645094', '#3b82f6', '#10b981', '#f59e0b', '#94a3b8'],
+                borderWidth: 0,
+                hoverOffset: 15
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Prompt', size: 10 }, usePointStyle: true, padding: 15 } }
+            },
+            cutout: '70%'
+        }
+    });
+
+    const monthCtx = document.getElementById('chart-monthly').getContext('2d');
+    monthlyChart = new Chart(monthCtx, {
+        type: 'line',
+        data: {
+            labels: data.monthlyData.labels,
+            datasets: [
+                { label: 'ปีนี้', data: [12, 19, 3, 5, 2, 3, 7, 10, 15, 8, 12, 14], borderColor: '#645094', tension: 0.4, fill: true, backgroundColor: 'rgba(100, 80, 148, 0.1)' },
+                { label: 'ปีก่อน', data: [8, 12, 15, 10, 8, 6, 9, 12, 10, 5, 8, 11], borderColor: '#cbd5e1', borderDash: [5,5], tension: 0.4 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: textColor, font: { family: 'Prompt' } } } },
+            scales: {
+                y: { grid: { color: isDark ? '#334155' : '#f1f5f9' }, ticks: { color: textColor } },
+                x: { grid: { display: false }, ticks: { color: textColor } }
+            }
+        }
+    });
+}
+
+// ==================== REGISTER LOGIC ====================
+
+async function loadRegisterData() {
+    const filters = {
+        search: document.getElementById('filter-search').value,
+        moneyType: document.getElementById('filter-moneyType').value,
+        status: document.getElementById('filter-status').value
     };
 
-    const cardsHtml = dash.summary.map(d => {
-        const color = moneyConf[d.type] || '#808080';
-        const txtColor = (d.type === 'เงินอื่น') ? 'text-white' : 'text-black';
-        return `
-        <div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-800 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-2 h-full" style="background-color:${color}"></div>
-            <div class="flex justify-between items-start mb-2">
-                <h4 class="text-sm font-bold text-gray-700 dark:text-gray-200">${d.type}</h4>
-                <span class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">${d.approvedCount}/${d.totalCount} ฎีกา</span>
-            </div>
-            <p class="text-xs text-gray-500">เบิกแล้ว</p>
-            <p class="text-xl font-bold text-green-600 dark:text-green-400">฿${d.approvedAmount.toLocaleString('th-TH', {minimumFractionDigits:2})}</p>
-            <div class="flex justify-between text-xs mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                <div><span class="text-gray-400 block">รอตรวจสอบ</span><span class="text-red-400 font-medium">฿${d.pendingAmount.toLocaleString()}</span></div>
-                <div class="text-right"><span class="text-gray-400 block">ทั้งสิ้น</span><span class="text-gray-700 dark:text-gray-300 font-medium">฿${d.totalAmount.toLocaleString()}</span></div>
-            </div>
-        </div>`;
-    }).join('');
-
-    container.innerHTML = `
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">${cardsHtml}</div>
-        <div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-5 mb-6 border border-gray-100 dark:border-gray-800">
-            <p class="text-lg font-semibold">ระยะเวลาเฉลี่ย รับเรื่อง-อนุมัติ <span class="text-midnight-600">${dash.avgDays} วัน</span></p>
-            <div class="mt-2 text-sm text-gray-500">อัตราความสำเร็จ: ${dash.successPercent.toFixed(1)}%</div>
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-5"><h3 class="text-lg font-semibold mb-4">ยอดเงินแยกตามหน่วยงาน</h3><canvas id="chart-dept" height="200"></canvas></div>
-            <div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-5"><h3 class="text-lg font-semibold mb-4">จำนวนฎีกาแต่ละเดือน</h3><canvas id="chart-month" height="200"></canvas></div>
-        </div>
-    `;
-    setTimeout(() => renderDashboardCharts(dash), 100);
+    try {
+        const res = await callAPI('getRegisterData', { filters });
+        registerData = res.data;
+        renderRegisterTable();
+    } catch(e) {}
 }
 
-function renderDashboardCharts(dash) {
-    Chart.defaults.color = currentTheme === 'dark' ? '#9ca3af' : '#6b7280';
-    if (chartsInstance.dept) chartsInstance.dept.destroy();
-    const deptCtx = document.getElementById('chart-dept');
-    chartsInstance.dept = new Chart(deptCtx, {
-        type: 'bar',
-        data: { labels: dash.deptChartData.labels.concat(['อื่นๆ']), datasets: [{ data: dash.deptChartData.values.concat(dash.deptChartData.others), backgroundColor: '#645097' }] },
-        options: { responsive: true, plugins: { legend: { display: false } } }
+function renderRegisterTable() {
+    const tbody = document.getElementById('register-table-body');
+    tbody.innerHTML = '';
+    
+    registerData.forEach((row, index) => {
+        const status = getRowStatus(row);
+        const statusClass = getStatusBadgeClass(status);
+        
+        tbody.innerHTML += `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
+                <td class="px-4 py-3 text-slate-400 font-mono text-[11px]">${row._rowIndex}</td>
+                <td class="px-4 py-3"><span class="${statusClass}">${status}</span></td>
+                <td class="px-4 py-3">
+                    <p class="font-bold text-midnight-600 dark:text-midnight-400">${row['เลขที่ฎีกา'] || '-'}</p>
+                    <p class="text-[10px] text-slate-400">รับ: ${row['เลขที่รับ'] || 'รอดำเนินการ'}</p>
+                </td>
+                <td class="px-4 py-3">
+                    <p class="font-semibold truncate max-w-[150px]">${row['หน่วยงาน']}</p>
+                    <p class="text-[11px] text-slate-500 truncate max-w-[150px]">${row['ผู้รับเงิน/ชื่อบริษัท']}</p>
+                </td>
+                <td class="px-4 py-3">
+                    <p class="text-[11px] line-clamp-2 w-48">${row['รายการ']}</p>
+                </td>
+                <td class="px-4 py-3 text-right font-mono font-bold">${Number(row['จำนวนเงินขอเบิก']||0).toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                <td class="px-4 py-3 text-[10px] text-slate-500">
+                    ${row['วันที่รับเอกสาร'] ? 'รับเมื่อ: ' + formatDate(row['วันที่รับเอกสาร']) : 'ลงทะเบียน: ' + formatDate(row['วันที่ลงทะเบียน'])}
+                </td>
+                <td class="px-4 py-3 text-center">
+                    <button onclick="viewRowDetail(${index})" class="p-2 hover:bg-midnight-100 dark:hover:bg-midnight-900/30 text-midnight-600 rounded-lg transition-all">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
     });
-    if (chartsInstance.month) chartsInstance.month.destroy();
-    const monthCtx = document.getElementById('chart-month');
-    chartsInstance.month = new Chart(monthCtx, {
-        type: 'line',
-        data: { labels: dash.monthlyData.labels, datasets: [
-            { label: 'ปีนี้', data: dash.monthlyData.currentYear, borderColor: '#645097' },
-            { label: 'ปีก่อน', data: dash.monthlyData.prevYear, borderColor: '#94a3b8' }
-        ]},
-        options: { responsive: true }
-    });
+    document.getElementById('register-count').textContent = `แสดงผล ${registerData.length} รายการ`;
 }
 
-// ==================== REGISTRY ====================
-async function renderRegistry() {
-    const container = document.getElementById('view-registry');
-    container.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลด...</div>';
-    // ดึงข้อมูลจาก server (ครั้งแรกเอาทั้งหมด)
-    const resp = await apiCall('getRegisterData', { filters: {} });
-    if (!resp.success) { container.innerHTML = `<p class="text-red-500">${resp.message}</p>`; return; }
-    allRegisterData = resp.data;
-    container.innerHTML = await registryHTML();
-    document.getElementById('reg-search').addEventListener('input', applyRegistryFilters);
-    document.getElementById('filter-money').addEventListener('change', applyRegistryFilters);
-    document.getElementById('filter-status').addEventListener('change', applyRegistryFilters);
-    applyRegistryFilters();
-}
-
-function registryHTML() {
-    return `
-        <div class="bg-white dark:bg-darkcard rounded-xl shadow-sm border overflow-hidden">
-            <div class="p-4 border-b flex flex-wrap gap-2 items-center">
-                <input id="reg-search" placeholder="ค้นหา..." class="flex-1 min-w-[200px] border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-50 dark:bg-gray-800">
-                <select id="filter-money" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800">
-                    <option value="">ทุกประเภทเงิน</option>
-                    <option>เงินงบประมาณ</option><option>เงินบำรุง</option><option>เงินประกันสุขภาพ</option>
-                    <option>เงินอุดหนุน</option><option>เงินแพทยศาสตร์</option><option>เงินอื่น</option>
-                </select>
-                <select id="filter-status" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800">
-                    <option value="">ทุกสถานะ</option>
-                    <option>รอเอกสาร</option><option>รับเข้าระบบ</option><option>ตรวจสอบ</option><option>ส่งแก้ไข</option>
-                    <option>ผ่านการตรวจ</option><option>ส่งเสนอ</option><option>อนุมัติจ่าย</option><option>จ่ายแล้ว</option><option>ยกเลิก</option>
-                </select>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 uppercase">
-                        <tr>
-                            <th class="p-3">ลำดับ/วันที่</th><th class="p-3">สถานะ</th><th class="p-3">ใบขอเบิก/ฎีกา</th>
-                            <th class="p-3">เจ้าหนี้</th><th class="p-3">รายการ</th><th class="p-3 text-right">จำนวนเงิน</th><th class="p-3">ประเภท/หน่วยงาน</th>
-                        </tr>
-                    </thead>
-                    <tbody id="registry-tbody"></tbody>
-                </table>
-            </div>
-        </div>
-    `;
-}
-
-function applyRegistryFilters() {
-    const search = document.getElementById('reg-search')?.value.toLowerCase() || '';
-    const money = document.getElementById('filter-money')?.value || '';
-    const status = document.getElementById('filter-status')?.value || '';
-    let filtered = allRegisterData.filter(r => {
-        if (money && r['ประเภทเงิน'] !== money) return false;
-        if (status && getStatusText(r) !== status) return false;
-        if (search) {
-            const txt = `${r['เลขที่รับ']} ${r['ชื่อเจ้าหนี้/ชื่อบริษัท']} ${r['รายการ']} ${r['หน่วยงาน']}`.toLowerCase();
-            if (!txt.includes(search)) return false;
-        }
-        return true;
-    });
-    const tbody = document.getElementById('registry-tbody');
-    if (!tbody) return;
-    tbody.innerHTML = filtered.slice(0, 100).map(r => {
-        const st = getStatusText(r);
-        const color = getMoneyColor(r['ประเภทเงิน']);
-        const txtColor = (r['ประเภทเงิน'] === 'เงินอื่น') ? 'text-white' : 'text-black';
-        return `<tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer" onclick="alert('ดูรายละเอียด ${r['เลขที่รับ']||'-'}')">
-            <td class="p-3"><div class="text-xs">${formatDate(r['วันที่รับเอกสาร'])}</div><div class="font-medium">${r['เลขที่รับ']||'-'}</div></td>
-            <td class="p-3">${st}</td>
-            <td class="p-3">${r['เลขที่ใบขอเบิก']||'-'}/${r['เลขที่ฎีกา']||'-'}</td>
-            <td class="p-3 font-semibold">${r['ชื่อเจ้าหนี้/ชื่อบริษัท']||'-'}</td>
-            <td class="p-3 truncate max-w-xs">${r['รายการ']||'-'}</td>
-            <td class="p-3 text-right">${(r['จำนวนเงินขอเบิก']||0).toLocaleString('th-TH',{minimumFractionDigits:2})}</td>
-            <td class="p-3"><span class="px-2 py-0.5 rounded text-xs" style="background:${color};color:${txtColor}">${r['ประเภทเงิน']}</span><div class="text-xs mt-1">${r['หน่วยงาน']}</div></td>
-        </tr>`;
-    }).join('');
-}
-
-function getStatusText(row) {
+function getRowStatus(row) {
     if (row['วันที่ยกเลิก']) return 'ยกเลิก';
     if (row['วันที่จ่ายเช็ค']) return 'จ่ายแล้ว';
     if (row['วันที่อนุมัติ']) return 'อนุมัติจ่าย';
@@ -409,198 +698,170 @@ function getStatusText(row) {
     return 'ไม่ระบุ';
 }
 
-function getMoneyColor(type) {
-    const map = { 'เงินงบประมาณ':'#FFCCFF','เงินบำรุง':'#FFFF99','เงินประกันสุขภาพ':'#F8CBAD','เงินอุดหนุน':'#FF9999','เงินแพทยศาสตร์':'#FFF2CC','เงินอื่น':'#808080' };
-    return map[type] || '#808080';
+function getStatusBadgeClass(status) {
+    const base = "px-2 py-1 rounded-full text-[10px] font-bold uppercase ";
+    if (status === 'รอเอกสาร') return base + "bg-slate-100 text-slate-600";
+    if (status === 'รับเข้าระบบ') return base + "bg-blue-100 text-blue-600";
+    if (status === 'ตรวจสอบ') return base + "bg-amber-100 text-amber-600";
+    if (status === 'ส่งแก้ไข') return base + "bg-red-100 text-red-600";
+    if (status === 'ผ่านการตรวจ') return base + "bg-cyan-100 text-cyan-600";
+    if (status === 'ส่งเสนอ') return base + "bg-indigo-100 text-indigo-600";
+    if (status === 'อนุมัติจ่าย') return base + "bg-emerald-100 text-emerald-600 shadow-sm";
+    if (status === 'จ่ายแล้ว') return base + "bg-emerald-500 text-white shadow-sm";
+    if (status === 'ยกเลิก') return base + "bg-slate-800 text-white";
+    return base + "bg-slate-100 text-slate-400";
 }
 
-function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    let d = new Date(dateStr);
-    if (isNaN(d.getTime())) d = new Date(dateStr.split('/').reverse().join('/')); // fallback
-    return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()+543}`;
+function formatDate(d) {
+    if (!d) return '-';
+    const date = new Date(d);
+    if (isNaN(date)) return d;
+    return date.toLocaleDateString('th-TH', { day:'2-digit', month:'2-digit', year:'2-digit' });
 }
 
-// ==================== IMPORT ====================
-function initImport() {
-    const container = document.getElementById('view-import');
-    container.innerHTML = importHTML();
-    renderStaging();
+// ==================== IMPORT LOGIC ====================
+
+function prepareImportTable() {
+    const tbody = document.getElementById('import-table-body');
+    tbody.innerHTML = '';
+    
+    // ตั้งค่าเบื้องต้นของหน่วยงาน ถ้าไม่ใช่ admin/editor ให้ล็อคหน่วยงานไว้
+    const isAdmin = currentUser.role === 'admin' || currentUser.role === 'editor';
+    if (!isAdmin) {
+        document.getElementById('th-dept').classList.add('hidden');
+    } else {
+        document.getElementById('th-dept').classList.remove('hidden');
+    }
+
+    for(let i=0; i<3; i++) addRowToImport();
 }
 
-function importHTML() {
-    return `
-        <div class="bg-white dark:bg-darkcard rounded-xl shadow-sm p-5">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                <div><label class="text-xs">วันที่ลงทะเบียน</label><input id="imp-date" type="date" class="w-full border rounded px-2 py-1.5 bg-gray-50 dark:bg-gray-800" readonly></div>
-                <div><label class="text-xs">หน่วยงาน</label><input id="imp-dept" class="w-full border rounded px-2 py-1.5 bg-gray-50 dark:bg-gray-800" readonly></div>
-                <div><label class="text-xs">ผู้ส่ง</label><input id="imp-sender" class="w-full border rounded px-2 py-1.5 bg-gray-50 dark:bg-gray-800" readonly></div>
-            </div>
-            <form onsubmit="addImportItem(event)" class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded">
-                <h4 class="font-semibold mb-3">เพิ่มรายละเอียด (สูงสุด 15)</h4>
-                <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
-                    <div><label class="text-xs">ประเภทเงิน *</label><select id="item-money" required class="w-full border rounded px-2 py-1.5 bg-white dark:bg-gray-700"></select></div>
-                    <div><label class="text-xs">เจ้าหนี้ *</label><input id="item-vendor" required class="w-full border rounded px-2 py-1.5 bg-white dark:bg-gray-700" list="vendor-list"><datalist id="vendor-list"></datalist></div>
-                    <div><label class="text-xs">รายการ *</label><input id="item-detail" required class="w-full border rounded px-2 py-1.5 bg-white dark:bg-gray-700"></div>
-                    <div><label class="text-xs">จำนวนเงิน *</label><input id="item-amount" type="number" step="0.01" min="0.01" required class="w-full border rounded px-2 py-1.5 bg-white dark:bg-gray-700 font-bold text-green-600"></div>
-                    <div class="md:col-span-2 flex items-end"><button type="submit" class="bg-midnight-600 text-white px-4 py-2 rounded hover:bg-midnight-700"><i class="fa-solid fa-plus"></i></button></div>
-                </div>
-            </form>
-            <div class="mt-4">
-                <h4 class="font-semibold">รายการรอลงทะเบียน (<span id="staging-count">0</span>/15)</h4>
-                <div class="overflow-x-auto border rounded">
-                    <table class="w-full text-sm">
-                        <thead class="bg-gray-100 dark:bg-gray-800"><tr><th>#</th><th>ประเภท</th><th>เจ้าหนี้</th><th>รายการ</th><th class="text-right">จำนวน</th><th></th></tr></thead>
-                        <tbody id="staging-tbody"><tr><td colspan="6" class="p-4 text-center text-gray-400">ไม่มีรายการ</td></tr></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="flex justify-end mt-4 space-x-2">
-                <button id="btn-save-import" disabled onclick="saveImportBatch()" class="bg-midnight-600 text-white px-6 py-2 rounded hover:bg-midnight-700 disabled:opacity-50"><i class="fa-solid fa-save mr-1"></i> ลงทะเบียน</button>
-            </div>
-        </div>
+function addRowToImport() {
+    const tbody = document.getElementById('import-table-body');
+    const isAdmin = currentUser.role === 'admin' || currentUser.role === 'editor';
+    
+    const row = document.createElement('tr');
+    row.className = "hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all";
+    
+    let html = `
+        <td class="py-2 pr-2">
+            <select class="imp-moneyType w-full bg-transparent border-b border-slate-200 dark:border-slate-700 p-1 outline-none focus:border-midnight-500">
+                ${settingsData.moneyTypes.map(t => `<option value="${t}">${t}</option>`).join('')}
+            </select>
+        </td>
     `;
-    document.getElementById('imp-date').valueAsDate = new Date();
-    document.getElementById('imp-dept').value = currentUser.dept;
-    document.getElementById('imp-sender').value = currentUser.username;
-    loadImportOptions();
-}
 
-async function loadImportOptions() {
-    const resp = await apiCall('getSettings');
-    if (resp.success) {
-        const s = resp.data;
-        document.getElementById('item-money').innerHTML = s.moneyTypes.map(m => `<option value="${m}">${m}</option>`).join('');
-        document.getElementById('vendor-list').innerHTML = s.vendors.map(v => `<option value="${v}">`).join('');
+    if (isAdmin) {
+        html += `
+            <td class="py-2 pr-2">
+                <select class="imp-dept w-full bg-transparent border-b border-slate-200 dark:border-slate-700 p-1 outline-none focus:border-midnight-500">
+                    ${settingsData.depts.map(d => `<option value="${d}">${d}</option>`).join('')}
+                </select>
+            </td>
+        `;
     }
+
+    html += `
+        <td class="py-2 pr-2"><input type="text" class="imp-sender w-full bg-transparent border-b border-slate-200 dark:border-slate-700 p-1 outline-none focus:border-midnight-500" value="${currentUser.username}"></td>
+        <td class="py-2 pr-2"><input type="text" class="imp-vendor w-full bg-transparent border-b border-slate-200 dark:border-slate-700 p-1 outline-none focus:border-midnight-500" placeholder="ระบุชื่อบริษัท..."></td>
+        <td class="py-2 pr-2"><input type="text" class="imp-desc w-full bg-transparent border-b border-slate-200 dark:border-slate-700 p-1 outline-none focus:border-midnight-500" placeholder="รายละเอียดรายการ..."></td>
+        <td class="py-2 pr-2"><input type="number" class="imp-amount w-full bg-transparent border-b border-slate-200 dark:border-slate-700 p-1 outline-none focus:border-midnight-500 text-right font-mono" placeholder="0.00"></td>
+        <td class="py-2 text-center">
+            <button onclick="this.closest('tr').remove()" class="text-slate-300 hover:text-red-500 transition-all"><i class="fas fa-times"></i></button>
+        </td>
+    `;
+    
+    row.innerHTML = html;
+    tbody.appendChild(row);
 }
 
-function addImportItem(e) {
-    e.preventDefault();
-    if (stagingItems.length >= 15) { alert('สูงสุด 15 รายการ'); return; }
-    stagingItems.push({
-        moneyType: document.getElementById('item-money').value,
-        vendor: document.getElementById('item-vendor').value,
-        detail: document.getElementById('item-detail').value,
-        amount: parseFloat(document.getElementById('item-amount').value),
-        registerDate: document.getElementById('imp-date').value,
-        sender: document.getElementById('imp-sender').value,
-        dept: document.getElementById('imp-dept').value,
-        invoice: '', period: '', reservedAmount: '', reserveNo: ''
-    });
-    renderStaging();
-    e.target.reset();
-}
-
-function removeStagingItem(index) {
-    stagingItems.splice(index, 1);
-    renderStaging();
-}
-
-function renderStaging() {
-    document.getElementById('staging-count').textContent = stagingItems.length;
-    const tbody = document.getElementById('staging-tbody');
-    if (stagingItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-400">ไม่มีรายการ</td></tr>';
-        document.getElementById('btn-save-import').disabled = true;
-        return;
-    }
-    document.getElementById('btn-save-import').disabled = false;
-    tbody.innerHTML = stagingItems.map((item, i) => `
-        <tr class="border-b dark:border-gray-700">
-            <td class="p-2">${i+1}</td>
-            <td class="p-2">${item.moneyType}</td>
-            <td class="p-2">${item.vendor}</td>
-            <td class="p-2 truncate max-w-[200px]">${item.detail}</td>
-            <td class="p-2 text-right">${item.amount.toLocaleString()}</td>
-            <td class="p-2"><button onclick="removeStagingItem(${i})" class="text-red-500"><i class="fa-solid fa-trash"></i></button></td>
-        </tr>
-    `).join('');
-}
-
-async function saveImportBatch() {
-    if (!confirm('ยืนยันการลงทะเบียน?')) return;
+async function submitImport() {
+    const rows = document.querySelectorAll('#import-table-body tr');
+    const records = [];
     const batchId = 'B' + Date.now().toString().slice(-6);
-    const resp = await apiCall('batchInsertRegister', {
-        records: stagingItems,
-        batchId,
-        userEmail: currentUser.email,
-        userDept: currentUser.dept
+    const regDate = new Date();
+
+    rows.forEach(r => {
+        const vendor = r.querySelector('.imp-vendor').value;
+        const amount = r.querySelector('.imp-amount').value;
+        const desc = r.querySelector('.imp-desc').value;
+        
+        if (vendor && amount && desc) {
+            records.push({
+                moneyType: r.querySelector('.imp-moneyType').value,
+                dept: r.querySelector('.imp-dept')?.value || currentUser.dept,
+                sender: r.querySelector('.imp-sender').value,
+                vendor: vendor,
+                description: desc,
+                amount: parseFloat(amount),
+                registerDate: regDate
+            });
+        }
     });
-    if (resp.success) {
-        alert(`ลงทะเบียนสำเร็จ เลขที่ ${batchId}`);
-        stagingItems = [];
-        renderStaging();
-        showView('registry');
-    } else {
-        alert('เกิดข้อผิดพลาด: ' + resp.message);
-    }
+
+    if (records.length === 0) return alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+
+    try {
+        const btn = document.getElementById('btn-submit-import');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> กำลังส่ง...';
+
+        const res = await callAPI('batchInsertRegister', { 
+            records, 
+            batchId, 
+            userEmail: currentUser.email,
+            userDept: currentUser.dept
+        });
+
+        if (res.success) {
+            alert(`ส่งข้อมูลสำเร็จ! รหัสอ้างอิง: ${batchId}`);
+            switchView('register');
+        }
+    } catch(e) { alert("เกิดข้อผิดพลาด"); }
 }
 
-// ==================== ACTIONS (checker) ====================
-async function renderActions() {
-    const container = document.getElementById('view-actions');
-    container.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลด...</div>';
-    const resp = await apiCall('getRegisterData', { filters: {} });
-    if (!resp.success) { container.innerHTML = `<p class="text-red-500">${resp.message}</p>`; return; }
-    allRegisterData = resp.data.filter(r => getStatusText(r) !== 'จ่ายแล้ว' && getStatusText(r) !== 'ยกเลิก');
-    container.innerHTML = actionsHTML();
-    document.getElementById('action-tbody').innerHTML = allRegisterData.slice(0, 50).map(r => {
-        return `<tr class="border-b dark:border-gray-700">
-            <td class="p-3"><input type="checkbox" class="row-check" value="${r._rowIndex}"></td>
-            <td class="p-3">${r['เลขที่รับ']||'-'}</td>
-            <td class="p-3">${getStatusText(r)}</td>
-            <td class="p-3">${r['หน่วยงาน']}</td>
-            <td class="p-3">${r['ชื่อเจ้าหนี้/ชื่อบริษัท']||'-'}</td>
-            <td class="p-3 text-right">${(r['จำนวนเงินขอเบิก']||0).toLocaleString()}</td>
-        </tr>`;
-    }).join('');
+// ==================== RECEIVE LOGIC ====================
+
+async function loadReceiveData() {
+    document.getElementById('receive-date').valueAsDate = new Date();
+    try {
+        const res = await callAPI('getRegisterData', { filters: { status: 'รอเอกสาร' } });
+        const tbody = document.getElementById('receive-table-body');
+        tbody.innerHTML = '';
+        
+        res.data.forEach(row => {
+            tbody.innerHTML += `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <td class="px-6 py-3"><input type="checkbox" class="receive-check" data-index="${row._rowIndex}"></td>
+                    <td class="px-6 py-3">${formatDate(row['วันที่ลงทะเบียน'])}</td>
+                    <td class="px-6 py-3 font-semibold">${row['หน่วยงาน']}</td>
+                    <td class="px-6 py-3 text-slate-500">${row['ผู้รับเงิน/ชื่อบริษัท']}</td>
+                    <td class="px-6 py-3 truncate max-w-xs">${row['รายการ']}</td>
+                    <td class="px-6 py-3 text-right font-mono font-bold">${Number(row['จำนวนเงินขอเบิก']||0).toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                </tr>
+            `;
+        });
+    } catch(e) {}
 }
 
-function actionsHTML() {
-    return `
-        <div class="bg-white dark:bg-darkcard rounded-xl shadow-sm border">
-            <div class="p-4 bg-gray-50 dark:bg-gray-800/50 flex flex-wrap gap-2">
-                <button onclick="doAction('receive')" class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm">รับเอกสาร</button>
-                <button onclick="doAction('edit')" class="bg-yellow-500 text-white px-3 py-1.5 rounded text-sm">ส่งแก้ไข</button>
-                <button onclick="doAction('propose')" class="bg-purple-600 text-white px-3 py-1.5 rounded text-sm">ส่งเสนอ</button>
-                <button onclick="doAction('pay')" class="bg-green-600 text-white px-3 py-1.5 rounded text-sm">จ่ายเช็ค</button>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                        <tr><th class="p-3"><input type="checkbox" id="check-all" onchange="toggleAllChecks()"></th><th class="p-3">เลขรับ</th><th class="p-3">สถานะ</th><th class="p-3">หน่วยงาน</th><th class="p-3">เจ้าหนี้</th><th class="p-3 text-right">จำนวนเงิน</th></tr>
-                    </thead>
-                    <tbody id="action-tbody"></tbody>
-                </table>
-            </div>
-        </div>
-    `;
+function toggleSelectAllReceive(el) {
+    document.querySelectorAll('.receive-check').forEach(c => c.checked = el.checked);
 }
 
-async function doAction(type) {
-    const checked = [...document.querySelectorAll('.row-check:checked')].map(cb => parseInt(cb.value));
-    if (checked.length === 0) { alert('กรุณาเลือกอย่างน้อย 1 รายการ'); return; }
-    const dateStr = prompt('ระบุวันที่ (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
-    if (!dateStr) return;
-    if (type === 'receive') {
-        const resp = await apiCall('updateReceiveInfo', { rowsIndices: checked, receiveDate: dateStr, userEmail: currentUser.email });
-        if (resp.success) { alert('ดำเนินการเรียบร้อย'); showView('actions'); }
-        else alert('ผิดพลาด: ' + resp.message);
-    } else {
-        // ใช้ updateFields สำหรับแก้ไข, เสนอ, จ่าย โดย map ช่องให้ถูกต้อง
-        const fieldMap = { edit: 'R', propose: 'U', pay: 'W' };
-        const col = fieldMap[type];
-        const updates = { [col]: dateStr };
-        const resp = await apiCall('updateFields', { rowsIndices: checked, updates, userEmail: currentUser.email });
-        if (resp.success) { alert('ดำเนินการเรียบร้อย'); showView('actions'); }
-        else alert('ผิดพลาด: ' + resp.message);
-    }
-}
+async function submitReceive() {
+    const checks = document.querySelectorAll('.receive-check:checked');
+    if (checks.length === 0) return;
+    
+    const rowsIndices = Array.from(checks).map(c => parseInt(c.dataset.index, 10));
+    const receiveDate = document.getElementById('receive-date').value;
 
-function toggleAllChecks() {
-    const checkAll = document.getElementById('check-all').checked;
-    document.querySelectorAll('.row-check').forEach(cb => cb.checked = checkAll);
+    try {
+        const res = await callAPI('updateReceiveInfo', { rowsIndices, receiveDate, userEmail: currentUser.email });
+        if (res.success) {
+            alert("บันทึกรับเอกสารสำเร็จ");
+            loadReceiveData();
+        }
+    } catch(e) {}
 }
 
 // ==================== SETTINGS & REPORTS placeholder ====================
@@ -618,7 +879,7 @@ function toggleDarkMode() {
     const isDark = html.classList.contains('dark');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
     currentTheme = isDark ? 'dark' : 'light';
-    if (!document.getElementById('view-dashboard').classList.contains('hidden')) renderDashboardCharts();
+    if (!document.getElementById('view-dashboard').classList.contains('hidden')) loadDashboardData();
 }
 function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
 function toggleMobileMenu() { document.querySelector('aside').classList.toggle('hidden'); }
@@ -626,7 +887,9 @@ window.addEventListener('click', e => { if (!document.getElementById('header-ava
 (function() {
     if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
 })();
-checkAuthSession();
+
+// ตรวจสอบเซสชั่นเมื่อโหลดหน้า
+window.onload = checkAuthSession;
 </script>
 </body>
 </html>
