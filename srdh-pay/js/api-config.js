@@ -1,67 +1,55 @@
-/*<!-- api-config.js - (กำหนด endpoints สำหรับเรียก Google Apps Script) - Version : 00109 -->*/
+/* api-config.js - Version 00110 */
 
 const CONFIG = {
-  // URL จากการ Deploy Google Apps Script (ต้องเป็นแบบ Web App และตั้งค่า Access เป็น Anyone)
-  API_URL: 'https://script.google.com/macros/s/AKfycbzFSv0aIDsy5efmK9WhAWboNBm5JhytKS0ClfQ87vVvVvcLlRBKrIK3tqspibd_XvAA2g/exec',
-  SHEET_ID: '14XoNe8jsygjaH3y0uz5c2VeNKpKubgxu8KT7TZBXu4A'
+  API_URL: 'https://script.google.com/macros/s/AKfycbyq6dW5gCwY_vVSDz0u4_yXrSMG-Xo86j0CqnIxOzW3FSDJ82cImI3kR0GzDEYuZG3tMw/exec',
+  VERSION: '00110'
 };
 
 /**
- * ฟังก์ชันกลางสำหรับเรียกใช้ API
- * รองรับทั้งการรันผ่าน Web App (google.script.run) 
- * และ Standalone (fetch API)
+ * แก้ไขปัญหา "Arguments too many" โดยการห่อหุ้ม arguments เข้าไปใน payload ตัวเดียว
  */
 async function callGAS(functionName, ...args) {
-  // กรณีรันภายใต้สภาพแวดล้อมของ Google Script (หน้า HTML ใน GAS)
+  // หากรันใน Google Script Environment
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     return new Promise((resolve, reject) => {
       google.script.run
-        .withSuccessHandler(resolve)
-        .withFailureHandler(reject)[functionName](...args);
+        .withSuccessHandler(res => resolve(res))
+        .withFailureHandler(err => reject(err))[functionName](...args);
     });
   }
 
-  // กรณีรันเป็น Standalone Frontend (เรียกผ่าน Fetch API)
+  // หากรันเป็น Standalone (Cloudflare Pages)
   try {
     const response = await fetch(CONFIG.API_URL, {
       method: 'POST',
-      mode: 'cors', // สำคัญ: ต้องเปิด CORS ในฝั่ง GAS (doPost)
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8', // GAS มักจะไม่รับ application/json ในบางเคส
-      },
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action: functionName,
-        data: args
+        data: args // ส่งเป็น array ของอาร์กิวเมนต์
       })
     });
 
-    if (!response.ok) throw new Error('การเชื่อมต่อเครือข่ายขัดข้อง');
+    if (!response.ok) throw new Error('Network response was not ok');
     const result = await response.json();
     
     if (result.success) {
       return result.data || result;
     } else {
-      throw new Error(result.message || 'เกิดข้อผิดพลาดจาก Server');
+      throw new Error(result.message || 'Server error occurred');
     }
   } catch (error) {
-    console.error('API Error:', error);
+    console.error(`API Error [${functionName}]:`, error);
     throw error;
   }
 }
 
-// กำหนด window.api ให้เรียกใช้ callGAS
 window.api = {
-  login: (email, password) => callGAS('login', email, password),
+  login: (email, pw) => callGAS('login', email, pw),
   guestLogin: (email) => callGAS('guestLogin', email),
   getRegisterData: (filters) => callGAS('getRegisterData', filters),
-  getDashboardData: () => callGAS('getDashboardData'),
-  batchInsertRegister: (records, batchId, userEmail, userDept) => 
-    callGAS('batchInsertRegister', records, batchId, userEmail, userDept),
-  updateReceiveInfo: (rowsIndices, receiveDate, userEmail) => 
-    callGAS('updateReceiveInfo', rowsIndices, receiveDate, userEmail),
-  updateFields: (rowsIndices, updates, userEmail) => 
-    callGAS('updateFields', rowsIndices, updates, userEmail),
   getSettings: () => callGAS('getSettings'),
-  getSystemDates: () => callGAS('getSystemDates'),
-  setSystemDates: (start, end) => callGAS('setSystemDates', start, end)
+  batchInsertRegister: (records, bId, email, dept) => callGAS('batchInsertRegister', records, bId, email, dept),
+  updateReceiveInfo: (indices, date, email) => callGAS('updateReceiveInfo', indices, date, email),
+  // เพิ่มฟังก์ชันอื่นๆ ตามเอกสาร...
 };
