@@ -1,0 +1,149 @@
+<!-- Version: 00120 -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ทะเบียนฎีกา - Srdh Pay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&amp;family=Prompt:wght@400;500;600&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-purple-50 text-gray-800" data-theme="light">
+    <!-- Header -->
+    <header class="bg-white border-b border-purple-200 shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-gradient-to-br from-purple-600 to-violet-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">รพส</div>
+                    <div>
+                        <h1 class="text-xl font-semibold text-purple-900">ทะเบียนฎีกาเบิกจ่ายเงิน</h1>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleDarkMode()" class="p-3 rounded-2xl hover:bg-purple-100">
+                        <i id="theme-icon" class="fas fa-moon text-xl"></i>
+                    </button>
+                    <button onclick="window.location.href='dashboard.html'" 
+                            class="px-5 py-2 text-purple-700 hover:bg-purple-100 rounded-2xl transition-all flex items-center gap-2">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span class="hidden md:inline">Dashboard</span>
+                    </button>
+                    <div onclick="logout()" class="cursor-pointer text-purple-700 hover:text-red-600 flex items-center gap-2">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <h2 class="text-3xl font-bold text-purple-900 flex items-center gap-3">
+                <i class="fas fa-list"></i> ทะเบียนฎีกา
+            </h2>
+            
+            <div class="flex flex-wrap gap-3">
+                <button onclick="showAdvancedSearch()" 
+                        class="btn-primary px-5 py-3 rounded-2xl text-white flex items-center gap-2">
+                    <i class="fas fa-search"></i>
+                    <span>ค้นหาแบบละเอียด</span>
+                </button>
+                
+                <button onclick="refreshList()" 
+                        class="px-5 py-3 border border-purple-300 hover:bg-purple-50 rounded-2xl flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>รีเฟรช</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="bg-white rounded-3xl p-6 shadow-sm mb-6">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <input type="text" id="searchInput" 
+                           onkeyup="if(event.key === 'Enter') searchTable()"
+                           placeholder="ค้นหา เลขที่ฎีกา, ชื่อบริษัท, รายการ..." 
+                           class="w-full px-5 py-4 border border-purple-200 rounded-2xl focus:outline-none focus:border-purple-500">
+                </div>
+                
+                <div class="flex gap-3">
+                    <select id="filterMoneyType" onchange="filterTable()" 
+                            class="px-4 py-4 border border-purple-200 rounded-2xl focus:outline-none">
+                        <option value="">ทุกประเภทเงิน</option>
+                    </select>
+                    <select id="filterDept" onchange="filterTable()" 
+                            class="px-4 py-4 border border-purple-200 rounded-2xl focus:outline-none">
+                        <option value="">ทุกหน่วยงาน</option>
+                    </select>
+                    <select id="filterStatus" onchange="filterTable()" 
+                            class="px-4 py-4 border border-purple-200 rounded-2xl focus:outline-none">
+                        <option value="">ทุกสถานะ</option>
+                    </select>
+                </div>
+                
+                <button onclick="clearFilters()" 
+                        class="px-6 py-4 text-purple-600 hover:bg-purple-100 rounded-2xl border border-purple-200">
+                    ล้างตัวกรอง
+                </button>
+            </div>
+        </div>
+
+        <!-- Table / Cards Container -->
+        <div class="bg-white rounded-3xl shadow overflow-hidden" id="data-container">
+            <!-- Desktop Table -->
+            <div class="hidden md:block overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-purple-100">
+                        <tr>
+                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">ลำดับ / วันที่รับ</th>
+                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">สถานะ</th>
+                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">เลขที่เอกสาร</th>
+                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">ชื่อเจ้าหนี้</th>
+                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">รายการ</th>
+                            <th class="px-6 py-5 text-right text-purple-800 font-semibold">จำนวนเงิน</th>
+                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">ประเภทเงิน</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y"></tbody>
+                </table>
+            </div>
+
+            <!-- Mobile Cards -->
+            <div class="md:hidden p-4 space-y-4" id="mobile-cards"></div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex justify-between items-center mt-6 px-4">
+            <div class="flex items-center gap-3">
+                <span class="text-sm text-purple-600">แสดง</span>
+                <select id="pageSize" onchange="changePageSize()" class="border border-purple-200 rounded-xl px-3 py-2">
+                    <option value="50">50</option>
+                    <option value="100" selected>100</option>
+                    <option value="200">200</option>
+                    <option value="500">500</option>
+                </select>
+            </div>
+            <div id="pagination" class="flex gap-2"></div>
+        </div>
+    </div>
+
+    <!-- Detail Popup -->
+    <div id="detailPopup" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
+        <div class="bg-white rounded-3xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-auto">
+            <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white rounded-t-3xl">
+                <h3 class="text-xl font-semibold text-purple-900">รายละเอียดฎีกา</h3>
+                <button onclick="closePopup()" class="text-3xl text-purple-400 hover:text-red-500">×</button>
+            </div>
+            <div id="popup-content" class="p-6 space-y-6"></div>
+        </div>
+    </div>
+
+    <script src="js/api-config.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/list.js"></script>
+</body>
+</html>
