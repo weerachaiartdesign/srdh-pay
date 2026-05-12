@@ -3,10 +3,10 @@
 
 const CONFIG = {
     // เปลี่ยน SPREADSHEET_ID เป็นของจริงเมื่อ deploy
-    SPREADSHEET_ID: "YOUR_SPREADSHEET_ID_HERE",
+    SPREADSHEET_ID: "14XoNe8jsygjaH3y0uz5c2VeNKpKubgxu8KT7TZBXu4A",
     
     // Google Apps Script Web App URL (จะได้หลัง Deploy)
-    GAS_URL: "YOUR_GAS_WEB_APP_URL_HERE",
+    GAS_URL: "https://script.google.com/macros/s/AKfycbyYhPg_17wXIc1P95XIN9P0d1fcPiX6UbXOlkQCewHuMms6U9TrRLm92BnJsmjhXGQwsA/exec",
     
     // เวลาหมดอายุของ Session (นาที)
     SESSION_TIMEOUT: 480, // 8 ชั่วโมง
