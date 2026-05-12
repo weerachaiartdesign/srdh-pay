@@ -1,0 +1,115 @@
+/* Version: 00120 */
+/* ============================================= */
+/* Srdh Pay - Corporate Purple Pastel Theme     */
+/* ============================================= */
+
+:root {
+    --primary: #7C3AED;
+    --primary-light: #A78BFA;
+    --primary-dark: #6D28D9;
+    --accent: #C026D3;
+    
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    
+    --bg-light: #F3E8FF;
+    --card-light: #FFFFFF;
+    --text-primary: #4C1D95;
+    --text-secondary: #6B7280;
+}
+
+[data-theme="dark"] {
+    --bg-light: #1A1A2E;
+    --card-light: #16213E;
+    --text-primary: #E0E7FF;
+    --text-secondary: #94A3B8;
+}
+
+/* Base Styles */
+body {
+    font-family: 'Prompt', 'Noto Sans Thai', system-ui, sans-serif;
+}
+
+h1, h2, h3, h4 {
+    font-family: 'Prompt', sans-serif;
+}
+
+/* Card Style */
+.card {
+    background: var(--card-light);
+    border-radius: 20px;
+    box-shadow: 0 10px 15px -3px rgb(124 58 237 / 0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgb(124 58 237 / 0.15);
+}
+
+/* Status Badges */
+.status-r-waiting {
+    background-color: #FEF3C7;
+    color: #D97706;
+}
+.status-r-received {
+    background-color: #DBEAFE;
+    color: #2563EB;
+}
+.status-r-approved {
+    background-color: #D1FAE5;
+    color: #10B981;
+}
+.status-r-paid {
+    background-color: #E0E7FF;
+    color: #4F46E5;
+}
+.status-r-cancel {
+    background-color: #FEE2E2;
+    color: #EF4444;
+}
+
+/* Money Type Backgrounds */
+.money-type-เงินงบประมาณ { background-color: #FFCCFF; }
+.money-type-เงินบำรุง { background-color: #FFFF99; }
+.money-type-เงินประกันสุขภาพ { background-color: #F8CBAD; }
+.money-type-เงินอุดหนุน { background-color: #FF9999; }
+.money-type-เงินแพทยศาสตร์ { background-color: #FFF2CC; }
+.money-type-เงินอื่น { background-color: #E5E7EB; }
+
+/* Tailwind Custom */
+.btn-primary {
+    background: linear-gradient(135deg, #7C3AED, #A855F7);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgb(124 58 237 / 0.4);
+}
+
+/* Progress Bar */
+.progress-bar {
+    height: 8px;
+    background: linear-gradient(90deg, #7C3AED, #C026D3);
+    border-radius: 9999px;
+}
+
+/* Table */
+.table-row {
+    transition: all 0.2s ease;
+}
+
+.table-row:hover {
+    background-color: #F3E8FF;
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] .table-row:hover {
+    background-color: #2A2A4A;
+}
+
+[data-theme="dark"] .card {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+}
