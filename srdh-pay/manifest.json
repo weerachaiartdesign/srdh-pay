@@ -5,7 +5,7 @@
   "description": "ระบบทะเบียนฎีกาเบิกจ่ายเงิน โรงพยาบาลสิรินธร",
 
   "start_url": "/index.html",
-  "scope": ".",
+  "scope": "",
 
   "display": "standalone",
 
