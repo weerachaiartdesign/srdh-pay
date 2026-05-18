@@ -2,7 +2,7 @@
   "name": "ทะเบียนเบิกจ่ายเงิน รพส.",
   "short_name": "Srdh Pay",
   "description": "ระบบทะเบียนฎีกาเบิกจ่ายเงิน โรงพยาบาลสิริน",
-  "start_url": "/index.html",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#F3E8FF",
   "theme_color": "#7C3AED",
