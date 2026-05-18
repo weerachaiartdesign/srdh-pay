@@ -6,7 +6,7 @@ const CONFIG = {
     SPREADSHEET_ID: "14XoNe8jsygjaH3y0uz5c2VeNKpKubgxu8KT7TZBXu4A",
     
     // Google Apps Script Web App URL (จะได้หลัง Deploy)
-    GAS_URL: "https://script.google.com/macros/s/AKfycbyYhPg_17wXIc1P95XIN9P0d1fcPiX6UbXOlkQCewHuMms6U9TrRLm92BnJsmjhXGQwsA/exec",
+    GAS_URL: "https://script.google.com/macros/s/AKfycbyjxq4WwcVqxfIQ2Gb8p9td8k2ze79KZmTm137MJ05RiFd4FAOqkQf-CV04TlhdUmqkaw/exec",
     
     // เวลาหมดอายุของ Session (นาที)
     SESSION_TIMEOUT: 480, // 8 ชั่วโมง
