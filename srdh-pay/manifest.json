@@ -4,8 +4,7 @@
   "short_name": "Srdh Pay",
   "description": "ระบบทะเบียนฎีกาเบิกจ่ายเงิน โรงพยาบาลสิรินธร",
 
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/index.html",
 
   "display": "standalone",
 
