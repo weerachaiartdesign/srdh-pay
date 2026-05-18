@@ -1,354 +1,144 @@
-// Version: 00121
+// Version: 00122
 // Main JavaScript - Core functionality for Srdh Pay
-// Fixed Session Loop / Auth Redirect / Null Element Errors
 
 let currentUser = null;
 
-// ====================== AUTH INITIALIZATION ======================
+// Initialize Authentication
 function initAuth() {
-
-    const currentPath = window.location.pathname;
-    const isAuthPage = currentPath.includes('auth.html');
-
-    try {
-
-        const user = localStorage.getItem('srdh_user');
-
-        // ======================
-        // NO LOGIN
-        // ======================
-        if (!user) {
-
-            if (!isAuthPage) {
-                window.location.replace('auth.html');
-            }
-
-            return;
-        }
-
+    const user = localStorage.getItem('srdh_user');
+    if (user) {
         currentUser = JSON.parse(user);
-
-        // ======================
-        // SESSION TIMEOUT CHECK
-        // ======================
-        const lastLogin = localStorage.getItem('srdh_last_login');
-
-        if (lastLogin) {
-
-            const minutesPassed =
-                (Date.now() - parseInt(lastLogin, 10)) / 60000;
-
-            // Session expired
-            if (minutesPassed > CONFIG.SESSION_TIMEOUT) {
-
-                console.warn('Session expired');
-
-                logout(true);
-                return;
-            }
-
-            // ======================
-            // REFRESH SESSION TIME
-            // ======================
-            localStorage.setItem(
-                'srdh_last_login',
-                Date.now().toString()
-            );
-        }
-
-        // ======================
-        // UPDATE UI
-        // ======================
         updateUserUI();
-
-        // ======================
-        // PREVENT BACK TO LOGIN
-        // ======================
-        if (isAuthPage) {
-            window.location.replace('dashboard.html');
+        
+        // Check session timeout
+        const lastLogin = localStorage.getItem('srdh_last_login');
+        if (lastLogin) {
+            const minutesPassed = (Date.now() - parseInt(lastLogin)) / 60000;
+            if (minutesPassed > CONFIG.SESSION_TIMEOUT) {
+                logout();
+            }
         }
-
-    } catch (error) {
-
-        console.error('Auth initialization error:', error);
-
-        // corrupted localStorage
-        localStorage.removeItem('srdh_user');
-        localStorage.removeItem('srdh_last_login');
-
-        if (!isAuthPage) {
-            window.location.replace('auth.html');
+    } else {
+        // Redirect to login if not on auth page
+        if (!window.location.pathname.includes('auth.html')) {
+            window.location.href = 'auth.html';
         }
     }
 }
 
-// ====================== UPDATE USER UI ======================
+// Update User Interface
 function updateUserUI() {
-
     if (!currentUser) return;
-
-    try {
-
-        // ======================
-        // SAFE ELEMENT ACCESS
-        // ======================
-        const userName =
-            document.getElementById('user-name');
-
-        const userRole =
-            document.getElementById('user-role');
-
-        const menuUserName =
-            document.getElementById('menu-user-name');
-
-        const menuUserPosition =
-            document.getElementById('menu-user-position');
-
-        const avatar =
-            document.getElementById('user-avatar');
-
-        const sidebarName =
-            document.getElementById('sidebar-name');
-
-        const sidebarRole =
-            document.getElementById('sidebar-role');
-
-        const sidebarAvatar =
-            document.getElementById('sidebar-avatar');
-
-        // ======================
-        // SET TEXT
-        // ======================
-        if (userName) {
-            userName.textContent =
-                currentUser.username || currentUser.email;
-        }
-
-        if (userRole) {
-            userRole.textContent =
-                (currentUser.role || 'user').toUpperCase();
-        }
-
-        if (menuUserName) {
-            menuUserName.textContent =
-                currentUser.username || '-';
-        }
-
-        if (menuUserPosition) {
-            menuUserPosition.textContent =
-                currentUser.position || '-';
-        }
-
-        if (sidebarName) {
-            sidebarName.textContent =
-                currentUser.username || currentUser.email;
-        }
-
-        if (sidebarRole) {
-            sidebarRole.textContent =
-                currentUser.role || 'user';
-        }
-
-        // ======================
-        // AVATAR
-        // ======================
-        const avatarText =
-            currentUser.username
-                ? currentUser.username.substring(0, 2).toUpperCase()
-                : 'US';
-
-        if (avatar) {
-            avatar.textContent = avatarText;
-        }
-
-        if (sidebarAvatar) {
-            sidebarAvatar.textContent = avatarText;
-        }
-
-    } catch (error) {
-
-        console.error('Update UI error:', error);
+    
+    document.getElementById('user-name').textContent = currentUser.username || currentUser.email;
+    document.getElementById('user-role').textContent = currentUser.role.toUpperCase();
+    document.getElementById('menu-user-name').textContent = currentUser.username;
+    document.getElementById('menu-user-position').textContent = currentUser.position || '';
+    
+    // Avatar
+    const avatar = document.getElementById('user-avatar');
+    if (avatar) {
+        avatar.textContent = currentUser.username ? currentUser.username.substring(0, 2).toUpperCase() : 'US';
     }
 }
 
-// ====================== LOGIN HANDLER ======================
+// Login Handler
 async function handleLogin(e) {
-
     e.preventDefault();
-
-    const email =
-        document.getElementById('email').value.trim();
-
-    const password =
-        document.getElementById('password').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
     try {
-
-        const result =
-            await callGAS('loginUser', {
-                email,
-                password
-            });
-
-        if (!result.success) {
-
+        const result = await callGAS('loginUser', { email, password });
+        
+        if (result.success) {
+            localStorage.setItem('srdh_user', JSON.stringify(result.user));
+            localStorage.setItem('srdh_last_login', Date.now());
+            window.location.href = 'dashboard.html';
+        } else {
             alert(result.message || 'เข้าสู่ระบบไม่สำเร็จ');
-            return;
         }
-
-        // ======================
-        // SAVE SESSION
-        // ======================
-        localStorage.setItem(
-            'srdh_user',
-            JSON.stringify(result.user)
-        );
-
-        localStorage.setItem(
-            'srdh_last_login',
-            Date.now().toString()
-        );
-
-        // ======================
-        // REDIRECT
-        // ======================
-        window.location.replace('dashboard.html');
-
-    } catch (error) {
-
-        console.error('Login error:', error);
-
+    } catch (err) {
         alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
     }
 }
 
-// ====================== GUEST LOGIN ======================
+// Guest Login
 async function guestLogin() {
-
-    const email =
-        prompt('กรอกอีเมลสำหรับเข้าใช้งานแบบ Guest:');
-
+    const email = prompt("กรอกอีเมลสำหรับเข้าใช้งานแบบ Guest:");
     if (!email) return;
 
     try {
-
-        const result =
-            await callGAS('guestLogin', { email });
-
-        if (!result.success) {
-            alert('ไม่สามารถเข้าใช้งานได้');
-            return;
+        const result = await callGAS('guestLogin', { email });
+        if (result.success) {
+            localStorage.setItem('srdh_user', JSON.stringify(result.user));
+            localStorage.setItem('srdh_last_login', Date.now());
+            window.location.href = 'dashboard.html';
         }
-
-        localStorage.setItem(
-            'srdh_user',
-            JSON.stringify(result.user)
-        );
-
-        localStorage.setItem(
-            'srdh_last_login',
-            Date.now().toString()
-        );
-
-        window.location.replace('dashboard.html');
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert('ไม่สามารถเข้าใช้งานแบบ Guest ได้');
+    } catch (err) {
+        alert('ไม่สามารถเข้าใช้งานแบบ Guest ได้ในขณะนี้');
     }
 }
 
-// ====================== LOGOUT
-// force = true → no confirm
-// ======================
-function logout(force = false) {
-
-    if (!force) {
-
-        const confirmed =
-            confirm('คุณต้องการออกจากระบบใช่หรือไม่?');
-
-        if (!confirmed) {
-            return;
-        }
-    }
-
-    try {
-
+// Logout
+function logout() {
+    if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
         callGAS('logAction', {
-            email: currentUser?.email || '',
+            email: currentUser?.email,
             action: 'logout'
         }).catch(() => {});
-
-    } catch (_) {}
-
-    // ======================
-    // CLEAR SESSION
-    // ======================
-    localStorage.removeItem('srdh_user');
-    localStorage.removeItem('srdh_last_login');
-
-    currentUser = null;
-
-    // ======================
-    // REDIRECT
-    // ======================
-    window.location.replace('auth.html');
-}
-
-// ====================== KEEP SESSION ALIVE ======================
-document.addEventListener('click', refreshSession);
-document.addEventListener('keydown', refreshSession);
-document.addEventListener('mousemove', refreshSession);
-
-function refreshSession() {
-
-    if (localStorage.getItem('srdh_user')) {
-
-        localStorage.setItem(
-            'srdh_last_login',
-            Date.now().toString()
-        );
+        
+        localStorage.removeItem('srdh_user');
+        localStorage.removeItem('srdh_last_login');
+        window.location.href = 'auth.html';
     }
 }
 
-// ====================== DARK MODE ======================
+// Dark Mode
 function toggleDarkMode() {
-
-    const body = document.body;
-
-    const isDark =
-        body.getAttribute('data-theme') === 'dark';
-
-    body.setAttribute(
-        'data-theme',
-        isDark ? 'light' : 'dark'
-    );
-
-    localStorage.setItem(
-        'theme',
-        isDark ? 'light' : 'dark'
-    );
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    
+    const icon = document.getElementById('theme-icon');
+    if (icon) icon.className = isDark ? 'fas fa-moon text-xl' : 'fas fa-sun text-xl';
 }
 
-// ====================== LOAD SAVED THEME ======================
-function loadTheme() {
-
-    const savedTheme =
-        localStorage.getItem('theme') || 'light';
-
-    document.body.setAttribute(
-        'data-theme',
-        savedTheme
-    );
+function checkDarkMode() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        const icon = document.getElementById('theme-icon');
+        if (icon) icon.className = savedTheme === 'dark' ? 'fas fa-sun text-xl' : 'fas fa-moon text-xl';
+    }
 }
 
-// ====================== PAGE START ======================
-document.addEventListener('DOMContentLoaded', () => {
+// Toggle User Menu
+function toggleUserMenu() {
+    const menu = document.getElementById('user-menu');
+    if (menu) menu.classList.toggle('hidden');
+}
 
-    loadTheme();
+// Utility: Format Thai Date
+function formatThaiDate(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('th-TH', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
 
-    initAuth();
+// Utility: Format Currency
+function formatCurrency(amount) {
+    return Number(amount).toLocaleString('th-TH') + ' บาท';
+}
+
+// Close all popups when press ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const popups = document.querySelectorAll('.popup');
+        popups.forEach(p => p.classList.add('hidden'));
+    }
 });
