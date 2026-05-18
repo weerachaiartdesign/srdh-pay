@@ -1,4 +1,4 @@
-// Version: 00120
+// Version: 00122
 // Dashboard Controller - Srdh Pay
 
 let deptChart, moneyTypeChart, monthlyChart;
