@@ -1,4 +1,4 @@
-<!-- Version: 00121 -->
+<!-- Version: 00122 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -162,17 +162,12 @@
 
     <script src="js/api-config.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/approve.js"></script>
+    <script src="js/dadhboard.js"></script>
     <script src="js/import.js"></script>
-    
-    <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-        initAuth();
-        if (!localStorage.getItem('srdh_user')) {
-            return;
-        }
-        await loadImportPage();
-    });
-    </script>
+    <script src="js/list.js"></script>
+    <script src="js/report.js"></script>
+    <script src="js/settings.js"></script>
     
 </body>
 </html>
