@@ -1,18 +1,23 @@
-<!-- Version: 00120 -->
+<!-- Version: 00121 -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เข้าสู่ระบบ - Srdh Pay</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#7C3AED">
-    <link rel="apple-touch-icon" href="icons/register_acc-touch-icon.png">
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Srdh Pay - Login</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#7C3AED" />
+    <!-- CSS -->
+    <link rel="stylesheet" href="./style.css" />
+    
 </head>
+    
 <body class="bg-gradient-to-br from-purple-100 via-violet-100 to-purple-50 min-h-screen flex items-center justify-center">
     <div class="max-w-md w-full mx-4">
         <div class="bg-white rounded-3xl shadow-2xl p-10">
@@ -58,14 +63,37 @@
         </div>
     </div>
 
+    <!-- CONFIG -->
     <script src="js/api-config.js"></script>
+    
+    <!-- CORE -->
     <script src="js/main.js"></script>
-    <script src="js/approve.js"></script>
-    <script src="js/dadhboard.js"></script>
-    <script src="js/import.js"></script>
-    <script src="js/list.js"></script>
-    <script src="js/report.js"></script>
-    <script src="js/settings.js"></script>
+    
+    <script>
+     document.addEventListener('DOMContentLoaded', () => {
+        // already login
+        const user = localStorage.getItem('srdh_user');
+        if (user) {
+            try {
+                JSON.parse(user);
+                window.location.replace('./dashboard.html');
+            } catch (e) {
+                localStorage.removeItem('srdh_user');
+                localStorage.removeItem('srdh_last_login');
+            }
+        }
+    
+        // bind login form
+        const loginForm =
+            document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener(
+                'submit',
+                handleLogin
+            );
+        }
+    });
+    </script>
     
 </body>
 </html>
