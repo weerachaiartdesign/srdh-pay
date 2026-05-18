@@ -1,365 +1,174 @@
-<!-- Version: 00121 -->
+<!-- Version: 00122 -->
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
-
-    <!-- ========================================= -->
-    <!-- META -->
-    <!-- ========================================= -->
-
-    <meta charset="UTF-8" />
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0" />
-
-    <meta
-        http-equiv="Cache-Control"
-        content="no-cache, no-store, must-revalidate" />
-
-    <meta
-        http-equiv="Pragma"
-        content="no-cache" />
-
-    <meta
-        http-equiv="Expires"
-        content="0" />
-
-    <meta
-        name="theme-color"
-        content="#7C3AED" />
-
-    <meta
-        name="description"
-        content="ระบบทะเบียนเบิกจ่ายเงิน โรงพยาบาลสิรินธร" />
-
-    <!-- ========================================= -->
-    <!-- TITLE -->
-    <!-- ========================================= -->
-
-    <title>Srdh Pay</title>
-
-    <!-- ========================================= -->
-    <!-- PWA -->
-    <!-- ========================================= -->
-
-    <link
-        rel="manifest"
-        href="manifest.json" />
-
-    <link
-        rel="icon"
-        type="image/png"
-        href="icons/register_acc-192.png" />
-
-    <link
-        rel="apple-touch-icon"
-        href="icons/register_acc-touch-icon.png" />
-
-    <!-- ========================================= -->
-    <!-- CSS -->
-    <!-- ========================================= -->
-
-    <link
-        rel="stylesheet"
-        href="css/style.css" />
-
-    <!-- ========================================= -->
-    <!-- FONT -->
-    <!-- ========================================= -->
-
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com" />
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin />
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
-
-    <!-- ========================================= -->
-    <!-- INLINE STYLE -->
-    <!-- ========================================= -->
-
-    <style>
-
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Prompt', sans-serif;
-            background:
-                linear-gradient(
-                    135deg,
-                    #F3E8FF 0%,
-                    #FFFFFF 50%,
-                    #EDE9FE 100%
-                );
-            overflow: hidden;
-        }
-        .loading-container {
-            text-align: center;
-        }
-        .logo {
-            width: 110px;
-            height: 110px;
-            border-radius: 30px;
-            box-shadow:
-                0 20px 40px rgba(124, 58, 237, 0.20);
-            animation:
-                float 2.5s ease-in-out infinite;
-        }
-        .title {
-            margin-top: 28px;
-            font-size: 2rem;
-            font-weight: 700;
-            color: #5B21B6;
-        }
-        .subtitle {
-            margin-top: 10px;
-            font-size: 1rem;
-            color: #6B7280;
-        }
-        .loader {
-            margin: 30px auto 0;
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            border: 5px solid #E9D5FF;
-            border-top-color: #7C3AED;
-            animation:
-                spin 1s linear infinite;
-        }
-        .version {
-            margin-top: 24px;
-            font-size: 0.85rem;
-            color: #9CA3AF;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        @keyframes float {
-            0%,
-            100% {
-                transform: translateY(0px);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-    </style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ทะเบียนเบิกจ่ายเงิน รพส. (Srdh Pay)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&amp;family=Prompt:wght@400;500;600&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
+<body class="bg-purple-50 text-gray-800" data-theme="light">
 
-<body>
+    <!-- SIDEBAR -->
+    <div class="fixed inset-y-0 left-0 w-72 bg-white border-r border-purple-200 shadow-xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 z-50" id="sidebar">
+        <div class="h-full flex flex-col">
+            <!-- Logo -->
+            <div class="p-6 border-b border-purple-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-violet-500 rounded-3xl flex items-center justify-center text-white font-bold text-3xl shadow-inner">รพส</div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-purple-900 leading-none">Srdh Pay</h1>
+                        <p class="text-purple-500 text-sm">โรงพยาบาลสิรินธร</p>
+                    </div>
+                </div>
+            </div>
 
-    <!-- ========================================= -->
-    <!-- LOADING SCREEN -->
-    <!-- ========================================= -->
+            <!-- Navigation -->
+            <nav class="flex-1 px-4 py-6 overflow-y-auto">
+                <a href="dashboard.html" class="nav-item flex items-center gap-3 px-5 py-4 rounded-2xl text-purple-700 hover:bg-purple-50 transition-all mb-1 active">
+                    <i class="fas fa-tachometer-alt w-5"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="list.html" class="nav-item flex items-center gap-3 px-5 py-4 rounded-2xl text-purple-700 hover:bg-purple-50 transition-all mb-1">
+                    <i class="fas fa-list-ul w-5"></i>
+                    <span class="font-medium">ทะเบียนฎีกา</span>
+                </a>
+                <a href="import.html" class="nav-item flex items-center gap-3 px-5 py-4 rounded-2xl text-purple-700 hover:bg-purple-50 transition-all mb-1">
+                    <i class="fas fa-file-import w-5"></i>
+                    <span class="font-medium">นำเข้าข้อมูล</span>
+                </a>
+                <a href="approve.html" class="nav-item flex items-center gap-3 px-5 py-4 rounded-2xl text-purple-700 hover:bg-purple-50 transition-all mb-1">
+                    <i class="fas fa-check-double w-5"></i>
+                    <span class="font-medium">บันทึกรายการ</span>
+                </a>
+                <a href="report.html" class="nav-item flex items-center gap-3 px-5 py-4 rounded-2xl text-purple-700 hover:bg-purple-50 transition-all mb-1">
+                    <i class="fas fa-chart-pie w-5"></i>
+                    <span class="font-medium">รายงาน</span>
+                </a>
+                <a href="settings.html" class="nav-item flex items-center gap-3 px-5 py-4 rounded-2xl text-purple-700 hover:bg-purple-50 transition-all mb-1">
+                    <i class="fas fa-cogs w-5"></i>
+                    <span class="font-medium">ตั้งค่าระบบ</span>
+                </a>
+            </nav>
 
-    <div class="loading-container">
-        <img
-            src="icons/register_acc-192.png"
-            alt="Srdh Pay"
-            class="logo"
-        />
-
-        <div class="title">
-            Srdh Pay
-        </div>
-
-        <div class="subtitle">
-            ระบบทะเบียนเบิกจ่ายเงิน
-        </div>
-        <div class="loader"></div>
-        <div class="version">
-            Version 00121
+            <!-- User Info at Bottom -->
+            <div class="p-4 border-t border-purple-100">
+                <div onclick="toggleUserMenu()" class="flex items-center gap-3 p-3 hover:bg-purple-50 rounded-2xl cursor-pointer">
+                    <div id="sidebar-avatar" class="w-10 h-10 bg-purple-200 rounded-2xl flex items-center justify-center text-purple-700 font-semibold">AD</div>
+                    <div class="flex-1 min-w-0">
+                        <p id="sidebar-name" class="font-medium text-purple-900 truncate">ผู้ใช้งาน</p>
+                        <p id="sidebar-role" class="text-xs text-purple-500">Admin</p>
+                    </div>
+                    <i class="fas fa-chevron-down text-purple-400"></i>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ========================================= -->
-    <!-- CONFIG -->
-    <!-- ========================================= -->
+    <!-- MAIN CONTENT -->
+    <div class="lg:ml-72 min-h-screen">
+        <!-- Top Header -->
+        <header class="bg-white border-b border-purple-200 shadow-sm sticky top-0 z-40">
+            <div class="px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <!-- Hamburger Menu -->
+                    <button onclick="toggleSidebar()" class="lg:hidden p-3 text-purple-700 hover:bg-purple-100 rounded-2xl">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                    <h1 id="page-title" class="text-2xl font-semibold text-purple-900">Dashboard</h1>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <!-- Dark Mode -->
+                    <button onclick="toggleDarkMode()" class="p-3 rounded-2xl hover:bg-purple-100 transition-colors">
+                        <i id="theme-icon" class="fas fa-moon text-xl"></i>
+                    </button>
+
+                    <!-- Notification -->
+                    <button class="p-3 rounded-2xl hover:bg-purple-100 relative">
+                        <i class="fas fa-bell text-xl text-purple-700"></i>
+                        <span class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full">3</span>
+                    </button>
+
+                    <!-- User Menu -->
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" class="flex items-center gap-3">
+                            <div id="header-avatar" class="w-9 h-9 bg-purple-600 text-white rounded-2xl flex items-center justify-center font-medium">AD</div>
+                            <div class="hidden md:block text-left">
+                                <p id="header-name" class="text-sm font-medium text-purple-800">ผู้ใช้งาน</p>
+                                <p id="header-role" class="text-xs text-purple-500">Administrator</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="p-6" id="main-content">
+            <!-- Content of each page will be loaded here if using SPA, 
+                 or you can redirect to other HTML files -->
+            <p class="text-center text-purple-400 py-20">เลือกเมนูจาก Sidebar เพื่อเริ่มใช้งานระบบ</p>
+        </main>
+    </div>
+
+    <!-- User Dropdown Menu -->
+    <div id="user-dropdown" class="hidden fixed top-16 right-6 bg-white rounded-3xl shadow-2xl border border-purple-100 w-64 py-2 z-50">
+        <a href="settings.html" class="flex items-center gap-3 px-6 py-3 hover:bg-purple-50 text-purple-700">
+            <i class="fas fa-user-cog"></i>
+            <span>ตั้งค่าผู้ใช้งาน</span>
+        </a>
+        <button onclick="logout()" class="w-full flex items-center gap-3 px-6 py-3 hover:bg-red-50 text-red-600">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>ออกจากระบบ</span>
+        </button>
+    </div>
 
     <script src="js/api-config.js"></script>
-
-    <!-- ========================================= -->
-    <!-- AUTH ROUTER -->
-    <!-- ========================================= -->
-
+    <script src="js/main.js"></script>
+    <script src="js/approve.js"></script>
+    <script src="js/dadhboard.js"></script>
+    <script src="js/import.js"></script>
+    <script src="js/list.js"></script>
+    <script src="js/report.js"></script>
+    <script src="js/settings.js"></script>
+    
     <script>
-
-        // =========================================
-        // SAFE REDIRECT
-        // =========================================
-
-        function safeRedirect(path) {
-
-            try {
-                window.location.replace(path);
-            } catch (error) {
-                console.error(
-                    'Redirect error:',
-                    error
-                );
-                window.location.href = path;
-            }
+        // Toggle Sidebar for Mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
         }
 
-        // =========================================
-        // CLEAR BROKEN SESSION
-        // =========================================
-
-        function clearBrokenSession() {
-
-            localStorage.removeItem('srdh_user');
-            localStorage.removeItem(
-                'srdh_last_login'
-            );
-        }
-        // =========================================
-        // CHECK SESSION
-        // =========================================
-
-        async function checkSession() {
-            try {
-
-                const user =
-                    localStorage.getItem(
-                        'srdh_user'
-                    );
-                const lastLogin =
-                    localStorage.getItem(
-                        'srdh_last_login'
-                    );
-
-                // =================================
-                // NO SESSION
-                // =================================
-                if (!user || !lastLogin) {
-                    clearBrokenSession();
-                    setTimeout(() => {
-                        safeRedirect(
-                            'auth.html'
-                        );
-                    }, 800);
-                    return;
+        // Active Nav Highlight
+        function setActiveNav() {
+            const links = document.querySelectorAll('.nav-item');
+            links.forEach(link => {
+                if (link.href === window.location.href) {
+                    link.classList.add('bg-purple-100', 'text-purple-900', 'font-semibold');
                 }
-
-                // =================================
-                // VALIDATE JSON
-                // =================================
-                let parsedUser = null;
-                try {
-                    parsedUser =
-                        JSON.parse(user);
-                } catch (error) {
-                    console.error(
-                        'Invalid session JSON:',
-                        error
-                    );
-                    clearBrokenSession();
-                    setTimeout(() => {
-                        safeRedirect(
-                            'auth.html'
-                        );
-                    }, 800);
-                    return;
-                }
-
-                // =================================
-                // CHECK REQUIRED DATA
-                // =================================
-                if (
-                    !parsedUser ||
-                    !parsedUser.email
-                ) {
-                    clearBrokenSession();
-                    setTimeout(() => {
-                        safeRedirect(
-                            'auth.html'
-                        );
-                    }, 800);
-                    return;
-                }
-
-                // =================================
-                // SESSION TIMEOUT
-                // =================================
-                const minutesPassed =
-                    (
-                        Date.now() -
-                        parseInt(lastLogin, 10)
-                    ) / 60000;
-                if (
-                    minutesPassed >
-                    CONFIG.SESSION_TIMEOUT
-                ) {
-                    console.warn(
-                        'Session expired'
-                    );
-                    clearBrokenSession();
-                    setTimeout(() => {
-                        safeRedirect(
-                            'auth.html'
-                        );
-                    }, 800);
-                    return;
-                }
-
-                // =================================
-                // REFRESH SESSION
-                // =================================
-                localStorage.setItem(
-                    'srdh_last_login',
-                    Date.now().toString()
-                );
-
-                // =================================
-                // REDIRECT TO DASHBOARD
-                // =================================
-                setTimeout(() => {
-                    safeRedirect(
-                        'dashboard.html'
-                    );
-                }, 1200);
-            } catch (error) {
-                console.error(
-                    'Session check error:',
-                    error
-                );
-                clearBrokenSession();
-                setTimeout(() => {
-                    safeRedirect(
-                        'auth.html'
-                    );
-                }, 1000);
-            }
+            });
         }
 
-        // =========================================
-        // START
-        // =========================================
-
-        document.addEventListener(
-            'DOMContentLoaded',
-            () => {
-                checkSession();
-            }
-        );
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initAuth();
+            checkDarkMode();
+            setActiveNav();
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(e) {
+                const sidebar = document.getElementById('sidebar');
+                if (window.innerWidth < 1024 && !sidebar.contains(e.target)) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        });
     </script>
-
 </body>
-
 </html>
