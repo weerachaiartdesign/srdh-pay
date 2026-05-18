@@ -1,4 +1,4 @@
-// Version: 00120
+// Version: 00122
 // Approve Page Controller - หน้าบันทึกรายการ (สำหรับ Checker & Admin)
 
 let approveData = [];
