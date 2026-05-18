@@ -12,33 +12,27 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    />
+        content="width=device-width, initial-scale=1.0" />
 
     <meta
         http-equiv="Cache-Control"
-        content="no-cache, no-store, must-revalidate"
-    />
+        content="no-cache, no-store, must-revalidate" />
 
     <meta
         http-equiv="Pragma"
-        content="no-cache"
-    />
+        content="no-cache" />
 
     <meta
         http-equiv="Expires"
-        content="0"
-    />
+        content="0" />
 
     <meta
         name="theme-color"
-        content="#7C3AED"
-    />
+        content="#7C3AED" />
 
     <meta
         name="description"
-        content="ระบบทะเบียนเบิกจ่ายเงิน โรงพยาบาลสิรินธร"
-    />
+        content="ระบบทะเบียนเบิกจ่ายเงิน โรงพยาบาลสิรินธร" />
 
     <!-- ========================================= -->
     <!-- TITLE -->
@@ -52,19 +46,16 @@
 
     <link
         rel="manifest"
-        href="./manifest.json"
-    />
+        href="manifest.json" />
 
     <link
         rel="icon"
         type="image/png"
-        href="./icons/register_acc-192.png"
-    />
+        href="icons/register_acc-192.png" />
 
     <link
         rel="apple-touch-icon"
-        href="./icons/register_acc-touch-icon.png"
-    />
+        href="icons/register_acc-touch-icon.png" />
 
     <!-- ========================================= -->
     <!-- CSS -->
@@ -72,8 +63,7 @@
 
     <link
         rel="stylesheet"
-        href="./style.css"
-    />
+        href="css/style.css" />
 
     <!-- ========================================= -->
     <!-- FONT -->
@@ -81,19 +71,16 @@
 
     <link
         rel="preconnect"
-        href="https://fonts.googleapis.com"
-    />
+        href="https://fonts.googleapis.com" />
 
     <link
         rel="preconnect"
         href="https://fonts.gstatic.com"
-        crossorigin
-    />
+        crossorigin />
 
     <link
         href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet"
-    />
+        rel="stylesheet" />
 
     <!-- ========================================= -->
     <!-- INLINE STYLE -->
@@ -102,18 +89,13 @@
     <style>
 
         body {
-
             margin: 0;
             padding: 0;
-
             min-height: 100vh;
-
             display: flex;
             justify-content: center;
             align-items: center;
-
             font-family: 'Prompt', sans-serif;
-
             background:
                 linear-gradient(
                     135deg,
@@ -121,87 +103,56 @@
                     #FFFFFF 50%,
                     #EDE9FE 100%
                 );
-
             overflow: hidden;
         }
-
         .loading-container {
-
             text-align: center;
         }
-
         .logo {
-
             width: 110px;
             height: 110px;
-
             border-radius: 30px;
-
             box-shadow:
                 0 20px 40px rgba(124, 58, 237, 0.20);
-
             animation:
                 float 2.5s ease-in-out infinite;
         }
-
         .title {
-
             margin-top: 28px;
-
             font-size: 2rem;
             font-weight: 700;
-
             color: #5B21B6;
         }
-
         .subtitle {
-
             margin-top: 10px;
-
             font-size: 1rem;
-
             color: #6B7280;
         }
-
         .loader {
-
             margin: 30px auto 0;
-
             width: 54px;
             height: 54px;
-
             border-radius: 50%;
-
             border: 5px solid #E9D5FF;
             border-top-color: #7C3AED;
-
             animation:
                 spin 1s linear infinite;
         }
-
         .version {
-
             margin-top: 24px;
-
             font-size: 0.85rem;
-
             color: #9CA3AF;
         }
-
         @keyframes spin {
-
             to {
                 transform: rotate(360deg);
             }
         }
-
         @keyframes float {
-
             0%,
             100% {
                 transform: translateY(0px);
             }
-
             50% {
                 transform: translateY(-10px);
             }
@@ -218,9 +169,8 @@
     <!-- ========================================= -->
 
     <div class="loading-container">
-
         <img
-            src="./icons/register_acc-192.png"
+            src="icons/register_acc-192.png"
             alt="Srdh Pay"
             class="logo"
         />
@@ -232,13 +182,10 @@
         <div class="subtitle">
             ระบบทะเบียนเบิกจ่ายเงิน
         </div>
-
         <div class="loader"></div>
-
         <div class="version">
             Version 00121
         </div>
-
     </div>
 
     <!-- ========================================= -->
@@ -260,16 +207,12 @@
         function safeRedirect(path) {
 
             try {
-
                 window.location.replace(path);
-
             } catch (error) {
-
                 console.error(
                     'Redirect error:',
                     error
                 );
-
                 window.location.href = path;
             }
         }
@@ -281,25 +224,21 @@
         function clearBrokenSession() {
 
             localStorage.removeItem('srdh_user');
-
             localStorage.removeItem(
                 'srdh_last_login'
             );
         }
-
         // =========================================
         // CHECK SESSION
         // =========================================
 
         async function checkSession() {
-
             try {
 
                 const user =
                     localStorage.getItem(
                         'srdh_user'
                     );
-
                 const lastLogin =
                     localStorage.getItem(
                         'srdh_last_login'
@@ -309,17 +248,12 @@
                 // NO SESSION
                 // =================================
                 if (!user || !lastLogin) {
-
                     clearBrokenSession();
-
                     setTimeout(() => {
-
                         safeRedirect(
-                            './auth.html'
+                            'js/auth.html'
                         );
-
                     }, 800);
-
                     return;
                 }
 
@@ -327,29 +261,20 @@
                 // VALIDATE JSON
                 // =================================
                 let parsedUser = null;
-
                 try {
-
                     parsedUser =
                         JSON.parse(user);
-
                 } catch (error) {
-
                     console.error(
                         'Invalid session JSON:',
                         error
                     );
-
                     clearBrokenSession();
-
                     setTimeout(() => {
-
                         safeRedirect(
-                            './auth.html'
+                            'js/auth.html'
                         );
-
                     }, 800);
-
                     return;
                 }
 
@@ -360,17 +285,12 @@
                     !parsedUser ||
                     !parsedUser.email
                 ) {
-
                     clearBrokenSession();
-
                     setTimeout(() => {
-
                         safeRedirect(
-                            './auth.html'
+                            'js/auth.html'
                         );
-
                     }, 800);
-
                     return;
                 }
 
@@ -382,26 +302,19 @@
                         Date.now() -
                         parseInt(lastLogin, 10)
                     ) / 60000;
-
                 if (
                     minutesPassed >
                     CONFIG.SESSION_TIMEOUT
                 ) {
-
                     console.warn(
                         'Session expired'
                     );
-
                     clearBrokenSession();
-
                     setTimeout(() => {
-
                         safeRedirect(
-                            './auth.html'
+                            'js/auth.html'
                         );
-
                     }, 800);
-
                     return;
                 }
 
@@ -417,28 +330,20 @@
                 // REDIRECT TO DASHBOARD
                 // =================================
                 setTimeout(() => {
-
                     safeRedirect(
-                        './dashboard.html'
+                        'js/dashboard.html'
                     );
-
                 }, 1200);
-
             } catch (error) {
-
                 console.error(
                     'Session check error:',
                     error
                 );
-
                 clearBrokenSession();
-
                 setTimeout(() => {
-
                     safeRedirect(
-                        './auth.html'
+                        'js/auth.html'
                     );
-
                 }, 1000);
             }
         }
@@ -450,11 +355,9 @@
         document.addEventListener(
             'DOMContentLoaded',
             () => {
-
                 checkSession();
             }
         );
-
     </script>
 
 </body>
