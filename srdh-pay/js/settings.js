@@ -1,4 +1,4 @@
-// Version: 00120
+// Version: 00122
 // Settings Page Controller (Admin Only)
 
 async function loadSettings() {
