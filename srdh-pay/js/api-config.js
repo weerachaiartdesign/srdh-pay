@@ -14,7 +14,7 @@ const API_CONFIG = {
     APP_VERSION: '00123.0',
 
     API_URL:
-        'https://script.google.com/macros/s/AKfycbzd2DwOmexh3qqqARt34M-V6mr17cHfOz6prj7Vj32Ir8Hoq8PoxSJjiRYX07GGghBxCA/exec',
+        'https://script.google.com/macros/s/AKfycbz0OPKeE7072A2Bzr46kcJe4HSSeR-LwPfiZKMUK_X2GbIEIG8omu49npKTO_Z8fQk_sg/exec',
 
     REQUEST_TIMEOUT: 30000,
 
