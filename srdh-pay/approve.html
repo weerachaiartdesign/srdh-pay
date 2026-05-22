@@ -1,324 +1,2082 @@
-<!-- Version: 00122.3
-     approve.html -->
+<!-- Version: 00123.0 -->
+<!-- approve.html -->
+<!-- SRDH PAY Approval Workflow -->
 
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>บันทึกรายการ - Srdh Pay</title>
+
+    <meta charset="UTF-8" />
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+        SRDH PAY - Approval Workflow
+    </title>
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&amp;family=Prompt:wght@400;500;600&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#7C3AED">
-    <link rel="apple-touch-icon" href="icons/register_acc-touch-icon.png">
+
+    <!-- Runtime -->
+    <script src="api-config.js"></script>
+    <script src="main.js"></script>
+
+    <style>
+
+        html,
+        body {
+
+            height: 100%;
+        }
+
+        body {
+
+            font-family:
+                system-ui,
+                sans-serif;
+        }
+
+        .sticky-head {
+
+            position: sticky;
+
+            top: 0;
+
+            z-index: 30;
+        }
+
+        .status-receive {
+
+            background:
+                rgba(59,130,246,0.12);
+
+            color:
+                rgb(37,99,235);
+        }
+
+        .status-pass {
+
+            background:
+                rgba(16,185,129,0.12);
+
+            color:
+                rgb(5,150,105);
+        }
+
+        .status-propose {
+
+            background:
+                rgba(168,85,247,0.12);
+
+            color:
+                rgb(126,34,206);
+        }
+
+        .status-approve {
+
+            background:
+                rgba(14,165,233,0.12);
+
+            color:
+                rgb(3,105,161);
+        }
+
+        .status-pay {
+
+            background:
+                rgba(34,197,94,0.12);
+
+            color:
+                rgb(22,101,52);
+        }
+
+        .status-edit {
+
+            background:
+                rgba(245,158,11,0.12);
+
+            color:
+                rgb(180,83,9);
+        }
+
+        .status-cancel {
+
+            background:
+                rgba(239,68,68,0.12);
+
+            color:
+                rgb(185,28,28);
+        }
+
+        .table-row-selected {
+
+            background:
+                rgba(59,130,246,0.08);
+        }
+
+        .timeline-dot {
+
+            width: 10px;
+
+            height: 10px;
+
+            border-radius: 9999px;
+        }
+
+    </style>
+
 </head>
-<body class="bg-purple-50 text-gray-800" data-theme="light">
-    <!-- Header -->
-    <header class="bg-white border-b border-purple-200 shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 bg-gradient-to-br from-purple-600 to-violet-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">รพส</div>
+
+<body
+    class="
+        bg-slate-100
+        dark:bg-slate-950
+        text-slate-800
+        dark:text-slate-100
+    "
+>
+
+    <!-- Layout -->
+    <div
+        class="
+            min-h-screen
+            flex
+        "
+    >
+
+        <!-- Sidebar -->
+        <aside
+            class="
+                hidden
+                lg:flex
+                w-64
+                bg-white
+                dark:bg-slate-900
+                border-r
+                border-slate-200
+                dark:border-slate-800
+                flex-col
+            "
+        >
+
+            <div
+                class="
+                    px-6
+                    py-5
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                "
+            >
+
+                <h1
+                    class="
+                        text-2xl
+                        font-bold
+                        text-blue-600
+                    "
+                >
+                    SRDH PAY
+                </h1>
+
+                <p
+                    class="
+                        text-sm
+                        text-slate-500
+                        mt-1
+                    "
+                >
+                    Approval Workflow
+                </p>
+
+            </div>
+
+            <nav
+                id="sidebarMenu"
+                class="
+                    flex-1
+                    p-4
+                "
+            ></nav>
+
+            <div
+                class="
+                    p-4
+                    border-t
+                    border-slate-200
+                    dark:border-slate-800
+                    text-xs
+                    text-slate-500
+                "
+            >
+                Version 00123.0
+            </div>
+
+        </aside>
+
+        <!-- Main -->
+        <main
+            class="
+                flex-1
+                overflow-hidden
+                flex
+                flex-col
+            "
+        >
+
+            <!-- Header -->
+            <header
+                class="
+                    bg-white
+                    dark:bg-slate-900
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                    px-4
+                    lg:px-8
+                    py-5
+                    flex
+                    flex-col
+                    lg:flex-row
+                    lg:items-center
+                    lg:justify-between
+                    gap-4
+                "
+            >
+
+                <div>
+
+                    <h2
+                        class="
+                            text-2xl
+                            font-bold
+                        "
+                    >
+                        Approval Workflow
+                    </h2>
+
+                    <p
+                        class="
+                            text-sm
+                            text-slate-500
+                            mt-1
+                        "
+                    >
+                        ตรวจสอบ อนุมัติ และจ่ายเช็ค
+                    </p>
+
+                </div>
+
+                <div
+                    class="
+                        flex
+                        flex-wrap
+                        gap-3
+                    "
+                >
+
+                    <button
+                        id="refreshButton"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            border
+                            border-slate-300
+                            hover:bg-slate-100
+                            dark:border-slate-700
+                            dark:hover:bg-slate-800
+                        "
+                    >
+                        Refresh
+                    </button>
+
+                    <button
+                        id="printButton"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            border
+                            border-slate-300
+                            hover:bg-slate-100
+                            dark:border-slate-700
+                            dark:hover:bg-slate-800
+                        "
+                    >
+                        Print
+                    </button>
+
+                    <button
+                        id="exportButton"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            border
+                            border-slate-300
+                            hover:bg-slate-100
+                            dark:border-slate-700
+                            dark:hover:bg-slate-800
+                        "
+                    >
+                        Export
+                    </button>
+
+                </div>
+
+            </header>
+
+            <!-- Filters -->
+            <section
+                class="
+                    bg-white
+                    dark:bg-slate-900
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                    p-4
+                    lg:px-8
+                "
+            >
+
+                <div
+                    class="
+                        grid
+                        grid-cols-1
+                        md:grid-cols-2
+                        xl:grid-cols-6
+                        gap-4
+                    "
+                >
+
                     <div>
-                        <h1 class="text-xl font-semibold text-purple-900">บันทึกรายการเบิกจ่าย</h1>
+
+                        <label
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            Search
+                        </label>
+
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="ค้นหา..."
+                            class="
+                                mt-1
+                                w-full
+                                rounded-xl
+                                border
+                                border-slate-300
+                                dark:border-slate-700
+                                bg-white
+                                dark:bg-slate-900
+                                px-4
+                                py-2
+                            "
+                        />
+
                     </div>
-                </div>
-                
-                <div class="flex items-center gap-4">
-                    <button onclick="toggleDarkMode()" class="p-3 rounded-2xl hover:bg-purple-100">
-                        <i id="theme-icon" class="fas fa-moon text-xl"></i>
-                    </button>
-                    <button onclick="window.location.href='list.html'" 
-                            class="px-5 py-2 text-purple-700 hover:bg-purple-100 rounded-2xl flex items-center gap-2">
-                        <i class="fas fa-list"></i>
-                        <span class="hidden md:inline">ทะเบียนฎีกา</span>
-                    </button>
-                    <div onclick="logout()" class="cursor-pointer text-purple-700 hover:text-red-600">
-                        <i class="fas fa-sign-out-alt text-xl"></i>
+
+                    <div>
+
+                        <label
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            Status
+                        </label>
+
+                        <select
+                            id="statusFilter"
+                            class="
+                                mt-1
+                                w-full
+                                rounded-xl
+                                border
+                                border-slate-300
+                                dark:border-slate-700
+                                bg-white
+                                dark:bg-slate-900
+                                px-4
+                                py-2
+                            "
+                        >
+
+                            <option value="">
+                                ทั้งหมด
+                            </option>
+
+                            <option value="รับเอกสาร">
+                                รับเอกสาร
+                            </option>
+
+                            <option value="ส่งแก้ไข">
+                                ส่งแก้ไข
+                            </option>
+
+                            <option value="ตรวจผ่าน">
+                                ตรวจผ่าน
+                            </option>
+
+                            <option value="เสนอ">
+                                เสนอ
+                            </option>
+
+                            <option value="อนุมัติ">
+                                อนุมัติ
+                            </option>
+
+                            <option value="จ่ายแล้ว">
+                                จ่ายแล้ว
+                            </option>
+
+                            <option value="ยกเลิก">
+                                ยกเลิก
+                            </option>
+
+                        </select>
+
                     </div>
+
+                    <div>
+
+                        <label
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            ประเภทเงิน
+                        </label>
+
+                        <select
+                            id="moneyTypeFilter"
+                            class="
+                                mt-1
+                                w-full
+                                rounded-xl
+                                border
+                                border-slate-300
+                                dark:border-slate-700
+                                bg-white
+                                dark:bg-slate-900
+                                px-4
+                                py-2
+                            "
+                        >
+
+                            <option value="">
+                                ทั้งหมด
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div>
+
+                        <label
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            วันที่เริ่ม
+                        </label>
+
+                        <input
+                            type="date"
+                            id="startDate"
+                            class="
+                                mt-1
+                                w-full
+                                rounded-xl
+                                border
+                                border-slate-300
+                                dark:border-slate-700
+                                bg-white
+                                dark:bg-slate-900
+                                px-4
+                                py-2
+                            "
+                        />
+
+                    </div>
+
+                    <div>
+
+                        <label
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            วันที่สิ้นสุด
+                        </label>
+
+                        <input
+                            type="date"
+                            id="endDate"
+                            class="
+                                mt-1
+                                w-full
+                                rounded-xl
+                                border
+                                border-slate-300
+                                dark:border-slate-700
+                                bg-white
+                                dark:bg-slate-900
+                                px-4
+                                py-2
+                            "
+                        />
+
+                    </div>
+
+                    <div
+                        class="
+                            flex
+                            items-end
+                        "
+                    >
+
+                        <button
+                            id="clearFilterButton"
+                            class="
+                                w-full
+                                px-4
+                                py-2
+                                rounded-xl
+                                border
+                                border-slate-300
+                                hover:bg-slate-100
+                                dark:border-slate-700
+                                dark:hover:bg-slate-800
+                            "
+                        >
+                            Clear Filters
+                        </button>
+
+                    </div>
+
                 </div>
-            </div>
-        </div>
-    </header>
 
-    <div class="max-w-7xl mx-auto px-6 py-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <h2 class="text-3xl font-bold text-purple-900 flex items-center gap-3">
-                <i class="fas fa-check-circle"></i> บันทึกรายการ
-            </h2>
-            
-            <div class="flex gap-3">
-                <button onclick="performAction('receive')" 
-                        class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl flex items-center gap-2 transition-all">
-                    <i class="fas fa-inbox"></i> รับเอกสาร
-                </button>
-                <button onclick="performAction('edit')" 
-                        class="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl flex items-center gap-2 transition-all">
-                    <i class="fas fa-edit"></i> ส่งแก้ไข
-                </button>
-                <button onclick="performAction('propose')" 
-                        class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl flex items-center gap-2 transition-all">
-                    <i class="fas fa-paper-plane"></i> ส่งเสนอ
-                </button>
-                <button onclick="performAction('pay')" 
-                        class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl flex items-center gap-2 transition-all">
-                    <i class="fas fa-money-check"></i> จ่ายเช็ค
-                </button>
-            </div>
-        </div>
+            </section>
 
-        <!-- Filters -->
-        <div class="bg-white rounded-3xl p-6 shadow-sm mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <input type="text" id="searchInput" placeholder="ค้นหา..." 
-                       onkeyup="if(event.key==='Enter') filterApproveData()" 
-                       class="px-5 py-4 border border-purple-200 rounded-2xl focus:outline-none focus:border-purple-500">
-                
-                <select id="filterMoneyType" onchange="filterApproveData()" class="px-5 py-4 border border-purple-200 rounded-2xl">
-                    <option value="">ทุกประเภทเงิน</option>
-                </select>
-                
-                <select id="filterDept" onchange="filterApproveData()" class="px-5 py-4 border border-purple-200 rounded-2xl">
-                    <option value="">ทุกหน่วยงาน</option>
-                </select>
-                
-                <select id="filterStatus" onchange="filterApproveData()" class="px-5 py-4 border border-purple-200 rounded-2xl">
-                    <option value="">ทุกสถานะ</option>
-                </select>
-            </div>
-        </div>
+            <!-- Batch Action -->
+            <section
+                class="
+                    bg-white
+                    dark:bg-slate-900
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                    px-4
+                    lg:px-8
+                    py-4
+                    flex
+                    flex-wrap
+                    gap-3
+                "
+            >
 
-        <!-- Data Table -->
-        <div class="bg-white rounded-3xl shadow overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-purple-100">
-                        <tr>
-                            <th class="w-12 px-4 py-5">
-                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
-                            </th>
-                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">ลำดับ / วันที่รับ</th>
-                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">สถานะ</th>
-                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">ชื่อเจ้าหนี้</th>
-                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">รายการ</th>
-                            <th class="px-6 py-5 text-right text-purple-800 font-semibold">จำนวนเงิน</th>
-                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">ประเภทเงิน</th>
-                        </tr>
-                    </thead>
-                    <tbody id="approve-table-body" class="divide-y divide-purple-100"></tbody>
-                </table>
-            </div>
-        </div>
+                <button
+                    onclick="openActionModal('receive')"
+                    class="
+                        action-editor
+                        hidden
+                        px-4
+                        py-2
+                        rounded-xl
+                        bg-blue-600
+                        hover:bg-blue-700
+                        text-white
+                    "
+                >
+                    รับเอกสาร
+                </button>
 
-        <!-- Pagination -->
-        <div class="flex justify-between items-center mt-6 px-4">
-            <div id="selected-count" class="text-sm text-purple-600">เลือก 0 รายการ</div>
-            <div id="approve-pagination" class="flex gap-2"></div>
-        </div>
+                <button
+                    onclick="openActionModal('edit')"
+                    class="
+                        action-editor
+                        hidden
+                        px-4
+                        py-2
+                        rounded-xl
+                        bg-amber-500
+                        hover:bg-amber-600
+                        text-white
+                    "
+                >
+                    ส่งแก้ไข
+                </button>
+
+                <button
+                    onclick="openActionModal('return')"
+                    class="
+                        action-editor
+                        hidden
+                        px-4
+                        py-2
+                        rounded-xl
+                        bg-orange-500
+                        hover:bg-orange-600
+                        text-white
+                    "
+                >
+                    รับคืน
+                </button>
+
+                <button
+                    onclick="openActionModal('pass')"
+                    class="
+                        action-editor
+                        hidden
+                        px-4
+                        py-2
+                        rounded-xl
+                        bg-emerald-600
+                        hover:bg-emerald-700
+                        text-white
+                    "
+                >
+                    ตรวจผ่าน
+                </button>
+
+                <button
+                    onclick="openActionModal('propose')"
+                    class="
+                        action-editor
+                        hidden
+                        px-4
+                        py-2
+                        rounded-xl
+                        bg-purple-600
+                        hover:bg-purple-700
+                        text-white
+                    "
+                >
+                    เสนอ
+                </button>
+
+                <button
+                    onclick="openActionModal('pay')"
+                    class="
+                        action-checker
+                        hidden
+                        px-4
+                        py-2
+                        rounded-xl
+                        bg-green-600
+                        hover:bg-green-700
+                        text-white
+                    "
+                >
+                    จ่ายเช็ค
+                </button>
+
+                <button
+                    onclick="openCancelModal()"
+                    class="
+                        action-admin
+                        hidden
+                        px-4
+                        py-2
+                        rounded-xl
+                        bg-red-600
+                        hover:bg-red-700
+                        text-white
+                    "
+                >
+                    ยกเลิก
+                </button>
+
+            </section>
+
+            <!-- Table -->
+            <section
+                class="
+                    flex-1
+                    overflow-hidden
+                    bg-white
+                    dark:bg-slate-900
+                "
+            >
+
+                <div
+                    class="
+                        h-full
+                        overflow-auto
+                    "
+                >
+
+                    <table
+                        class="
+                            min-w-[1900px]
+                            w-full
+                            text-sm
+                        "
+                    >
+
+                        <thead
+                            class="
+                                bg-slate-100
+                                dark:bg-slate-800
+                                sticky-head
+                            "
+                        >
+
+                            <tr>
+
+                                <th class="px-4 py-3">
+                                    <input
+                                        type="checkbox"
+                                        id="selectAll"
+                                    />
+                                </th>
+
+                                <th class="px-4 py-3">
+                                    เลขทะเบียน
+                                </th>
+
+                                <th class="px-4 py-3">
+                                    เลขรับ
+                                </th>
+
+                                <th class="px-4 py-3">
+                                    ประเภทเงิน
+                                </th>
+
+                                <th class="px-4 py-3">
+                                    หน่วยงาน
+                                </th>
+
+                                <th class="px-4 py-3">
+                                    เจ้าหนี้
+                                </th>
+
+                                <th class="px-4 py-3">
+                                    จำนวนเงิน
+                                </th>
+
+                                <th class="px-4 py-3">
+                                    Status
+                                </th>
+
+                                <th class="px-4 py-3">
+                                    Timeline
+                                </th>
+
+                                <th class="px-4 py-3">
+                                    Updated
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody
+                            id="tableBody"
+                        ></tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
+
     </div>
 
-    <!-- Date Picker Popup -->
-    <div id="dateModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[100]">
-        <div class="bg-white rounded-3xl p-8 w-full max-w-md mx-4">
-            <h3 class="text-xl font-semibold mb-6 text-purple-900" id="modal-title">เลือกวันที่</h3>
-            <input type="date" id="action-date" class="w-full px-5 py-4 border border-purple-200 rounded-2xl text-lg">
-            <div class="flex gap-4 mt-8">
-                <button onclick="closeDateModal()" 
-                        class="flex-1 py-4 border border-gray-300 rounded-2xl">ยกเลิก</button>
-                <button onclick="confirmAction()" 
-                        class="flex-1 btn-primary py-4 rounded-2xl text-white">ยืนยัน</button>
-            </div>
-        </div>
-    </div>
+    <!-- Action Modal -->
+    <div
+        id="actionModal"
+        class="
+            hidden
+            fixed
+            inset-0
+            bg-black/50
+            z-50
+            flex
+            items-center
+            justify-center
+            p-4
+        "
+    >
 
-    <script src="js/api-config.js"></script>
-    <script src="js/main.js"></script>
+        <div
+            class="
+                bg-white
+                dark:bg-slate-900
+                rounded-2xl
+                shadow-2xl
+                w-full
+                max-w-xl
+            "
+        >
+
+            <div
+                class="
+                    px-6
+                    py-5
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                "
+            >
+
+                <h3
+                    id="modalTitle"
+                    class="
+                        text-xl
+                        font-bold
+                    "
+                >
+                    Action
+                </h3>
+
+            </div>
+
+            <div
+                class="
+                    p-6
+                    space-y-5
+                "
+            >
+
+                <div>
+
+                    <label
+                        class="
+                            text-sm
+                            text-slate-500
+                        "
+                    >
+                        วันที่
+                    </label>
+
+                    <input
+                        type="date"
+                        id="actionDate"
+                        class="
+                            mt-1
+                            w-full
+                            rounded-xl
+                            border
+                            border-slate-300
+                            dark:border-slate-700
+                            bg-white
+                            dark:bg-slate-900
+                            px-4
+                            py-2
+                        "
+                    />
+
+                </div>
+
+                <div
+                    id="checkerContainer"
+                    class="hidden"
+                >
+
+                    <label
+                        class="
+                            text-sm
+                            text-slate-500
+                        "
+                    >
+                        ผู้จ่ายเช็ค
+                    </label>
+
+                    <input
+                        type="text"
+                        id="checkerInput"
+                        class="
+                            mt-1
+                            w-full
+                            rounded-xl
+                            border
+                            border-slate-300
+                            dark:border-slate-700
+                            bg-white
+                            dark:bg-slate-900
+                            px-4
+                            py-2
+                        "
+                    />
+
+                </div>
+
+                <div
+                    id="noteContainer"
+                    class="hidden"
+                >
+
+                    <label
+                        class="
+                            text-sm
+                            text-slate-500
+                        "
+                    >
+                        หมายเหตุ
+                    </label>
+
+                    <textarea
+                        id="actionNote"
+                        rows="4"
+                        class="
+                            mt-1
+                            w-full
+                            rounded-xl
+                            border
+                            border-slate-300
+                            dark:border-slate-700
+                            bg-white
+                            dark:bg-slate-900
+                            px-4
+                            py-3
+                        "
+                    ></textarea>
+
+                </div>
+
+                <div
+                    class="
+                        bg-slate-100
+                        dark:bg-slate-800
+                        rounded-xl
+                        p-4
+                    "
+                >
+
+                    <div
+                        class="
+                            text-sm
+                            text-slate-500
+                        "
+                    >
+                        Selected Rows
+                    </div>
+
+                    <div
+                        id="selectedCount"
+                        class="
+                            mt-2
+                            text-3xl
+                            font-bold
+                        "
+                    >
+                        0
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div
+                class="
+                    px-6
+                    py-5
+                    border-t
+                    border-slate-200
+                    dark:border-slate-800
+                    flex
+                    justify-end
+                    gap-3
+                "
+            >
+
+                <button
+                    onclick="closeModal()"
+                    class="
+                        px-5
+                        py-2
+                        rounded-xl
+                        border
+                    "
+                >
+                    Cancel
+                </button>
+
+                <button
+                    id="confirmActionButton"
+                    class="
+                        px-5
+                        py-2
+                        rounded-xl
+                        bg-blue-600
+                        hover:bg-blue-700
+                        text-white
+                    "
+                >
+                    Confirm
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
 
     <script>
 
-// Version: 00122
-// Approve Page Controller - หน้าบันทึกรายการ (สำหรับ Checker & Admin)
+        'use strict';
 
-let approveData = [];
-let filteredApproveData = [];
-let selectedItems = new Set();
-let currentAction = null;
+        // ======================
+        // STATE
+        // ======================
 
-// โหลดข้อมูล
-async function loadApproveData() {
-    try {
-        const result = await callGAS('getRegisterData');
-        if (result.success) {
-            approveData = result.data || [];
-            filteredApproveData = [...approveData];
-            renderApproveTable();
-            populateApproveFilters();
+        let allRows = [];
+
+        let filteredRows = [];
+
+        let selectedRows = new Set();
+
+        let currentAction = '';
+
+        let searchTimeout = null;
+
+        // ======================
+        // INIT
+        // ======================
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            initializePage
+        );
+
+        async function initializePage() {
+
+            try {
+
+                Auth.requireRoles([
+                    'admin',
+                    'editor',
+                    'checker'
+                ]);
+
+                bindEvents();
+
+                initializePermissions();
+
+                restoreFilters();
+
+                await loadData();
+
+                startAutoRefresh();
+
+            } catch (error) {
+
+                console.error(error);
+
+                UI.showToast(
+                    error.message,
+                    'error'
+                );
+            }
         }
-    } catch (error) {
-        console.error("Load approve data error:", error);
-    }
-}
 
-function populateApproveFilters() {
-    // Similar to list.js - populate dropdowns
-    const moneySelect = document.getElementById('filterMoneyType');
-    const deptSelect = document.getElementById('filterDept');
-    
-    const moneyTypes = new Set(approveData.map(row => row[0]).filter(Boolean));
-    const depts = new Set(approveData.map(row => row[1]).filter(Boolean));
-    
-    moneyTypes.forEach(type => {
-        const opt = document.createElement('option');
-        opt.value = type; opt.textContent = type;
-        moneySelect.appendChild(opt);
-    });
-    
-    depts.forEach(dept => {
-        const opt = document.createElement('option');
-        opt.value = dept; opt.textContent = dept;
-        deptSelect.appendChild(opt);
-    });
-}
+        // ======================
+        // EVENTS
+        // ======================
 
-function renderApproveTable() {
-    const tbody = document.getElementById('approve-table-body');
-    tbody.innerHTML = '';
+        function bindEvents() {
 
-    filteredApproveData.forEach((row, index) => {
-        const status = getStatus(row);
-        const isChecked = selectedItems.has(index);
-        
-        const tr = document.createElement('tr');
-        tr.className = `table-row hover:bg-purple-50 ${isChecked ? 'bg-purple-50' : ''}`;
-        tr.innerHTML = `
-            <td class="px-4 py-5">
-                <input type="checkbox" ${isChecked ? 'checked' : ''} 
-                       onchange="toggleSelect(${index}, this)">
-            </td>
-            <td class="px-6 py-5">
-                <div class="text-sm">${formatThaiDate(row[16])}</div>
-                <div class="font-medium">เลขรับ: ${row[10] || '-'}</div>
-            </td>
-            <td class="px-6 py-5">
-                <span class="px-4 py-1.5 rounded-2xl text-xs font-medium ${getStatusClass(status)}">${status}</span>
-            </td>
-            <td class="px-6 py-5 font-semibold">${row[4] || '-'}</td>
-            <td class="px-6 py-5 max-w-md truncate">${row[6] || '-'}</td>
-            <td class="px-6 py-5 text-right font-bold">${formatCurrency(row[5])}</td>
-            <td class="px-6 py-5">
-                <span class="money-type-${(row[0] || '').replace(/ /g,'')} px-4 py-1 rounded-2xl text-xs">${row[0] || '-'}</span>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+            document
+                .getElementById(
+                    'refreshButton'
+                )
+                .addEventListener(
+                    'click',
+                    loadData
+                );
 
-    updateSelectedCount();
-}
+            document
+                .getElementById(
+                    'printButton'
+                )
+                .addEventListener(
+                    'click',
+                    () => window.print()
+                );
 
-function toggleSelect(index, checkbox) {
-    if (checkbox.checked) {
-        selectedItems.add(index);
-    } else {
-        selectedItems.delete(index);
-    }
-    updateSelectedCount();
-}
+            document
+                .getElementById(
+                    'searchInput'
+                )
+                .addEventListener(
+                    'input',
+                    handleSearch
+                );
 
-function toggleSelectAll(checkbox) {
-    selectedItems.clear();
-    if (checkbox.checked) {
-        filteredApproveData.forEach((_, i) => selectedItems.add(i));
-    }
-    renderApproveTable();
-}
+            [
+                'statusFilter',
+                'moneyTypeFilter',
+                'startDate',
+                'endDate'
+            ].forEach(id => {
 
-function updateSelectedCount() {
-    document.getElementById('selected-count').textContent = `เลือก ${selectedItems.size} รายการ`;
-}
+                document
+                    .getElementById(id)
+                    .addEventListener(
+                        'change',
+                        applyFilters
+                    );
+            });
 
-// ปุ่ม Action
-function performAction(action) {
-    if (selectedItems.size === 0) {
-        alert("กรุณาเลือกรายการอย่างน้อย 1 รายการ");
-        return;
-    }
-    
-    currentAction = action;
-    
-    const titles = {
-        'receive': 'รับเอกสาร',
-        'edit': 'ส่งแก้ไข',
-        'propose': 'ส่งเสนอ',
-        'pay': 'จ่ายเช็ค'
-    };
-    
-    document.getElementById('modal-title').textContent = titles[action];
-    document.getElementById('dateModal').classList.remove('hidden');
-}
+            document
+                .getElementById(
+                    'clearFilterButton'
+                )
+                .addEventListener(
+                    'click',
+                    clearFilters
+                );
 
-function closeDateModal() {
-    document.getElementById('dateModal').classList.add('hidden');
-}
-
-async function confirmAction() {
-    const date = document.getElementById('action-date').value;
-    if (!date) {
-        alert("กรุณาเลือกวันที่");
-        return;
-    }
-
-    const selectedRows = Array.from(selectedItems).map(i => filteredApproveData[i]);
-
-    try {
-        const result = await callGAS('updateStatus', {
-            action: currentAction,
-            items: selectedRows,
-            date: date,
-            user: currentUser
-        });
-
-        if (result.success) {
-            alert(`ดำเนินการ "${currentAction}" สำเร็จ`);
-            selectedItems.clear();
-            closeDateModal();
-            loadApproveData(); // Refresh
+            document
+                .getElementById(
+                    'selectAll'
+                )
+                .addEventListener(
+                    'change',
+                    toggleSelectAll
+                );
         }
-    } catch (error) {
-        alert("เกิดข้อผิดพลาดในการบันทึก");
-    }
-}
 
-// Filter
-function filterApproveData() {
-    const term = document.getElementById('searchInput').value.toLowerCase();
-    const money = document.getElementById('filterMoneyType').value;
-    const dept = document.getElementById('filterDept').value;
-    const statusFilter = document.getElementById('filterStatus').value;
+        // ======================
+        // PERMISSIONS
+        // ======================
 
-    filteredApproveData = approveData.filter(row => {
-        let match = true;
-        if (term) {
-            match = row.some(cell => cell && String(cell).toLowerCase().includes(term));
+        function initializePermissions() {
+
+            const role =
+                Auth.user.role;
+
+            if (
+                role === 'admin'
+            ) {
+
+                document
+                    .querySelectorAll(
+                        '.action-admin, .action-editor, .action-checker'
+                    )
+                    .forEach(element => {
+
+                        element.classList.remove(
+                            'hidden'
+                        );
+                    });
+
+                return;
+            }
+
+            if (
+                role === 'editor'
+            ) {
+
+                document
+                    .querySelectorAll(
+                        '.action-editor'
+                    )
+                    .forEach(element => {
+
+                        element.classList.remove(
+                            'hidden'
+                        );
+                    });
+            }
+
+            if (
+                role === 'checker'
+            ) {
+
+                document
+                    .querySelectorAll(
+                        '.action-checker'
+                    )
+                    .forEach(element => {
+
+                        element.classList.remove(
+                            'hidden'
+                        );
+                    });
+            }
         }
-        if (money && row[0] !== money) match = false;
-        if (dept && row[1] !== dept) match = false;
-        if (statusFilter && getStatus(row) !== statusFilter) match = false;
-        return match;
-    });
 
-    renderApproveTable();
-}
+        // ======================
+        // LOAD
+        // ======================
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    initAuth();
-    checkDarkMode();
-    loadApproveData();
-});
+        async function loadData() {
+
+            try {
+
+                UI.showLoading();
+
+                const result =
+                    await RegisterAPI
+                        .getRegisterData();
+
+                if (
+                    !result.success
+                ) {
+
+                    throw new Error(
+                        result.message
+                    );
+                }
+
+                allRows =
+                    result.data || [];
+
+                applyFilters();
+
+                populateMoneyTypes();
+
+            } catch (error) {
+
+                console.error(error);
+
+                UI.showToast(
+                    error.message,
+                    'error'
+                );
+
+            } finally {
+
+                UI.hideLoading();
+            }
+        }
+
+        // ======================
+        // FILTER
+        // ======================
+
+        function handleSearch() {
+
+            clearTimeout(
+                searchTimeout
+            );
+
+            searchTimeout =
+                setTimeout(
+                    applyFilters,
+                    300
+                );
+        }
+
+        function applyFilters() {
+
+            saveFilters();
+
+            const search =
+                document
+                    .getElementById(
+                        'searchInput'
+                    )
+                    .value
+                    .toLowerCase();
+
+            const status =
+                document
+                    .getElementById(
+                        'statusFilter'
+                    )
+                    .value;
+
+            const moneyType =
+                document
+                    .getElementById(
+                        'moneyTypeFilter'
+                    )
+                    .value;
+
+            filteredRows =
+                allRows.filter(
+                    row => {
+
+                        const rowStatus =
+                            getRowStatus(
+                                row
+                            );
+
+                        const searchable =
+                            JSON.stringify(
+                                row
+                            ).toLowerCase();
+
+                        if (
+                            search &&
+                            !searchable.includes(
+                                search
+                            )
+                        ) {
+
+                            return false;
+                        }
+
+                        if (
+                            status &&
+                            rowStatus !== status
+                        ) {
+
+                            return false;
+                        }
+
+                        if (
+                            moneyType &&
+                            row[0] !== moneyType
+                        ) {
+
+                            return false;
+                        }
+
+                        return true;
+                    }
+                );
+
+            renderTable();
+        }
+
+        function clearFilters() {
+
+            [
+                'searchInput',
+                'statusFilter',
+                'moneyTypeFilter',
+                'startDate',
+                'endDate'
+            ].forEach(id => {
+
+                document.getElementById(
+                    id
+                ).value = '';
+            });
+
+            applyFilters();
+        }
+
+        // ======================
+        // TABLE
+        // ======================
+
+        function renderTable() {
+
+            const tbody =
+                document.getElementById(
+                    'tableBody'
+                );
+
+            tbody.innerHTML = '';
+
+            if (
+                !filteredRows.length
+            ) {
+
+                tbody.innerHTML =
+                    `
+                    <tr>
+                        <td
+                            colspan="10"
+                            class="
+                                px-6
+                                py-12
+                                text-center
+                                text-slate-500
+                            "
+                        >
+                            ไม่พบข้อมูล
+                        </td>
+                    </tr>
+                    `;
+
+                return;
+            }
+
+            filteredRows.forEach(
+                row => {
+
+                    const status =
+                        getRowStatus(
+                            row
+                        );
+
+                    const registerNo =
+                        row[9] || '-';
+
+                    const receiveNo =
+                        row[10] || '-';
+
+                    const uniqueId =
+                        receiveNo;
+
+                    const tr =
+                        document.createElement(
+                            'tr'
+                        );
+
+                    if (
+                        selectedRows.has(
+                            uniqueId
+                        )
+                    ) {
+
+                        tr.classList.add(
+                            'table-row-selected'
+                        );
+                    }
+
+                    tr.innerHTML =
+                        `
+                        <td class="px-4 py-3">
+
+                            <input
+                                type="checkbox"
+                                ${selectedRows.has(uniqueId) ? 'checked' : ''}
+                                onchange="toggleRowSelection('${uniqueId}')"
+                            />
+
+                        </td>
+
+                        <td class="px-4 py-3">
+                            ${registerNo}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            ${receiveNo}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            ${row[0] || '-'}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            ${row[1] || '-'}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            ${row[4] || '-'}
+                        </td>
+
+                        <td class="px-4 py-3 text-right">
+                            ${formatCurrency(row[5])}
+                        </td>
+
+                        <td class="px-4 py-3">
+
+                            ${renderStatusBadge(status)}
+
+                        </td>
+
+                        <td class="px-4 py-3">
+
+                            ${renderTimeline(row)}
+
+                        </td>
+
+                        <td class="px-4 py-3 text-xs text-slate-500">
+                            ${formatDate(row[24])}
+                        </td>
+                        `;
+
+                    tbody.appendChild(
+                        tr
+                    );
+                }
+            );
+        }
+
+        // ======================
+        // STATUS
+        // ======================
+
+        function renderStatusBadge(
+            status
+        ) {
+
+            const map = {
+
+                'รับเอกสาร':
+                    'status-receive',
+
+                'ตรวจผ่าน':
+                    'status-pass',
+
+                'เสนอ':
+                    'status-propose',
+
+                'อนุมัติ':
+                    'status-approve',
+
+                'จ่ายแล้ว':
+                    'status-pay',
+
+                'ส่งแก้ไข':
+                    'status-edit',
+
+                'ยกเลิก':
+                    'status-cancel'
+            };
+
+            return `
+            <span class="
+                px-3
+                py-1
+                rounded-full
+                text-xs
+                font-medium
+                ${map[status] || ''}
+            ">
+                ${status}
+            </span>
+            `;
+        }
+
+        function renderTimeline(
+            row
+        ) {
+
+            const timeline = [];
+
+            if (row[16]) {
+
+                timeline.push(
+                    `
+                    <div class="flex items-center gap-2">
+                        <div class="timeline-dot bg-blue-500"></div>
+                        <span>รับ</span>
+                    </div>
+                    `
+                );
+            }
+
+            if (row[17]) {
+
+                timeline.push(
+                    `
+                    <div class="flex items-center gap-2">
+                        <div class="timeline-dot bg-amber-500"></div>
+                        <span>แก้ไข</span>
+                    </div>
+                    `
+                );
+            }
+
+            if (row[19]) {
+
+                timeline.push(
+                    `
+                    <div class="flex items-center gap-2">
+                        <div class="timeline-dot bg-emerald-500"></div>
+                        <span>ผ่าน</span>
+                    </div>
+                    `
+                );
+            }
+
+            if (row[20]) {
+
+                timeline.push(
+                    `
+                    <div class="flex items-center gap-2">
+                        <div class="timeline-dot bg-purple-500"></div>
+                        <span>เสนอ</span>
+                    </div>
+                    `
+                );
+            }
+
+            if (row[21]) {
+
+                timeline.push(
+                    `
+                    <div class="flex items-center gap-2">
+                        <div class="timeline-dot bg-sky-500"></div>
+                        <span>อนุมัติ</span>
+                    </div>
+                    `
+                );
+            }
+
+            if (row[22]) {
+
+                timeline.push(
+                    `
+                    <div class="flex items-center gap-2">
+                        <div class="timeline-dot bg-green-600"></div>
+                        <span>จ่าย</span>
+                    </div>
+                    `
+                );
+            }
+
+            return `
+            <div class="
+                flex
+                flex-wrap
+                gap-2
+            ">
+                ${timeline.join('')}
+            </div>
+            `;
+        }
+
+        // ======================
+        // SELECT
+        // ======================
+
+        function toggleRowSelection(
+            id
+        ) {
+
+            if (
+                selectedRows.has(id)
+            ) {
+
+                selectedRows.delete(id);
+
+            } else {
+
+                if (
+                    selectedRows.size >= 100
+                ) {
+
+                    UI.showToast(
+                        'เลือกได้สูงสุด 100 รายการ',
+                        'warning'
+                    );
+
+                    return;
+                }
+
+                selectedRows.add(id);
+            }
+
+            renderTable();
+        }
+
+        function toggleSelectAll(
+            event
+        ) {
+
+            if (
+                event.target.checked
+            ) {
+
+                filteredRows
+                    .slice(0, 100)
+                    .forEach(row => {
+
+                        selectedRows.add(
+                            row[10]
+                        );
+                    });
+
+            } else {
+
+                selectedRows.clear();
+            }
+
+            renderTable();
+        }
+
+        // ======================
+        // ACTION
+        // ======================
+
+        function openActionModal(
+            action
+        ) {
+
+            if (
+                !selectedRows.size
+            ) {
+
+                UI.showToast(
+                    'กรุณาเลือกรายการ',
+                    'warning'
+                );
+
+                return;
+            }
+
+            currentAction =
+                action;
+
+            document
+                .getElementById(
+                    'modalTitle'
+                )
+                .textContent =
+                getActionLabel(
+                    action
+                );
+
+            document
+                .getElementById(
+                    'selectedCount'
+                )
+                .textContent =
+                selectedRows.size;
+
+            document
+                .getElementById(
+                    'checkerContainer'
+                )
+                .classList.toggle(
+                    'hidden',
+                    action !== 'pay'
+                );
+
+            document
+                .getElementById(
+                    'noteContainer'
+                )
+                .classList.toggle(
+                    'hidden',
+                    action !== 'edit'
+                );
+
+            document
+                .getElementById(
+                    'actionModal'
+                )
+                .classList.remove(
+                    'hidden'
+                );
+
+            document
+                .getElementById(
+                    'confirmActionButton'
+                )
+                .onclick =
+                executeAction;
+        }
+
+        function openCancelModal() {
+
+            openActionModal(
+                'cancel'
+            );
+
+            document
+                .getElementById(
+                    'noteContainer'
+                )
+                .classList.remove(
+                    'hidden'
+                );
+        }
+
+        function closeModal() {
+
+            document
+                .getElementById(
+                    'actionModal'
+                )
+                .classList.add(
+                    'hidden'
+                );
+        }
+
+        async function executeAction() {
+
+            try {
+
+                UI.showLoading();
+
+                const date =
+                    document
+                        .getElementById(
+                            'actionDate'
+                        )
+                        .value;
+
+                const note =
+                    document
+                        .getElementById(
+                            'actionNote'
+                        )
+                        .value;
+
+                const checker =
+                    document
+                        .getElementById(
+                            'checkerInput'
+                        )
+                        .value;
+
+                if (
+                    !date
+                ) {
+
+                    throw new Error(
+                        'กรุณาระบุวันที่'
+                    );
+                }
+
+                if (
+                    currentAction === 'cancel' &&
+                    !note
+                ) {
+
+                    throw new Error(
+                        'กรุณาระบุเหตุผลการยกเลิก'
+                    );
+                }
+
+                if (
+                    currentAction === 'pay' &&
+                    !checker
+                ) {
+
+                    throw new Error(
+                        'กรุณาระบุผู้จ่ายเช็ค'
+                    );
+                }
+
+                const items =
+                    allRows.filter(
+                        row =>
+                            selectedRows.has(
+                                row[10]
+                            )
+                    );
+
+                const result =
+                    await RegisterAPI
+                        .updateWorkflowStatus({
+
+                            action:
+                                currentAction,
+
+                            items,
+
+                            date,
+
+                            note,
+
+                            checker
+                        });
+
+                if (
+                    !result.success
+                ) {
+
+                    throw new Error(
+                        result.message
+                    );
+                }
+
+                UI.showToast(
+                    'อัพเดทสถานะสำเร็จ',
+                    'success'
+                );
+
+                selectedRows.clear();
+
+                closeModal();
+
+                await loadData();
+
+            } catch (error) {
+
+                console.error(error);
+
+                UI.showToast(
+                    error.message,
+                    'error'
+                );
+
+            } finally {
+
+                UI.hideLoading();
+            }
+        }
+
+        // ======================
+        // STORAGE
+        // ======================
+
+        function saveFilters() {
+
+            localStorage.setItem(
+                'approve_filters',
+                JSON.stringify({
+
+                    search:
+                        document.getElementById(
+                            'searchInput'
+                        ).value,
+
+                    status:
+                        document.getElementById(
+                            'statusFilter'
+                        ).value,
+
+                    moneyType:
+                        document.getElementById(
+                            'moneyTypeFilter'
+                        ).value
+                })
+            );
+        }
+
+        function restoreFilters() {
+
+            const raw =
+                localStorage.getItem(
+                    'approve_filters'
+                );
+
+            if (!raw) {
+
+                return;
+            }
+
+            try {
+
+                const filters =
+                    JSON.parse(raw);
+
+                document.getElementById(
+                    'searchInput'
+                ).value =
+                    filters.search || '';
+
+                document.getElementById(
+                    'statusFilter'
+                ).value =
+                    filters.status || '';
+
+                document.getElementById(
+                    'moneyTypeFilter'
+                ).value =
+                    filters.moneyType || '';
+
+            } catch (error) {
+
+                console.error(error);
+            }
+        }
+
+        // ======================
+        // REFRESH
+        // ======================
+
+        function startAutoRefresh() {
+
+            setInterval(
+                async () => {
+
+                    await loadData();
+
+                },
+                300000
+            );
+        }
+
+        // ======================
+        // UTILS
+        // ======================
+
+        function populateMoneyTypes() {
+
+            const select =
+                document.getElementById(
+                    'moneyTypeFilter'
+                );
+
+            const current =
+                select.value;
+
+            const values =
+                [
+                    ...new Set(
+                        allRows.map(
+                            row => row[0]
+                        )
+                    )
+                ]
+                    .filter(Boolean)
+                    .sort();
+
+            select.innerHTML =
+                `
+                <option value="">
+                    ทั้งหมด
+                </option>
+                `;
+
+            values.forEach(
+                value => {
+
+                    const option =
+                        document.createElement(
+                            'option'
+                        );
+
+                    option.value =
+                        value;
+
+                    option.textContent =
+                        value;
+
+                    select.appendChild(
+                        option
+                    );
+                }
+            );
+
+            select.value =
+                current;
+        }
+
+        function getActionLabel(
+            action
+        ) {
+
+            const map = {
+
+                receive:
+                    'รับเอกสาร',
+
+                edit:
+                    'ส่งแก้ไข',
+
+                return:
+                    'รับคืน',
+
+                pass:
+                    'ตรวจผ่าน',
+
+                propose:
+                    'เสนอ',
+
+                pay:
+                    'จ่ายเช็ค',
+
+                cancel:
+                    'ยกเลิก'
+            };
+
+            return map[action] || action;
+        }
+
     </script>
-    
+
 </body>
+
 </html>
