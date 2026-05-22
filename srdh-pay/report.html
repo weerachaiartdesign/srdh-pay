@@ -1,217 +1,2140 @@
-<!-- Version: 00122.3
-     report.html -->
+<!-- Version: 00123.0 -->
+<!-- report.html -->
+<!-- SRDH PAY Report System -->
 
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>รายงาน - Srdh Pay</title>
+
+    <meta charset="UTF-8" />
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+        SRDH PAY - Reports
+    </title>
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&amp;family=Prompt:wght@400;500;600&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#7C3AED">
-    <link rel="apple-touch-icon" href="icons/register_acc-touch-icon.png">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Runtime -->
+    <script src="api-config.js"></script>
+    <script src="main.js"></script>
+
+    <style>
+
+        html,
+        body {
+
+            height: 100%;
+        }
+
+        body {
+
+            font-family:
+                system-ui,
+                sans-serif;
+        }
+
+        .report-card {
+
+            background:
+                white;
+
+            border-radius:
+                1rem;
+
+            padding:
+                1.25rem;
+
+            border:
+                1px solid rgb(226 232 240);
+        }
+
+        .dark .report-card {
+
+            background:
+                rgb(15 23 42);
+
+            border-color:
+                rgb(30 41 59);
+        }
+
+        .print-only {
+
+            display: none;
+        }
+
+        @media print {
+
+            .no-print {
+
+                display: none !important;
+            }
+
+            .print-only {
+
+                display: block;
+            }
+
+            body {
+
+                background:
+                    white;
+            }
+
+            .report-card {
+
+                border:
+                    1px solid #ddd;
+            }
+        }
+
+    </style>
+
 </head>
-<body class="bg-purple-50 text-gray-800" data-theme="light">
-    <!-- Header -->
-    <header class="bg-white border-b border-purple-200 shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 bg-gradient-to-br from-purple-600 to-violet-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">รพส</div>
+
+<body
+    class="
+        bg-slate-100
+        dark:bg-slate-950
+        text-slate-800
+        dark:text-slate-100
+    "
+>
+
+    <!-- Layout -->
+    <div
+        class="
+            min-h-screen
+            flex
+        "
+    >
+
+        <!-- Sidebar -->
+        <aside
+            class="
+                hidden
+                lg:flex
+                w-64
+                bg-white
+                dark:bg-slate-900
+                border-r
+                border-slate-200
+                dark:border-slate-800
+                flex-col
+                no-print
+            "
+        >
+
+            <div
+                class="
+                    px-6
+                    py-5
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                "
+            >
+
+                <h1
+                    class="
+                        text-2xl
+                        font-bold
+                        text-blue-600
+                    "
+                >
+                    SRDH PAY
+                </h1>
+
+                <p
+                    class="
+                        text-sm
+                        text-slate-500
+                        mt-1
+                    "
+                >
+                    Financial Reports
+                </p>
+
+            </div>
+
+            <nav
+                id="sidebarMenu"
+                class="
+                    flex-1
+                    p-4
+                "
+            ></nav>
+
+            <div
+                class="
+                    p-4
+                    border-t
+                    border-slate-200
+                    dark:border-slate-800
+                    text-xs
+                    text-slate-500
+                "
+            >
+                Version 00123.0
+            </div>
+
+        </aside>
+
+        <!-- Main -->
+        <main
+            class="
+                flex-1
+                overflow-hidden
+                flex
+                flex-col
+            "
+        >
+
+            <!-- Header -->
+            <header
+                class="
+                    bg-white
+                    dark:bg-slate-900
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                    px-4
+                    lg:px-8
+                    py-5
+                    flex
+                    flex-col
+                    lg:flex-row
+                    lg:items-center
+                    lg:justify-between
+                    gap-4
+                    no-print
+                "
+            >
+
+                <div>
+
+                    <h2
+                        class="
+                            text-2xl
+                            font-bold
+                        "
+                    >
+                        รายงานการเงิน
+                    </h2>
+
+                    <p
+                        class="
+                            text-sm
+                            text-slate-500
+                            mt-1
+                        "
+                    >
+                        สรุปและวิเคราะห์ข้อมูลการเบิกจ่าย
+                    </p>
+
+                </div>
+
+                <div
+                    class="
+                        flex
+                        flex-wrap
+                        gap-3
+                    "
+                >
+
+                    <button
+                        id="refreshButton"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            border
+                            border-slate-300
+                            hover:bg-slate-100
+                            dark:border-slate-700
+                            dark:hover:bg-slate-800
+                        "
+                    >
+                        Refresh
+                    </button>
+
+                    <button
+                        id="printButton"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            bg-blue-600
+                            hover:bg-blue-700
+                            text-white
+                        "
+                    >
+                        Print
+                    </button>
+
+                    <button
+                        id="exportExcelButton"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            bg-emerald-600
+                            hover:bg-emerald-700
+                            text-white
+                        "
+                    >
+                        Export Excel
+                    </button>
+
+                    <button
+                        id="exportPdfButton"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            bg-red-600
+                            hover:bg-red-700
+                            text-white
+                        "
+                    >
+                        Export PDF
+                    </button>
+
+                </div>
+
+            </header>
+
+            <!-- Filters -->
+            <section
+                class="
+                    bg-white
+                    dark:bg-slate-900
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                    px-4
+                    lg:px-8
+                    py-4
+                    no-print
+                "
+            >
+
+                <div
+                    class="
+                        grid
+                        grid-cols-1
+                        md:grid-cols-2
+                        xl:grid-cols-7
+                        gap-4
+                    "
+                >
+
                     <div>
-                        <h1 class="text-xl font-semibold text-purple-900">รายงานระบบ</h1>
+
+                        <label
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            ประเภทรายงาน
+                        </label>
+
+                        <select
+                            id="reportType"
+                            class="
+                                mt-1
+                                w-full
+                                rounded-xl
+                                border
+                                border-slate-300
+                                dark:border-slate-700
+                                bg-white
+                                dark:bg-slate-900
+                                px-4
+                                py-2
+                            "
+                        >
+
+                            <option value="daily">
+                                รายวัน
+                            </option>
+
+                            <option value="monthly">
+                                รายเดือน
+                            </option>
+
+                            <option value="fiscal">
+                                ปีงบประมาณ
+                            </option>
+
+                            <option value="department">
+                                หน่วยงาน
+                            </option>
+
+                            <option value="moneyType">
+                                ประเภทเงิน
+                            </option>
+
+                            <option value="status">
+                                สถานะ
+                            </option>
+
+                            <option value="custom">
+                                Custom Range
+                            </option>
+
+                        </select>
+
                     </div>
-                </div>
-                
-                <div class="flex items-center gap-4">
-                    <button onclick="toggleDarkMode()" class="p-3 rounded-2xl hover:bg-purple-100">
-                        <i id="theme-icon" class="fas fa-moon text-xl"></i>
-                    </button>
-                    <button onclick="exportToExcel()" 
-                            class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl flex items-center gap-2">
-                        <i class="fas fa-file-excel"></i> ส่งออก Excel
-                    </button>
-                    <div onclick="logout()" class="cursor-pointer text-purple-700 hover:text-red-600">
-                        <i class="fas fa-sign-out-alt text-xl"></i>
+
+                    <div>
+
+                        <label
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            วันที่เริ่ม
+                        </label>
+
+                        <input
+                            type="date"
+                            id="startDate"
+                            class="
+                                mt-1
+                                w-full
+                                rounded-xl
+                                border
+                                border-slate-300
+                                dark:border-slate-700
+                                bg-white
+                                dark:bg-slate-900
+                                px-4
+                                py-2
+                            "
+                        />
+
                     </div>
+
+                    <div>
+
+                        <label
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            วันที่สิ้นสุด
+                        </label>
+
+                        <input
+                            type="date"
+                            id="endDate"
+                            class="
+                                mt-1
+                                w-full
+                                rounded-xl
+                                border
+                                border-slate-300
+                                dark:border-slate-700
+                                bg-white
+                                dark:bg-slate-900
+                                px-4
+                                py-2
+                            "
+                        />
+
+                    </div>
+
+                    <div>
+
+                        <label
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            ประเภทเงิน
+                        </label>
+
+                        <select
+                            id="moneyTypeFilter"
+                            class="
+                                mt-1
+                                w-full
+                                rounded-xl
+                                border
+                                border-slate-300
+                                dark:border-slate-700
+                                bg-white
+                                dark:bg-slate-900
+                                px-4
+                                py-2
+                            "
+                        >
+
+                            <option value="">
+                                ทั้งหมด
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div>
+
+                        <label
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            หน่วยงาน
+                        </label>
+
+                        <select
+                            id="deptFilter"
+                            class="
+                                mt-1
+                                w-full
+                                rounded-xl
+                                border
+                                border-slate-300
+                                dark:border-slate-700
+                                bg-white
+                                dark:bg-slate-900
+                                px-4
+                                py-2
+                            "
+                        >
+
+                            <option value="">
+                                ทั้งหมด
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div>
+
+                        <label
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            สถานะ
+                        </label>
+
+                        <select
+                            id="statusFilter"
+                            class="
+                                mt-1
+                                w-full
+                                rounded-xl
+                                border
+                                border-slate-300
+                                dark:border-slate-700
+                                bg-white
+                                dark:bg-slate-900
+                                px-4
+                                py-2
+                            "
+                        >
+
+                            <option value="">
+                                ทั้งหมด
+                            </option>
+
+                            <option value="รออนุมัติ">
+                                รออนุมัติ
+                            </option>
+
+                            <option value="รับเอกสาร">
+                                รับเอกสาร
+                            </option>
+
+                            <option value="ตรวจผ่าน">
+                                ตรวจผ่าน
+                            </option>
+
+                            <option value="เสนอ">
+                                เสนอ
+                            </option>
+
+                            <option value="อนุมัติ">
+                                อนุมัติ
+                            </option>
+
+                            <option value="จ่ายแล้ว">
+                                จ่ายแล้ว
+                            </option>
+
+                            <option value="ยกเลิก">
+                                ยกเลิก
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div
+                        class="
+                            flex
+                            items-end
+                        "
+                    >
+
+                        <button
+                            id="applyFilterButton"
+                            class="
+                                w-full
+                                px-4
+                                py-2
+                                rounded-xl
+                                bg-blue-600
+                                hover:bg-blue-700
+                                text-white
+                            "
+                        >
+                            Apply Filter
+                        </button>
+
+                    </div>
+
                 </div>
-            </div>
-        </div>
-    </header>
 
-    <div class="max-w-7xl mx-auto px-6 py-8">
-        <h2 class="text-3xl font-bold text-purple-900 mb-8 flex items-center gap-3">
-            <i class="fas fa-chart-bar"></i> รายงานการเบิกจ่ายเงิน
-        </h2>
+            </section>
 
-        <!-- Period Selector -->
-        <div class="bg-white rounded-3xl p-6 shadow-sm mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-purple-700 mb-2">เดือน</label>
-                    <select id="report-month" class="w-full px-5 py-4 border border-purple-200 rounded-2xl">
-                        <!-- Populated by JS -->
-                    </select>
+            <!-- Content -->
+            <section
+                class="
+                    flex-1
+                    overflow-auto
+                    p-4
+                    lg:p-8
+                    space-y-6
+                "
+            >
+
+                <!-- Print Header -->
+                <div
+                    class="
+                        print-only
+                        mb-6
+                    "
+                >
+
+                    <h1
+                        class="
+                            text-2xl
+                            font-bold
+                        "
+                    >
+                        รายงานระบบทะเบียนเบิกจ่ายเงิน
+                    </h1>
+
+                    <p
+                        class="
+                            mt-2
+                            text-sm
+                        "
+                    >
+                        วันที่พิมพ์:
+                        <span id="printDate"></span>
+                    </p>
+
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-purple-700 mb-2">ปีงบประมาณ</label>
-                    <select id="report-year" class="w-full px-5 py-4 border border-purple-200 rounded-2xl">
-                        <!-- Populated by JS -->
-                    </select>
+
+                <!-- KPI -->
+                <div
+                    class="
+                        grid
+                        grid-cols-1
+                        sm:grid-cols-2
+                        xl:grid-cols-6
+                        gap-4
+                    "
+                >
+
+                    <div class="report-card">
+
+                        <div
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            ยอดรวม
+                        </div>
+
+                        <div
+                            id="totalAmount"
+                            class="
+                                mt-2
+                                text-3xl
+                                font-bold
+                            "
+                        >
+                            0
+                        </div>
+
+                    </div>
+
+                    <div class="report-card">
+
+                        <div
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            จ่ายแล้ว
+                        </div>
+
+                        <div
+                            id="paidAmount"
+                            class="
+                                mt-2
+                                text-3xl
+                                font-bold
+                                text-green-600
+                            "
+                        >
+                            0
+                        </div>
+
+                    </div>
+
+                    <div class="report-card">
+
+                        <div
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            รอดำเนินการ
+                        </div>
+
+                        <div
+                            id="pendingAmount"
+                            class="
+                                mt-2
+                                text-3xl
+                                font-bold
+                                text-amber-600
+                            "
+                        >
+                            0
+                        </div>
+
+                    </div>
+
+                    <div class="report-card">
+
+                        <div
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            ยกเลิก
+                        </div>
+
+                        <div
+                            id="cancelAmount"
+                            class="
+                                mt-2
+                                text-3xl
+                                font-bold
+                                text-red-600
+                            "
+                        >
+                            0
+                        </div>
+
+                    </div>
+
+                    <div class="report-card">
+
+                        <div
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            Avg Days
+                        </div>
+
+                        <div
+                            id="avgDays"
+                            class="
+                                mt-2
+                                text-3xl
+                                font-bold
+                            "
+                        >
+                            0
+                        </div>
+
+                    </div>
+
+                    <div class="report-card">
+
+                        <div
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            Success Rate
+                        </div>
+
+                        <div
+                            id="successRate"
+                            class="
+                                mt-2
+                                text-3xl
+                                font-bold
+                            "
+                        >
+                            0%
+                        </div>
+
+                    </div>
+
                 </div>
-                <div class="flex items-end">
-                    <button onclick="loadReport()" 
-                            class="w-full py-4 btn-primary text-white rounded-2xl font-semibold">
-                        แสดงรายงาน
-                    </button>
+
+                <!-- Charts -->
+                <div
+                    class="
+                        grid
+                        grid-cols-1
+                        xl:grid-cols-2
+                        gap-6
+                    "
+                >
+
+                    <div class="report-card">
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                justify-between
+                                mb-4
+                            "
+                        >
+
+                            <h3
+                                class="
+                                    text-lg
+                                    font-semibold
+                                "
+                            >
+                                ประเภทเงิน
+                            </h3>
+
+                        </div>
+
+                        <canvas
+                            id="moneyTypeChart"
+                            height="120"
+                        ></canvas>
+
+                    </div>
+
+                    <div class="report-card">
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                justify-between
+                                mb-4
+                            "
+                        >
+
+                            <h3
+                                class="
+                                    text-lg
+                                    font-semibold
+                                "
+                            >
+                                สถานะ
+                            </h3>
+
+                        </div>
+
+                        <canvas
+                            id="statusChart"
+                            height="120"
+                        ></canvas>
+
+                    </div>
+
+                    <div class="report-card">
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                justify-between
+                                mb-4
+                            "
+                        >
+
+                            <h3
+                                class="
+                                    text-lg
+                                    font-semibold
+                                "
+                            >
+                                รายเดือน
+                            </h3>
+
+                        </div>
+
+                        <canvas
+                            id="monthlyChart"
+                            height="120"
+                        ></canvas>
+
+                    </div>
+
+                    <div class="report-card">
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                justify-between
+                                mb-4
+                            "
+                        >
+
+                            <h3
+                                class="
+                                    text-lg
+                                    font-semibold
+                                "
+                            >
+                                Top เจ้าหนี้
+                            </h3>
+
+                        </div>
+
+                        <canvas
+                            id="vendorChart"
+                            height="120"
+                        ></canvas>
+
+                    </div>
+
                 </div>
-            </div>
-        </div>
 
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10" id="report-summary">
-            <!-- Generated by JS -->
-        </div>
+                <!-- Top -->
+                <div
+                    class="
+                        grid
+                        grid-cols-1
+                        xl:grid-cols-3
+                        gap-6
+                    "
+                >
 
-        <!-- Charts -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="card p-6">
-                <h3 class="font-semibold text-purple-800 mb-4">สรุปตามประเภทเงิน</h3>
-                <canvas id="reportMoneyChart" height="140"></canvas>
-            </div>
-            <div class="card p-6">
-                <h3 class="font-semibold text-purple-800 mb-4">สรุปตามหน่วยงาน</h3>
-                <canvas id="reportDeptChart" height="140"></canvas>
-            </div>
-        </div>
+                    <div class="report-card">
 
-        <!-- Pending Items -->
-        <div class="mt-8 card p-6">
-            <h3 class="font-semibold text-purple-800 mb-4">รายการค้างดำเนินการ</h3>
-            <div id="pending-list" class="space-y-3">
-                <!-- Dynamic -->
-            </div>
-        </div>
+                        <h3
+                            class="
+                                text-lg
+                                font-semibold
+                                mb-4
+                            "
+                        >
+                            Top 5 หน่วยงาน
+                        </h3>
+
+                        <div
+                            id="topDeptList"
+                            class="
+                                space-y-3
+                            "
+                        ></div>
+
+                    </div>
+
+                    <div class="report-card">
+
+                        <h3
+                            class="
+                                text-lg
+                                font-semibold
+                                mb-4
+                            "
+                        >
+                            Top 5 ประเภทเงิน
+                        </h3>
+
+                        <div
+                            id="topMoneyList"
+                            class="
+                                space-y-3
+                            "
+                        ></div>
+
+                    </div>
+
+                    <div class="report-card">
+
+                        <h3
+                            class="
+                                text-lg
+                                font-semibold
+                                mb-4
+                            "
+                        >
+                            Top 10 เจ้าหนี้
+                        </h3>
+
+                        <div
+                            id="topVendorList"
+                            class="
+                                space-y-3
+                            "
+                        ></div>
+
+                    </div>
+
+                </div>
+
+                <!-- Table -->
+                <div class="report-card">
+
+                    <div
+                        class="
+                            flex
+                            items-center
+                            justify-between
+                            mb-4
+                        "
+                    >
+
+                        <h3
+                            class="
+                                text-lg
+                                font-semibold
+                            "
+                        >
+                            รายละเอียดข้อมูล
+                        </h3>
+
+                        <div
+                            id="tableCount"
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            0 rows
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="
+                            overflow-auto
+                        "
+                    >
+
+                        <table
+                            class="
+                                min-w-[1400px]
+                                w-full
+                                text-sm
+                            "
+                        >
+
+                            <thead
+                                class="
+                                    bg-slate-100
+                                    dark:bg-slate-800
+                                "
+                            >
+
+                                <tr>
+
+                                    <th class="px-4 py-3 text-left">
+                                        เลขทะเบียน
+                                    </th>
+
+                                    <th class="px-4 py-3 text-left">
+                                        เลขรับ
+                                    </th>
+
+                                    <th class="px-4 py-3 text-left">
+                                        ประเภทเงิน
+                                    </th>
+
+                                    <th class="px-4 py-3 text-left">
+                                        หน่วยงาน
+                                    </th>
+
+                                    <th class="px-4 py-3 text-left">
+                                        เจ้าหนี้
+                                    </th>
+
+                                    <th class="px-4 py-3 text-left">
+                                        รายการ
+                                    </th>
+
+                                    <th class="px-4 py-3 text-right">
+                                        จำนวนเงิน
+                                    </th>
+
+                                    <th class="px-4 py-3 text-left">
+                                        สถานะ
+                                    </th>
+
+                                    <th class="px-4 py-3 text-left">
+                                        วันที่
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody
+                                id="tableBody"
+                            ></tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
     </div>
-
-    <script src="js/api-config.js"></script>
-    <script src="js/main.js"></script>
 
     <script>
 
-// Version: 00122
-// Report Page Controller
+        'use strict';
 
-let reportMoneyChart, reportDeptChart;
+        // ======================
+        // STATE
+        // ======================
 
-async function loadReport() {
-    try {
-        const result = await callGAS('getReportData', {
-            month: document.getElementById('report-month').value,
-            year: document.getElementById('report-year').value
-        });
+        let allRows = [];
 
-        if (result.success) {
-            renderReportSummary(result.summary);
-            renderMoneyChart(result.moneyData);
-            renderDeptChart(result.deptData);
-            renderPendingItems(result.pending);
+        let filteredRows = [];
+
+        let charts = {};
+
+        // ======================
+        // INIT
+        // ======================
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            initializePage
+        );
+
+        async function initializePage() {
+
+            try {
+
+                Auth.requireRoles([
+                    'admin',
+                    'checker',
+                    'staff'
+                ]);
+
+                bindEvents();
+
+                await loadData();
+
+                startAutoRefresh();
+
+            } catch (error) {
+
+                console.error(error);
+
+                UI.showToast(
+                    error.message,
+                    'error'
+                );
+            }
         }
-    } catch (e) {
-        alert("ไม่สามารถโหลดรายงานได้");
-    }
-}
 
-function renderReportSummary(summary) {
-    const container = document.getElementById('report-summary');
-    container.innerHTML = `
-        <div class="card p-6">
-            <p class="text-purple-600">ยอดเบิกทั้งหมด</p>
-            <p class="text-4xl font-bold text-purple-900">${formatCurrency(summary.totalAmount)}</p>
-        </div>
-        <div class="card p-6">
-            <p class="text-emerald-600">จ่ายแล้ว</p>
-            <p class="text-4xl font-bold text-emerald-600">${formatCurrency(summary.paidAmount)}</p>
-        </div>
-        <div class="card p-6">
-            <p class="text-amber-600">รอตรวจสอบ</p>
-            <p class="text-4xl font-bold text-amber-600">${formatCurrency(summary.waitingAmount)}</p>
-        </div>
-        <div class="card p-6">
-            <p class="text-purple-600">จำนวนฎีกา</p>
-            <p class="text-4xl font-bold text-purple-900">${summary.count.toLocaleString()}</p>
-        </div>
-    `;
-}
+        // ======================
+        // EVENTS
+        // ======================
 
-function renderMoneyChart(data) {
-    if (reportMoneyChart) reportMoneyChart.destroy();
-    reportMoneyChart = new Chart(document.getElementById('reportMoneyChart'), {
-        type: 'pie',
-        data: {
-            labels: data.labels,
-            datasets: [{ data: data.values, backgroundColor: ['#7C3AED','#C026D3','#F59E0B','#10B981'] }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
-}
+        function bindEvents() {
 
-function renderDeptChart(data) {
-    if (reportDeptChart) reportDeptChart.destroy();
-    reportDeptChart = new Chart(document.getElementById('reportDeptChart'), {
-        type: 'bar',
-        data: {
-            labels: data.labels,
-            datasets: [{ label: 'จำนวนเงิน', data: data.values, backgroundColor: '#7C3AED' }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
-}
+            document
+                .getElementById(
+                    'refreshButton'
+                )
+                .addEventListener(
+                    'click',
+                    loadData
+                );
 
-function renderPendingItems(pending) {
-    const container = document.getElementById('pending-list');
-    container.innerHTML = pending.map(item => `
-        <div class="flex justify-between items-center p-4 bg-purple-50 rounded-2xl">
-            <div>
-                <span class="font-medium">${item.vendor}</span>
-                <span class="text-sm text-gray-500 ml-3">${item.moneyType}</span>
-            </div>
-            <div class="text-right">
-                <div class="font-bold">${formatCurrency(item.amount)}</div>
-                <div class="text-xs text-amber-600">${item.status}</div>
-            </div>
-        </div>
-    `).join('');
-}
+            document
+                .getElementById(
+                    'applyFilterButton'
+                )
+                .addEventListener(
+                    'click',
+                    applyFilters
+                );
 
-async function exportToExcel() {
-    alert("กำลังส่งออกไฟล์ Excel (CSV)...\nฟังก์ชันจะเชื่อมต่อกับ Google Apps Script");
-    // TODO: callGAS('exportExcel')
-}
+            document
+                .getElementById(
+                    'printButton'
+                )
+                .addEventListener(
+                    'click',
+                    printReport
+                );
 
-document.addEventListener('DOMContentLoaded', () => {
-    initAuth();
-    checkDarkMode();
-    
-    // Populate year and month
-    const yearSelect = document.getElementById('report-year');
-    const currentYear = new Date().getFullYear() + 543;
-    for (let y = currentYear - 2; y <= currentYear + 1; y++) {
-        const opt = document.createElement('option');
-        opt.value = y;
-        opt.textContent = y;
-        if (y === currentYear) opt.selected = true;
-        yearSelect.appendChild(opt);
-    }
-    
-    loadReport();
-});
+            document
+                .getElementById(
+                    'exportExcelButton'
+                )
+                .addEventListener(
+                    'click',
+                    exportExcel
+                );
+
+            document
+                .getElementById(
+                    'exportPdfButton'
+                )
+                .addEventListener(
+                    'click',
+                    printReport
+                );
+        }
+
+        // ======================
+        // LOAD
+        // ======================
+
+        async function loadData() {
+
+            try {
+
+                UI.showLoading();
+
+                const result =
+                    await RegisterAPI
+                        .getRegisterData();
+
+                if (
+                    !result.success
+                ) {
+
+                    throw new Error(
+                        result.message
+                    );
+                }
+
+                allRows =
+                    result.data || [];
+
+                applyRoleFilter();
+
+                populateFilters();
+
+                applyFilters();
+
+            } catch (error) {
+
+                console.error(error);
+
+                UI.showToast(
+                    error.message,
+                    'error'
+                );
+
+            } finally {
+
+                UI.hideLoading();
+            }
+        }
+
+        function applyRoleFilter() {
+
+            if (
+                Auth.user.role === 'staff'
+            ) {
+
+                allRows =
+                    allRows.filter(
+                        row =>
+                            row[1] ===
+                            Auth.user.dept
+                    );
+            }
+        }
+
+        // ======================
+        // FILTER
+        // ======================
+
+        function applyFilters() {
+
+            const moneyType =
+                document
+                    .getElementById(
+                        'moneyTypeFilter'
+                    )
+                    .value;
+
+            const dept =
+                document
+                    .getElementById(
+                        'deptFilter'
+                    )
+                    .value;
+
+            const status =
+                document
+                    .getElementById(
+                        'statusFilter'
+                    )
+                    .value;
+
+            filteredRows =
+                allRows.filter(
+                    row => {
+
+                        const rowStatus =
+                            getRowStatus(
+                                row
+                            );
+
+                        if (
+                            moneyType &&
+                            row[0] !== moneyType
+                        ) {
+
+                            return false;
+                        }
+
+                        if (
+                            dept &&
+                            row[1] !== dept
+                        ) {
+
+                            return false;
+                        }
+
+                        if (
+                            status &&
+                            rowStatus !== status
+                        ) {
+
+                            return false;
+                        }
+
+                        return true;
+                    }
+                );
+
+            updateKPI();
+
+            renderCharts();
+
+            renderTopLists();
+
+            renderTable();
+        }
+
+        // ======================
+        // KPI
+        // ======================
+
+        function updateKPI() {
+
+            let total = 0;
+
+            let paid = 0;
+
+            let pending = 0;
+
+            let cancel = 0;
+
+            let success = 0;
+
+            filteredRows.forEach(
+                row => {
+
+                    const amount =
+                        Number(
+                            row[5]
+                        ) || 0;
+
+                    const status =
+                        getRowStatus(
+                            row
+                        );
+
+                    total += amount;
+
+                    if (
+                        status === 'จ่ายแล้ว'
+                    ) {
+
+                        paid += amount;
+
+                        success++;
+
+                    } else if (
+                        status === 'ยกเลิก'
+                    ) {
+
+                        cancel += amount;
+
+                    } else {
+
+                        pending += amount;
+                    }
+                }
+            );
+
+            document
+                .getElementById(
+                    'totalAmount'
+                )
+                .textContent =
+                formatCurrency(
+                    total
+                );
+
+            document
+                .getElementById(
+                    'paidAmount'
+                )
+                .textContent =
+                formatCurrency(
+                    paid
+                );
+
+            document
+                .getElementById(
+                    'pendingAmount'
+                )
+                .textContent =
+                formatCurrency(
+                    pending
+                );
+
+            document
+                .getElementById(
+                    'cancelAmount'
+                )
+                .textContent =
+                formatCurrency(
+                    cancel
+                );
+
+            document
+                .getElementById(
+                    'avgDays'
+                )
+                .textContent =
+                calculateAverageDays();
+
+            document
+                .getElementById(
+                    'successRate'
+                )
+                .textContent =
+                total > 0
+                    ? (
+                        (
+                            success /
+                            filteredRows.length
+                        ) * 100
+                    ).toFixed(1) + '%'
+                    : '0%';
+        }
+
+        // ======================
+        // CHARTS
+        // ======================
+
+        function renderCharts() {
+
+            destroyCharts();
+
+            renderMoneyTypeChart();
+
+            renderStatusChart();
+
+            renderMonthlyChart();
+
+            renderVendorChart();
+        }
+
+        function renderMoneyTypeChart() {
+
+            const grouped =
+                groupBy(
+                    filteredRows,
+                    0
+                );
+
+            charts.moneyType =
+                new Chart(
+                    document
+                        .getElementById(
+                            'moneyTypeChart'
+                        ),
+                    {
+
+                        type: 'pie',
+
+                        data: {
+
+                            labels:
+                                Object.keys(
+                                    grouped
+                                ),
+
+                            datasets: [
+
+                                {
+
+                                    data:
+                                        Object.values(
+                                            grouped
+                                        )
+                                }
+                            ]
+                        }
+                    }
+                );
+        }
+
+        function renderStatusChart() {
+
+            const grouped = {};
+
+            filteredRows.forEach(
+                row => {
+
+                    const status =
+                        getRowStatus(
+                            row
+                        );
+
+                    grouped[status] =
+                        (
+                            grouped[status] || 0
+                        ) + 1;
+                }
+            );
+
+            charts.status =
+                new Chart(
+                    document
+                        .getElementById(
+                            'statusChart'
+                        ),
+                    {
+
+                        type: 'bar',
+
+                        data: {
+
+                            labels:
+                                Object.keys(
+                                    grouped
+                                ),
+
+                            datasets: [
+
+                                {
+
+                                    data:
+                                        Object.values(
+                                            grouped
+                                        )
+                                }
+                            ]
+                        }
+                    }
+                );
+        }
+
+        function renderMonthlyChart() {
+
+            const grouped = {};
+
+            filteredRows.forEach(
+                row => {
+
+                    const key =
+                        formatMonth(
+                            row[15]
+                        );
+
+                    grouped[key] =
+                        (
+                            grouped[key] || 0
+                        ) +
+                        (
+                            Number(
+                                row[5]
+                            ) || 0
+                        );
+                }
+            );
+
+            charts.monthly =
+                new Chart(
+                    document
+                        .getElementById(
+                            'monthlyChart'
+                        ),
+                    {
+
+                        type: 'line',
+
+                        data: {
+
+                            labels:
+                                Object.keys(
+                                    grouped
+                                ),
+
+                            datasets: [
+
+                                {
+
+                                    data:
+                                        Object.values(
+                                            grouped
+                                        )
+                                }
+                            ]
+                        }
+                    }
+                );
+        }
+
+        function renderVendorChart() {
+
+            const grouped =
+                groupBy(
+                    filteredRows,
+                    4
+                );
+
+            const sorted =
+                Object.entries(
+                    grouped
+                )
+                    .sort(
+                        (
+                            a,
+                            b
+                        ) => b[1] - a[1]
+                    )
+                    .slice(0, 10);
+
+            charts.vendor =
+                new Chart(
+                    document
+                        .getElementById(
+                            'vendorChart'
+                        ),
+                    {
+
+                        type: 'bar',
+
+                        data: {
+
+                            labels:
+                                sorted.map(
+                                    x => x[0]
+                                ),
+
+                            datasets: [
+
+                                {
+
+                                    data:
+                                        sorted.map(
+                                            x => x[1]
+                                        )
+                                }
+                            ]
+                        }
+                    }
+                );
+        }
+
+        function destroyCharts() {
+
+            Object.values(
+                charts
+            ).forEach(
+                chart => {
+
+                    if (
+                        chart
+                    ) {
+
+                        chart.destroy();
+                    }
+                }
+            );
+        }
+
+        // ======================
+        // TOP LIST
+        // ======================
+
+        function renderTopLists() {
+
+            renderTop(
+                'topDeptList',
+                groupBy(
+                    filteredRows,
+                    1
+                ),
+                5
+            );
+
+            renderTop(
+                'topMoneyList',
+                groupBy(
+                    filteredRows,
+                    0
+                ),
+                5
+            );
+
+            renderTop(
+                'topVendorList',
+                groupBy(
+                    filteredRows,
+                    4
+                ),
+                10
+            );
+        }
+
+        function renderTop(
+            id,
+            grouped,
+            limit
+        ) {
+
+            const container =
+                document.getElementById(
+                    id
+                );
+
+            const rows =
+                Object.entries(
+                    grouped
+                )
+                    .sort(
+                        (
+                            a,
+                            b
+                        ) => b[1] - a[1]
+                    )
+                    .slice(
+                        0,
+                        limit
+                    );
+
+            container.innerHTML =
+                rows.map(
+                    (
+                        row,
+                        index
+                    ) => {
+
+                        return `
+                        <div class="
+                            flex
+                            items-center
+                            justify-between
+                            border-b
+                            border-slate-200
+                            dark:border-slate-800
+                            pb-2
+                        ">
+
+                            <div>
+
+                                <div class="
+                                    font-medium
+                                ">
+                                    ${index + 1}. ${row[0]}
+                                </div>
+
+                            </div>
+
+                            <div class="
+                                text-sm
+                                text-slate-500
+                            ">
+                                ${formatCurrency(row[1])}
+                            </div>
+
+                        </div>
+                        `;
+                    }
+                ).join('');
+        }
+
+        // ======================
+        // TABLE
+        // ======================
+
+        function renderTable() {
+
+            const tbody =
+                document.getElementById(
+                    'tableBody'
+                );
+
+            tbody.innerHTML = '';
+
+            document
+                .getElementById(
+                    'tableCount'
+                )
+                .textContent =
+                `${filteredRows.length} rows`;
+
+            if (
+                !filteredRows.length
+            ) {
+
+                tbody.innerHTML =
+                    `
+                    <tr>
+                        <td
+                            colspan="9"
+                            class="
+                                px-6
+                                py-12
+                                text-center
+                                text-slate-500
+                            "
+                        >
+                            ไม่พบข้อมูล
+                        </td>
+                    </tr>
+                    `;
+
+                return;
+            }
+
+            filteredRows.forEach(
+                row => {
+
+                    const tr =
+                        document.createElement(
+                            'tr'
+                        );
+
+                    tr.className =
+                        `
+                        border-b
+                        border-slate-200
+                        dark:border-slate-800
+                        `;
+
+                    tr.innerHTML =
+                        `
+                        <td class="px-4 py-3">
+                            ${row[9] || '-'}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            ${row[10] || '-'}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            ${row[0] || '-'}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            ${row[1] || '-'}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            ${row[4] || '-'}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            ${row[6] || '-'}
+                        </td>
+
+                        <td class="px-4 py-3 text-right">
+                            ${formatCurrency(row[5])}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            ${getRowStatus(row)}
+                        </td>
+
+                        <td class="px-4 py-3">
+                            ${formatDate(row[15])}
+                        </td>
+                        `;
+
+                    tbody.appendChild(
+                        tr
+                    );
+                }
+            );
+        }
+
+        // ======================
+        // FILTERS
+        // ======================
+
+        function populateFilters() {
+
+            populateSelect(
+                'moneyTypeFilter',
+                0
+            );
+
+            populateSelect(
+                'deptFilter',
+                1
+            );
+        }
+
+        function populateSelect(
+            id,
+            column
+        ) {
+
+            const select =
+                document.getElementById(
+                    id
+                );
+
+            const values =
+                [
+                    ...new Set(
+                        allRows.map(
+                            row =>
+                                row[column]
+                        )
+                    )
+                ]
+                    .filter(Boolean)
+                    .sort();
+
+            select.innerHTML =
+                `
+                <option value="">
+                    ทั้งหมด
+                </option>
+                `;
+
+            values.forEach(
+                value => {
+
+                    const option =
+                        document.createElement(
+                            'option'
+                        );
+
+                    option.value =
+                        value;
+
+                    option.textContent =
+                        value;
+
+                    select.appendChild(
+                        option
+                    );
+                }
+            );
+        }
+
+        // ======================
+        // EXPORT
+        // ======================
+
+        function printReport() {
+
+            document
+                .getElementById(
+                    'printDate'
+                )
+                .textContent =
+                new Date()
+                    .toLocaleString(
+                        'th-TH'
+                    );
+
+            window.print();
+        }
+
+        function exportExcel() {
+
+            UI.showToast(
+                'กำลังเตรียม export...',
+                'info'
+            );
+        }
+
+        // ======================
+        // REFRESH
+        // ======================
+
+        function startAutoRefresh() {
+
+            setInterval(
+                async () => {
+
+                    await loadData();
+
+                },
+                300000
+            );
+        }
+
+        // ======================
+        // UTILS
+        // ======================
+
+        function groupBy(
+            rows,
+            index
+        ) {
+
+            const grouped = {};
+
+            rows.forEach(
+                row => {
+
+                    const key =
+                        row[index] || '-';
+
+                    grouped[key] =
+                        (
+                            grouped[key] || 0
+                        ) +
+                        (
+                            Number(
+                                row[5]
+                            ) || 0
+                        );
+                }
+            );
+
+            return grouped;
+        }
+
+        function calculateAverageDays() {
+
+            let total = 0;
+
+            let count = 0;
+
+            filteredRows.forEach(
+                row => {
+
+                    if (
+                        row[16] &&
+                        row[22]
+                    ) {
+
+                        const start =
+                            new Date(
+                                row[16]
+                            );
+
+                        const end =
+                            new Date(
+                                row[22]
+                            );
+
+                        const days =
+                            (
+                                end - start
+                            ) /
+                            (
+                                1000 *
+                                60 *
+                                60 *
+                                24
+                            );
+
+                        total += days;
+
+                        count++;
+                    }
+                }
+            );
+
+            return count
+                ? (
+                    total / count
+                ).toFixed(1)
+                : '0';
+        }
+
+        function formatMonth(
+            date
+        ) {
+
+            if (!date) {
+
+                return '-';
+            }
+
+            const d =
+                new Date(date);
+
+            return d.toLocaleDateString(
+                'th-TH',
+                {
+
+                    month: 'short',
+
+                    year: 'numeric'
+                }
+            );
+        }
+
     </script>
-    
+
 </body>
+
 </html>
