@@ -1,190 +1,2169 @@
-<!-- Version: 00122.3
-     settings.html -->
+<!-- Version: 00123.0 -->
+<!-- settings.html -->
+<!-- SRDH PAY System Settings -->
 
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ตั้งค่าระบบ - Srdh Pay</title>
+
+    <meta charset="UTF-8" />
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+        SRDH PAY - Settings
+    </title>
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&amp;family=Prompt:wght@400;500;600&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#7C3AED">
-    <link rel="apple-touch-icon" href="icons/register_acc-touch-icon.png">
+
+    <!-- Runtime -->
+    <script src="api-config.js"></script>
+    <script src="main.js"></script>
+
+    <style>
+
+        html,
+        body {
+
+            height: 100%;
+        }
+
+        body {
+
+            font-family:
+                system-ui,
+                sans-serif;
+        }
+
+        .settings-card {
+
+            background:
+                white;
+
+            border-radius:
+                1rem;
+
+            border:
+                1px solid rgb(226 232 240);
+
+            padding:
+                1.5rem;
+        }
+
+        .dark .settings-card {
+
+            background:
+                rgb(15 23 42);
+
+            border-color:
+                rgb(30 41 59);
+        }
+
+        .sidebar-link {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                .75rem;
+
+            padding:
+                .75rem 1rem;
+
+            border-radius:
+                .75rem;
+
+            transition:
+                .2s;
+        }
+
+        .sidebar-link:hover {
+
+            background:
+                rgb(241 245 249);
+        }
+
+        .dark .sidebar-link:hover {
+
+            background:
+                rgb(30 41 59);
+        }
+
+        .sidebar-link.active {
+
+            background:
+                rgb(37 99 235);
+
+            color:
+                white;
+        }
+
+        .settings-section {
+
+            display:
+                none;
+        }
+
+        .settings-section.active {
+
+            display:
+                block;
+        }
+
+        .danger-zone {
+
+            border:
+                1px solid rgb(239 68 68);
+
+            background:
+                rgb(254 242 242);
+        }
+
+        .dark .danger-zone {
+
+            background:
+                rgba(127,29,29,.2);
+        }
+
+        .table-scroll {
+
+            overflow:
+                auto;
+        }
+
+        table {
+
+            min-width:
+                900px;
+        }
+
+    </style>
+
 </head>
-<body class="bg-purple-50 text-gray-800" data-theme="light">
-    <!-- Header -->
-    <header class="bg-white border-b border-purple-200 shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 bg-gradient-to-br from-purple-600 to-violet-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">รพส</div>
-                    <div>
-                        <h1 class="text-xl font-semibold text-purple-900">ตั้งค่าระบบ</h1>
+
+<body
+    class="
+        bg-slate-100
+        dark:bg-slate-950
+        text-slate-800
+        dark:text-slate-100
+    "
+>
+
+    <div
+        class="
+            min-h-screen
+            flex
+        "
+    >
+
+        <!-- Sidebar -->
+        <aside
+            class="
+                w-72
+                bg-white
+                dark:bg-slate-900
+                border-r
+                border-slate-200
+                dark:border-slate-800
+                hidden
+                lg:flex
+                flex-col
+            "
+        >
+
+            <div
+                class="
+                    px-6
+                    py-5
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                "
+            >
+
+                <h1
+                    class="
+                        text-2xl
+                        font-bold
+                        text-blue-600
+                    "
+                >
+                    SRDH PAY
+                </h1>
+
+                <p
+                    class="
+                        text-sm
+                        text-slate-500
+                        mt-1
+                    "
+                >
+                    System Settings
+                </p>
+
+            </div>
+
+            <nav
+                class="
+                    flex-1
+                    p-4
+                    space-y-2
+                    overflow-auto
+                "
+            >
+
+                <button
+                    class="sidebar-link active"
+                    data-section="general"
+                >
+                    General
+                </button>
+
+                <button
+                    class="sidebar-link"
+                    data-section="users"
+                >
+                    Users
+                </button>
+
+                <button
+                    class="sidebar-link"
+                    data-section="moneytype"
+                >
+                    Money Types
+                </button>
+
+                <button
+                    class="sidebar-link"
+                    data-section="mapping"
+                >
+                    XLSX Mapping
+                </button>
+
+                <button
+                    class="sidebar-link"
+                    data-section="permission"
+                >
+                    Permission Matrix
+                </button>
+
+                <button
+                    class="sidebar-link"
+                    data-section="session"
+                >
+                    Session
+                </button>
+
+                <button
+                    class="sidebar-link"
+                    data-section="audit"
+                >
+                    Audit Logs
+                </button>
+
+                <button
+                    class="sidebar-link"
+                    data-section="cache"
+                >
+                    Cache
+                </button>
+
+                <button
+                    class="sidebar-link"
+                    data-section="backup"
+                >
+                    Backup
+                </button>
+
+                <button
+                    class="sidebar-link"
+                    data-section="theme"
+                >
+                    Theme
+                </button>
+
+                <button
+                    class="sidebar-link"
+                    data-section="version"
+                >
+                    Version
+                </button>
+
+                <button
+                    class="sidebar-link"
+                    data-section="danger"
+                >
+                    Danger Zone
+                </button>
+
+            </nav>
+
+            <div
+                class="
+                    p-4
+                    border-t
+                    border-slate-200
+                    dark:border-slate-800
+                    text-xs
+                    text-slate-500
+                "
+            >
+
+                Version 00123.0
+
+            </div>
+
+        </aside>
+
+        <!-- Main -->
+        <main
+            class="
+                flex-1
+                overflow-auto
+            "
+        >
+
+            <!-- Header -->
+            <header
+                class="
+                    bg-white
+                    dark:bg-slate-900
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                    px-4
+                    lg:px-8
+                    py-5
+                    flex
+                    items-center
+                    justify-between
+                "
+            >
+
+                <div>
+
+                    <h2
+                        class="
+                            text-2xl
+                            font-bold
+                        "
+                    >
+                        ตั้งค่าระบบ
+                    </h2>
+
+                    <p
+                        class="
+                            text-sm
+                            text-slate-500
+                            mt-1
+                        "
+                    >
+                        System Administration & Configuration
+                    </p>
+
+                </div>
+
+                <div
+                    class="
+                        flex
+                        items-center
+                        gap-3
+                    "
+                >
+
+                    <button
+                        id="refreshButton"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            border
+                            border-slate-300
+                            dark:border-slate-700
+                        "
+                    >
+                        Refresh
+                    </button>
+
+                    <button
+                        id="saveAllButton"
+                        class="
+                            px-5
+                            py-2
+                            rounded-xl
+                            bg-blue-600
+                            hover:bg-blue-700
+                            text-white
+                        "
+                    >
+                        Save Settings
+                    </button>
+
+                </div>
+
+            </header>
+
+            <!-- Content -->
+            <div
+                class="
+                    p-4
+                    lg:p-8
+                    space-y-6
+                "
+            >
+
+                <!-- GENERAL -->
+                <section
+                    id="general"
+                    class="
+                        settings-section
+                        active
+                    "
+                >
+
+                    <div class="settings-card">
+
+                        <h3
+                            class="
+                                text-xl
+                                font-semibold
+                                mb-6
+                            "
+                        >
+                            General Settings
+                        </h3>
+
+                        <div
+                            class="
+                                grid
+                                grid-cols-1
+                                md:grid-cols-2
+                                gap-6
+                            "
+                        >
+
+                            <div>
+
+                                <label
+                                    class="
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Hospital Name
+                                </label>
+
+                                <input
+                                    id="hospitalName"
+                                    type="text"
+                                    class="
+                                        mt-1
+                                        w-full
+                                        rounded-xl
+                                        border
+                                        border-slate-300
+                                        dark:border-slate-700
+                                        bg-white
+                                        dark:bg-slate-900
+                                        px-4
+                                        py-2
+                                    "
+                                />
+
+                            </div>
+
+                            <div>
+
+                                <label
+                                    class="
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Print Footer
+                                </label>
+
+                                <input
+                                    id="printFooter"
+                                    type="text"
+                                    class="
+                                        mt-1
+                                        w-full
+                                        rounded-xl
+                                        border
+                                        border-slate-300
+                                        dark:border-slate-700
+                                        bg-white
+                                        dark:bg-slate-900
+                                        px-4
+                                        py-2
+                                    "
+                                />
+
+                            </div>
+
+                            <div>
+
+                                <label
+                                    class="
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Accent Color
+                                </label>
+
+                                <input
+                                    id="accentColor"
+                                    type="color"
+                                    class="
+                                        mt-1
+                                        h-12
+                                        w-full
+                                        rounded-xl
+                                        border
+                                        border-slate-300
+                                        dark:border-slate-700
+                                    "
+                                />
+
+                            </div>
+
+                        </div>
+
                     </div>
-                </div>
-                <div onclick="logout()" class="cursor-pointer text-purple-700 hover:text-red-600">
-                    <i class="fas fa-sign-out-alt text-xl"></i>
-                </div>
-            </div>
-        </div>
-    </header>
 
-    <div class="max-w-7xl mx-auto px-6 py-8">
-        <h2 class="text-3xl font-bold text-purple-900 mb-8">จัดการข้อมูลพื้นฐาน</h2>
+                </section>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Money Types -->
-            <div class="card p-6">
-                <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
-                    <i class="fas fa-coins"></i> ประเภทเงิน
-                </h3>
-                <div id="money-list" class="space-y-2 mb-4"></div>
-                <input type="text" id="new-money" placeholder="เพิ่มประเภทเงินใหม่" 
-                       class="w-full px-4 py-3 border border-purple-200 rounded-2xl">
-                <button onclick="addMoneyType()" class="mt-3 w-full py-3 btn-primary text-white rounded-2xl">เพิ่ม</button>
+                <!-- USERS -->
+                <section
+                    id="users"
+                    class="
+                        settings-section
+                    "
+                >
+
+                    <div class="settings-card">
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                justify-between
+                                mb-6
+                            "
+                        >
+
+                            <h3
+                                class="
+                                    text-xl
+                                    font-semibold
+                                "
+                            >
+                                User Management
+                            </h3>
+
+                            <button
+                                id="addUserButton"
+                                class="
+                                    px-4
+                                    py-2
+                                    rounded-xl
+                                    bg-blue-600
+                                    hover:bg-blue-700
+                                    text-white
+                                "
+                            >
+                                + Add User
+                            </button>
+
+                        </div>
+
+                        <div class="table-scroll">
+
+                            <table
+                                class="
+                                    w-full
+                                    text-sm
+                                "
+                            >
+
+                                <thead
+                                    class="
+                                        bg-slate-100
+                                        dark:bg-slate-800
+                                    "
+                                >
+
+                                    <tr>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Email
+                                        </th>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Username
+                                        </th>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Role
+                                        </th>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Dept
+                                        </th>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Status
+                                        </th>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Action
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody
+                                    id="userTableBody"
+                                ></tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- MONEY TYPE -->
+                <section
+                    id="moneytype"
+                    class="
+                        settings-section
+                    "
+                >
+
+                    <div class="settings-card">
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                justify-between
+                                mb-6
+                            "
+                        >
+
+                            <h3
+                                class="
+                                    text-xl
+                                    font-semibold
+                                "
+                            >
+                                Money Type Settings
+                            </h3>
+
+                            <button
+                                id="addMoneyTypeButton"
+                                class="
+                                    px-4
+                                    py-2
+                                    rounded-xl
+                                    bg-blue-600
+                                    text-white
+                                "
+                            >
+                                + Add Type
+                            </button>
+
+                        </div>
+
+                        <div
+                            id="moneyTypeList"
+                            class="
+                                space-y-4
+                            "
+                        ></div>
+
+                    </div>
+
+                </section>
+
+                <!-- XLSX MAPPING -->
+                <section
+                    id="mapping"
+                    class="
+                        settings-section
+                    "
+                >
+
+                    <div class="settings-card">
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                justify-between
+                                mb-6
+                            "
+                        >
+
+                            <h3
+                                class="
+                                    text-xl
+                                    font-semibold
+                                "
+                            >
+                                XLSX Mapping
+                            </h3>
+
+                            <div
+                                class="
+                                    flex
+                                    gap-3
+                                "
+                            >
+
+                                <button
+                                    class="
+                                        px-4
+                                        py-2
+                                        rounded-xl
+                                        border
+                                        border-slate-300
+                                    "
+                                >
+                                    Export Mapping
+                                </button>
+
+                                <button
+                                    class="
+                                        px-4
+                                        py-2
+                                        rounded-xl
+                                        bg-blue-600
+                                        text-white
+                                    "
+                                >
+                                    Test Mapping
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <div
+                            class="
+                                overflow-auto
+                            "
+                        >
+
+                            <table
+                                class="
+                                    w-full
+                                    text-sm
+                                "
+                            >
+
+                                <thead
+                                    class="
+                                        bg-slate-100
+                                        dark:bg-slate-800
+                                    "
+                                >
+
+                                    <tr>
+
+                                        <th class="px-4 py-3 text-left">
+                                            System Field
+                                        </th>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Source Field
+                                        </th>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Required
+                                        </th>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Action
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody
+                                    id="mappingTableBody"
+                                ></tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- PERMISSION -->
+                <section
+                    id="permission"
+                    class="
+                        settings-section
+                    "
+                >
+
+                    <div class="settings-card">
+
+                        <h3
+                            class="
+                                text-xl
+                                font-semibold
+                                mb-6
+                            "
+                        >
+                            Permission Matrix
+                        </h3>
+
+                        <div
+                            class="
+                                overflow-auto
+                            "
+                        >
+
+                            <table
+                                class="
+                                    w-full
+                                    text-sm
+                                "
+                            >
+
+                                <thead
+                                    class="
+                                        bg-slate-100
+                                        dark:bg-slate-800
+                                    "
+                                >
+
+                                    <tr>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Module
+                                        </th>
+
+                                        <th class="px-4 py-3">
+                                            Admin
+                                        </th>
+
+                                        <th class="px-4 py-3">
+                                            Editor
+                                        </th>
+
+                                        <th class="px-4 py-3">
+                                            Checker
+                                        </th>
+
+                                        <th class="px-4 py-3">
+                                            Staff
+                                        </th>
+
+                                        <th class="px-4 py-3">
+                                            Guest
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody
+                                    id="permissionTableBody"
+                                ></tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- SESSION -->
+                <section
+                    id="session"
+                    class="
+                        settings-section
+                    "
+                >
+
+                    <div class="settings-card">
+
+                        <h3
+                            class="
+                                text-xl
+                                font-semibold
+                                mb-6
+                            "
+                        >
+                            Session Settings
+                        </h3>
+
+                        <div
+                            class="
+                                grid
+                                grid-cols-1
+                                md:grid-cols-2
+                                gap-6
+                            "
+                        >
+
+                            <div>
+
+                                <label
+                                    class="
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Guest Timeout (Hours)
+                                </label>
+
+                                <input
+                                    id="guestTimeout"
+                                    type="number"
+                                    value="2"
+                                    class="
+                                        mt-1
+                                        w-full
+                                        rounded-xl
+                                        border
+                                        border-slate-300
+                                        dark:border-slate-700
+                                        bg-white
+                                        dark:bg-slate-900
+                                        px-4
+                                        py-2
+                                    "
+                                />
+
+                            </div>
+
+                            <div>
+
+                                <label
+                                    class="
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Inactivity Logout (Minutes)
+                                </label>
+
+                                <input
+                                    id="inactiveTimeout"
+                                    type="number"
+                                    value="30"
+                                    class="
+                                        mt-1
+                                        w-full
+                                        rounded-xl
+                                        border
+                                        border-slate-300
+                                        dark:border-slate-700
+                                        bg-white
+                                        dark:bg-slate-900
+                                        px-4
+                                        py-2
+                                    "
+                                />
+
+                            </div>
+
+                            <div>
+
+                                <label
+                                    class="
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Token Age (Hours)
+                                </label>
+
+                                <input
+                                    id="tokenAge"
+                                    type="number"
+                                    value="12"
+                                    class="
+                                        mt-1
+                                        w-full
+                                        rounded-xl
+                                        border
+                                        border-slate-300
+                                        dark:border-slate-700
+                                        bg-white
+                                        dark:bg-slate-900
+                                        px-4
+                                        py-2
+                                    "
+                                />
+
+                            </div>
+
+                            <div>
+
+                                <label
+                                    class="
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Max Login Retry
+                                </label>
+
+                                <input
+                                    id="maxRetry"
+                                    type="number"
+                                    value="5"
+                                    class="
+                                        mt-1
+                                        w-full
+                                        rounded-xl
+                                        border
+                                        border-slate-300
+                                        dark:border-slate-700
+                                        bg-white
+                                        dark:bg-slate-900
+                                        px-4
+                                        py-2
+                                    "
+                                />
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- AUDIT -->
+                <section
+                    id="audit"
+                    class="
+                        settings-section
+                    "
+                >
+
+                    <div class="settings-card">
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                justify-between
+                                mb-6
+                            "
+                        >
+
+                            <h3
+                                class="
+                                    text-xl
+                                    font-semibold
+                                "
+                            >
+                                Audit Logs
+                            </h3>
+
+                            <button
+                                class="
+                                    px-4
+                                    py-2
+                                    rounded-xl
+                                    bg-emerald-600
+                                    text-white
+                                "
+                            >
+                                Export Logs
+                            </button>
+
+                        </div>
+
+                        <div
+                            class="
+                                flex
+                                flex-col
+                                md:flex-row
+                                gap-4
+                                mb-4
+                            "
+                        >
+
+                            <input
+                                type="text"
+                                placeholder="Search..."
+                                class="
+                                    flex-1
+                                    rounded-xl
+                                    border
+                                    border-slate-300
+                                    dark:border-slate-700
+                                    bg-white
+                                    dark:bg-slate-900
+                                    px-4
+                                    py-2
+                                "
+                            />
+
+                            <select
+                                class="
+                                    rounded-xl
+                                    border
+                                    border-slate-300
+                                    dark:border-slate-700
+                                    bg-white
+                                    dark:bg-slate-900
+                                    px-4
+                                    py-2
+                                "
+                            >
+
+                                <option>
+                                    All Actions
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div
+                            class="
+                                overflow-auto
+                            "
+                        >
+
+                            <table
+                                class="
+                                    w-full
+                                    text-sm
+                                "
+                            >
+
+                                <thead
+                                    class="
+                                        bg-slate-100
+                                        dark:bg-slate-800
+                                    "
+                                >
+
+                                    <tr>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Time
+                                        </th>
+
+                                        <th class="px-4 py-3 text-left">
+                                            User
+                                        </th>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Action
+                                        </th>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Browser
+                                        </th>
+
+                                        <th class="px-4 py-3 text-left">
+                                            Detail
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody
+                                    id="auditTableBody"
+                                ></tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- CACHE -->
+                <section
+                    id="cache"
+                    class="
+                        settings-section
+                    "
+                >
+
+                    <div class="settings-card">
+
+                        <h3
+                            class="
+                                text-xl
+                                font-semibold
+                                mb-6
+                            "
+                        >
+                            Cache Management
+                        </h3>
+
+                        <div
+                            class="
+                                grid
+                                grid-cols-1
+                                md:grid-cols-3
+                                gap-4
+                            "
+                        >
+
+                            <button
+                                class="
+                                    px-5
+                                    py-4
+                                    rounded-xl
+                                    bg-amber-500
+                                    hover:bg-amber-600
+                                    text-white
+                                "
+                            >
+                                Clear Dashboard Cache
+                            </button>
+
+                            <button
+                                class="
+                                    px-5
+                                    py-4
+                                    rounded-xl
+                                    bg-red-600
+                                    hover:bg-red-700
+                                    text-white
+                                "
+                            >
+                                Clear All Cache
+                            </button>
+
+                            <button
+                                class="
+                                    px-5
+                                    py-4
+                                    rounded-xl
+                                    bg-blue-600
+                                    hover:bg-blue-700
+                                    text-white
+                                "
+                            >
+                                Rebuild Summary
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- BACKUP -->
+                <section
+                    id="backup"
+                    class="
+                        settings-section
+                    "
+                >
+
+                    <div class="settings-card">
+
+                        <h3
+                            class="
+                                text-xl
+                                font-semibold
+                                mb-6
+                            "
+                        >
+                            Backup & Restore
+                        </h3>
+
+                        <div
+                            class="
+                                flex
+                                flex-wrap
+                                gap-4
+                            "
+                        >
+
+                            <button
+                                class="
+                                    px-5
+                                    py-3
+                                    rounded-xl
+                                    bg-blue-600
+                                    hover:bg-blue-700
+                                    text-white
+                                "
+                            >
+                                Export JSON Config
+                            </button>
+
+                            <button
+                                class="
+                                    px-5
+                                    py-3
+                                    rounded-xl
+                                    bg-emerald-600
+                                    hover:bg-emerald-700
+                                    text-white
+                                "
+                            >
+                                Import Config
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- THEME -->
+                <section
+                    id="theme"
+                    class="
+                        settings-section
+                    "
+                >
+
+                    <div class="settings-card">
+
+                        <h3
+                            class="
+                                text-xl
+                                font-semibold
+                                mb-6
+                            "
+                        >
+                            Theme Settings
+                        </h3>
+
+                        <div
+                            class="
+                                grid
+                                grid-cols-1
+                                md:grid-cols-2
+                                gap-6
+                            "
+                        >
+
+                            <div>
+
+                                <label
+                                    class="
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Hospital Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="
+                                        mt-1
+                                        w-full
+                                        rounded-xl
+                                        border
+                                        border-slate-300
+                                        dark:border-slate-700
+                                        bg-white
+                                        dark:bg-slate-900
+                                        px-4
+                                        py-2
+                                    "
+                                />
+
+                            </div>
+
+                            <div>
+
+                                <label
+                                    class="
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Print Footer
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="
+                                        mt-1
+                                        w-full
+                                        rounded-xl
+                                        border
+                                        border-slate-300
+                                        dark:border-slate-700
+                                        bg-white
+                                        dark:bg-slate-900
+                                        px-4
+                                        py-2
+                                    "
+                                />
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- VERSION -->
+                <section
+                    id="version"
+                    class="
+                        settings-section
+                    "
+                >
+
+                    <div class="settings-card">
+
+                        <h3
+                            class="
+                                text-xl
+                                font-semibold
+                                mb-6
+                            "
+                        >
+                            Version Information
+                        </h3>
+
+                        <div
+                            class="
+                                space-y-4
+                            "
+                        >
+
+                            <div
+                                class="
+                                    p-4
+                                    rounded-xl
+                                    bg-slate-100
+                                    dark:bg-slate-800
+                                "
+                            >
+
+                                <div
+                                    class="
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Current Version
+                                </div>
+
+                                <div
+                                    class="
+                                        text-2xl
+                                        font-bold
+                                        mt-1
+                                    "
+                                >
+                                    00123.0
+                                </div>
+
+                            </div>
+
+                            <div>
+
+                                <h4
+                                    class="
+                                        font-semibold
+                                        mb-3
+                                    "
+                                >
+                                    Release Notes
+                                </h4>
+
+                                <div
+                                    class="
+                                        p-4
+                                        rounded-xl
+                                        border
+                                        border-slate-200
+                                        dark:border-slate-700
+                                        text-sm
+                                        space-y-2
+                                    "
+                                >
+
+                                    <p>
+                                        - Rewrite Production Architecture
+                                    </p>
+
+                                    <p>
+                                        - XLSX Import System
+                                    </p>
+
+                                    <p>
+                                        - Role-based Security
+                                    </p>
+
+                                    <p>
+                                        - Dashboard & Reports
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- DANGER -->
+                <section
+                    id="danger"
+                    class="
+                        settings-section
+                    "
+                >
+
+                    <div
+                        class="
+                            settings-card
+                            danger-zone
+                        "
+                    >
+
+                        <h3
+                            class="
+                                text-xl
+                                font-semibold
+                                text-red-600
+                                mb-6
+                            "
+                        >
+                            Danger Zone
+                        </h3>
+
+                        <div
+                            class="
+                                space-y-6
+                            "
+                        >
+
+                            <div>
+
+                                <h4
+                                    class="
+                                        font-semibold
+                                    "
+                                >
+                                    Force Logout All Sessions
+                                </h4>
+
+                                <p
+                                    class="
+                                        text-sm
+                                        text-slate-500
+                                        mt-1
+                                    "
+                                >
+                                    ผู้ใช้ทั้งหมดจะถูก logout ทันที
+                                </p>
+
+                                <div
+                                    class="
+                                        mt-4
+                                        flex
+                                        gap-3
+                                    "
+                                >
+
+                                    <input
+                                        id="logoutConfirmInput"
+                                        type="text"
+                                        placeholder="Type FORCE LOGOUT"
+                                        class="
+                                            rounded-xl
+                                            border
+                                            border-red-300
+                                            px-4
+                                            py-2
+                                            bg-white
+                                            dark:bg-slate-900
+                                        "
+                                    />
+
+                                    <button
+                                        class="
+                                            px-5
+                                            py-2
+                                            rounded-xl
+                                            bg-red-600
+                                            hover:bg-red-700
+                                            text-white
+                                        "
+                                    >
+                                        Execute
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                            <div
+                                class="
+                                    border-t
+                                    border-red-300
+                                    pt-6
+                                "
+                            >
+
+                                <h4
+                                    class="
+                                        font-semibold
+                                    "
+                                >
+                                    Reset System Cache
+                                </h4>
+
+                                <p
+                                    class="
+                                        text-sm
+                                        text-slate-500
+                                        mt-1
+                                    "
+                                >
+                                    ล้าง cache ทั้งระบบ
+                                </p>
+
+                                <div
+                                    class="
+                                        mt-4
+                                        flex
+                                        gap-3
+                                    "
+                                >
+
+                                    <input
+                                        id="cacheConfirmInput"
+                                        type="text"
+                                        placeholder="Type CLEAR CACHE"
+                                        class="
+                                            rounded-xl
+                                            border
+                                            border-red-300
+                                            px-4
+                                            py-2
+                                            bg-white
+                                            dark:bg-slate-900
+                                        "
+                                    />
+
+                                    <button
+                                        class="
+                                            px-5
+                                            py-2
+                                            rounded-xl
+                                            bg-red-600
+                                            hover:bg-red-700
+                                            text-white
+                                        "
+                                    >
+                                        Clear Cache
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
             </div>
 
-            <!-- Vendors -->
-            <div class="card p-6">
-                <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
-                    <i class="fas fa-building"></i> รายชื่อเจ้าหนี้/บริษัท
-                </h3>
-                <div id="vendor-list" class="space-y-2 mb-4 max-h-80 overflow-auto"></div>
-                <input type="text" id="new-vendor" placeholder="เพิ่มชื่อบริษัทใหม่" 
-                       class="w-full px-4 py-3 border border-purple-200 rounded-2xl">
-                <button onclick="addVendor()" class="mt-3 w-full py-3 btn-primary text-white rounded-2xl">เพิ่ม</button>
-            </div>
+        </main>
 
-            <!-- Checkers -->
-            <div class="card p-6">
-                <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
-                    <i class="fas fa-user-check"></i> ผู้ตรวจสอบ
-                </h3>
-                <div id="checker-list" class="space-y-2 mb-4"></div>
-                <input type="text" id="new-checker" placeholder="เพิ่มชื่อผู้ตรวจสอบ" 
-                       class="w-full px-4 py-3 border border-purple-200 rounded-2xl">
-                <button onclick="addChecker()" class="mt-3 w-full py-3 btn-primary text-white rounded-2xl">เพิ่ม</button>
-            </div>
-        </div>
-
-        <!-- System Settings -->
-        <div class="card p-8 mt-8">
-            <h3 class="font-semibold text-xl mb-6">กำหนดช่วงรับฎีกา</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label>วันที่เริ่มรับ</label>
-                    <input type="date" id="open-date" class="w-full mt-2 px-5 py-4 border border-purple-200 rounded-2xl">
-                </div>
-                <div>
-                    <label>วันที่ปิดรับ</label>
-                    <input type="date" id="close-date" class="w-full mt-2 px-5 py-4 border border-purple-200 rounded-2xl">
-                </div>
-            </div>
-            <button onclick="savePeriod()" class="mt-6 px-8 py-4 btn-primary text-white rounded-2xl">บันทึกช่วงเวลา</button>
-        </div>
     </div>
 
-    <script src="js/api-config.js"></script>
-    <script src="js/main.js"></script>
-
     <script>
- 
-    // Version: 00122
-// Settings Page Controller (Admin Only)
 
-async function loadSettings() {
-    if (currentUser?.role !== 'admin') {
-        alert("เฉพาะผู้ดูแลระบบเท่านั้นที่เข้าถึงได้");
-        window.location.href = 'dashboard.html';
-        return;
-    }
+        'use strict';
 
-    await loadMoneyTypes();
-    await loadVendors();
-    await loadCheckers();
-}
+        // ======================
+        // INIT
+        // ======================
 
-async function loadMoneyTypes() {
-    const result = await callGAS('getSettings', { sheet: 'moneytype' });
-    const container = document.getElementById('money-list');
-    if (result.success) {
-        container.innerHTML = result.data.map(item => `
-            <div class="flex justify-between bg-purple-50 px-4 py-3 rounded-2xl">
-                <span>${item}</span>
-                <button onclick="deleteSetting('moneytype', '${item}')" class="text-red-500 text-sm">ลบ</button>
-            </div>
-        `).join('');
-    }
-}
+        document.addEventListener(
+            'DOMContentLoaded',
+            initializePage
+        );
 
-async function loadVendors() {
-    const result = await callGAS('getSettings', { sheet: 'vendor' });
-    const container = document.getElementById('vendor-list');
-    if (result.success) {
-        container.innerHTML = result.data.map(item => `
-            <div class="flex justify-between bg-purple-50 px-4 py-3 rounded-2xl">
-                <span>${item}</span>
-                <button onclick="deleteSetting('vendor', '${item}')" class="text-red-500 text-sm">ลบ</button>
-            </div>
-        `).join('');
-    }
-}
+        async function initializePage() {
 
-async function loadCheckers() {
-    const result = await callGAS('getSettings', { sheet: 'checker' });
-    const container = document.getElementById('checker-list');
-    if (result.success) {
-        container.innerHTML = result.data.map(item => `
-            <div class="flex justify-between bg-purple-50 px-4 py-3 rounded-2xl">
-                <span>${item}</span>
-                <button onclick="deleteSetting('checker', '${item}')" class="text-red-500 text-sm">ลบ</button>
-            </div>
-        `).join('');
-    }
-}
+            try {
 
-// Add Functions
-async function addMoneyType() {
-    const val = document.getElementById('new-money').value.trim();
-    if (val) await saveSetting('moneytype', val);
-}
+                Auth.requireRoles([
+                    'admin'
+                ]);
 
-async function addVendor() {
-    const val = document.getElementById('new-vendor').value.trim();
-    if (val) await saveSetting('vendor', val);
-}
+                initializeSidebar();
 
-async function addChecker() {
-    const val = document.getElementById('new-checker').value.trim();
-    if (val) await saveSetting('checker', val);
-}
+                bindEvents();
 
-async function saveSetting(type, value) {
-    await callGAS('addSetting', { type, value });
-    loadSettings(); // Refresh
-}
+                await loadSettings();
 
-async function deleteSetting(type, value) {
-    if (confirm(`ลบ "${value}"?`)) {
-        await callGAS('deleteSetting', { type, value });
-        loadSettings();
-    }
-}
+            } catch (error) {
 
-async function savePeriod() {
-    alert("บันทึกช่วงเวลารับฎีกาสำเร็จ (เชื่อมต่อกับ GAS)");
-}
+                console.error(error);
 
-document.addEventListener('DOMContentLoaded', () => {
-    initAuth();
-    checkDarkMode();
-    loadSettings();
-});
+                UI.showToast(
+                    error.message,
+                    'error'
+                );
+            }
+        }
+
+        // ======================
+        // SIDEBAR
+        // ======================
+
+        function initializeSidebar() {
+
+            const links =
+                document.querySelectorAll(
+                    '.sidebar-link'
+                );
+
+            links.forEach(
+                link => {
+
+                    link.addEventListener(
+                        'click',
+                        () => {
+
+                            links.forEach(
+                                item =>
+                                    item.classList.remove(
+                                        'active'
+                                    )
+                            );
+
+                            document
+                                .querySelectorAll(
+                                    '.settings-section'
+                                )
+                                .forEach(
+                                    section =>
+                                        section.classList.remove(
+                                            'active'
+                                        )
+                                );
+
+                            link.classList.add(
+                                'active'
+                            );
+
+                            document
+                                .getElementById(
+                                    link.dataset.section
+                                )
+                                .classList.add(
+                                    'active'
+                                );
+                        }
+                    );
+                }
+            );
+        }
+
+        // ======================
+        // EVENTS
+        // ======================
+
+        function bindEvents() {
+
+            document
+                .getElementById(
+                    'refreshButton'
+                )
+                .addEventListener(
+                    'click',
+                    loadSettings
+                );
+
+            document
+                .getElementById(
+                    'saveAllButton'
+                )
+                .addEventListener(
+                    'click',
+                    saveAllSettings
+                );
+        }
+
+        // ======================
+        // LOAD
+        // ======================
+
+        async function loadSettings() {
+
+            try {
+
+                UI.showLoading();
+
+                await Promise.all([
+                    loadUsers(),
+                    loadMoneyTypes(),
+                    loadMappings(),
+                    loadPermissions(),
+                    loadAuditLogs()
+                ]);
+
+            } catch (error) {
+
+                console.error(error);
+
+                UI.showToast(
+                    error.message,
+                    'error'
+                );
+
+            } finally {
+
+                UI.hideLoading();
+            }
+        }
+
+        // ======================
+        // USERS
+        // ======================
+
+        async function loadUsers() {
+
+            const tbody =
+                document.getElementById(
+                    'userTableBody'
+                );
+
+            tbody.innerHTML =
+                `
+                <tr>
+                    <td colspan="6"
+                        class="
+                            px-4
+                            py-8
+                            text-center
+                            text-slate-500
+                        "
+                    >
+                        User API Pending
+                    </td>
+                </tr>
+                `;
+        }
+
+        // ======================
+        // MONEY TYPES
+        // ======================
+
+        async function loadMoneyTypes() {
+
+            const container =
+                document.getElementById(
+                    'moneyTypeList'
+                );
+
+            container.innerHTML =
+                `
+                <div
+                    class="
+                        p-4
+                        rounded-xl
+                        border
+                        border-slate-200
+                        dark:border-slate-700
+                        flex
+                        flex-col
+                        md:flex-row
+                        md:items-center
+                        gap-4
+                    "
+                >
+
+                    <input
+                        type="text"
+                        value="งบประมาณ"
+                        class="
+                            flex-1
+                            rounded-xl
+                            border
+                            border-slate-300
+                            dark:border-slate-700
+                            bg-white
+                            dark:bg-slate-900
+                            px-4
+                            py-2
+                        "
+                    />
+
+                    <input
+                        type="color"
+                        value="#2563eb"
+                        class="
+                            h-12
+                            w-20
+                            rounded-xl
+                        "
+                    />
+
+                    <input
+                        type="text"
+                        value="budget,bg"
+                        class="
+                            flex-1
+                            rounded-xl
+                            border
+                            border-slate-300
+                            dark:border-slate-700
+                            bg-white
+                            dark:bg-slate-900
+                            px-4
+                            py-2
+                        "
+                    />
+
+                    <button
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            bg-red-600
+                            text-white
+                        "
+                    >
+                        Disable
+                    </button>
+
+                </div>
+                `;
+        }
+
+        // ======================
+        // MAPPING
+        // ======================
+
+        async function loadMappings() {
+
+            const tbody =
+                document.getElementById(
+                    'mappingTableBody'
+                );
+
+            tbody.innerHTML =
+                `
+                <tr>
+
+                    <td class="px-4 py-3">
+                        เลขที่ใบขอเบิก
+                    </td>
+
+                    <td class="px-4 py-3">
+                        bgdk_rcvno
+                    </td>
+
+                    <td class="px-4 py-3">
+                        YES
+                    </td>
+
+                    <td class="px-4 py-3">
+                        <button
+                            class="
+                                px-3
+                                py-1
+                                rounded-lg
+                                bg-blue-600
+                                text-white
+                            "
+                        >
+                            Edit
+                        </button>
+                    </td>
+
+                </tr>
+                `;
+        }
+
+        // ======================
+        // PERMISSIONS
+        // ======================
+
+        async function loadPermissions() {
+
+            const modules = [
+
+                'Dashboard',
+                'Register',
+                'Import',
+                'Approve',
+                'Report',
+                'Settings',
+                'Delete',
+                'Export'
+
+            ];
+
+            const tbody =
+                document.getElementById(
+                    'permissionTableBody'
+                );
+
+            tbody.innerHTML =
+                modules.map(
+                    module => {
+
+                        return `
+                        <tr
+                            class="
+                                border-b
+                                border-slate-200
+                                dark:border-slate-800
+                            "
+                        >
+
+                            <td class="px-4 py-3">
+                                ${module}
+                            </td>
+
+                            ${['admin','editor','checker','staff','guest']
+                                .map(
+                                    () => `
+                                    <td class="px-4 py-3 text-center">
+                                        <input
+                                            type="checkbox"
+                                            checked
+                                        />
+                                    </td>
+                                    `
+                                )
+                                .join('')
+                            }
+
+                        </tr>
+                        `;
+                    }
+                ).join('');
+        }
+
+        // ======================
+        // AUDIT
+        // ======================
+
+        async function loadAuditLogs() {
+
+            const tbody =
+                document.getElementById(
+                    'auditTableBody'
+                );
+
+            tbody.innerHTML =
+                `
+                <tr>
+
+                    <td class="px-4 py-3">
+                        22/05/2569 14:20
+                    </td>
+
+                    <td class="px-4 py-3">
+                        admin@srdh.go.th
+                    </td>
+
+                    <td class="px-4 py-3">
+                        LOGIN
+                    </td>
+
+                    <td class="px-4 py-3">
+                        Chrome
+                    </td>
+
+                    <td class="px-4 py-3">
+                        Success login
+                    </td>
+
+                </tr>
+                `;
+        }
+
+        // ======================
+        // SAVE
+        // ======================
+
+        async function saveAllSettings() {
+
+            try {
+
+                UI.showLoading();
+
+                await delay(1000);
+
+                UI.showToast(
+                    'บันทึกการตั้งค่าเรียบร้อย',
+                    'success'
+                );
+
+            } catch (error) {
+
+                console.error(error);
+
+                UI.showToast(
+                    error.message,
+                    'error'
+                );
+
+            } finally {
+
+                UI.hideLoading();
+            }
+        }
+
+        // ======================
+        // UTILS
+        // ======================
+
+        function delay(ms) {
+
+            return new Promise(
+                resolve =>
+                    setTimeout(
+                        resolve,
+                        ms
+                    )
+            );
+        }
+
     </script>
-    
+
 </body>
+
 </html>
