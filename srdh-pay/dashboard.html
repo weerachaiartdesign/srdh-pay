@@ -1,262 +1,1329 @@
-<!-- Version: 00122.3
-     dashboard.html -->
+<!-- Version: 00123.0 -->
+<!-- dashboard.html -->
+<!-- SRDH PAY Dashboard -->
 
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - ทะเบียนเบิกจ่ายเงิน รพส.</title>
+
+    <meta charset="UTF-8" />
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+        SRDH PAY - Dashboard
+    </title>
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&amp;family=Prompt:wght@400;500;600&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#7C3AED">
-    <link rel="apple-touch-icon" href="icons/register_acc-touch-icon.png">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Runtime -->
+    <script src="api-config.js"></script>
+    <script src="main.js"></script>
+
+    <style>
+
+        html,
+        body {
+
+            height: 100%;
+        }
+
+        body {
+
+            font-family:
+                system-ui,
+                sans-serif;
+        }
+
+        .card-hover {
+
+            transition:
+                all 0.2s ease;
+        }
+
+        .card-hover:hover {
+
+            transform:
+                translateY(-2px);
+        }
+
+        .skeleton {
+
+            position: relative;
+
+            overflow: hidden;
+
+            background:
+                #e5e7eb;
+        }
+
+        .skeleton::after {
+
+            content: '';
+
+            position: absolute;
+
+            inset: 0;
+
+            transform:
+                translateX(-100%);
+
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255,255,255,0.5),
+                    transparent
+                );
+
+            animation:
+                shimmer 1.2s infinite;
+        }
+
+        @keyframes shimmer {
+
+            100% {
+
+                transform:
+                    translateX(100%);
+            }
+        }
+
+        @media print {
+
+            body * {
+
+                visibility: hidden;
+            }
+
+            #printSummary,
+            #printSummary * {
+
+                visibility: visible;
+            }
+
+            #printSummary {
+
+                position: absolute;
+
+                inset: 0;
+            }
+        }
+
+    </style>
+
 </head>
-<body class="bg-purple-50 text-gray-800" data-theme="light">
-    <!-- Header ใช้ main.html แทน แต่เพื่อความสมบูรณ์ของไฟล์เดี่ยว -->
-    <header class="bg-white border-b border-purple-200 shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 bg-gradient-to-br from-purple-600 to-violet-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">รพส</div>
-                    <div>
-                        <h1 class="text-xl font-semibold text-purple-900">ทะเบียนเบิกจ่ายเงิน รพส.</h1>
-                        <p class="text-xs text-purple-500">Srdh Pay - Dashboard</p>
-                    </div>
+
+<body
+    class="
+        bg-slate-100
+        dark:bg-slate-950
+        text-slate-800
+        dark:text-slate-100
+    "
+>
+
+    <!-- Layout -->
+    <div
+        class="
+            min-h-screen
+            flex
+        "
+    >
+
+        <!-- Sidebar -->
+        <aside
+            class="
+                hidden
+                lg:flex
+                w-64
+                bg-white
+                dark:bg-slate-900
+                border-r
+                border-slate-200
+                dark:border-slate-800
+                flex-col
+            "
+        >
+
+            <!-- Logo -->
+            <div
+                class="
+                    px-6
+                    py-5
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                "
+            >
+
+                <h1
+                    class="
+                        text-2xl
+                        font-bold
+                        text-blue-600
+                    "
+                >
+                    SRDH PAY
+                </h1>
+
+                <p
+                    class="
+                        text-sm
+                        text-slate-500
+                        mt-1
+                    "
+                >
+                    Financial Dashboard
+                </p>
+
+            </div>
+
+            <!-- Menu -->
+            <nav
+                id="sidebarMenu"
+                class="
+                    flex-1
+                    p-4
+                "
+            ></nav>
+
+            <!-- Footer -->
+            <div
+                class="
+                    p-4
+                    border-t
+                    border-slate-200
+                    dark:border-slate-800
+                    text-xs
+                    text-slate-500
+                "
+            >
+
+                Version 00123.0
+
+            </div>
+
+        </aside>
+
+        <!-- Main -->
+        <main
+            class="
+                flex-1
+                overflow-x-hidden
+            "
+        >
+
+            <!-- Topbar -->
+            <header
+                class="
+                    bg-white
+                    dark:bg-slate-900
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                    px-4
+                    lg:px-8
+                    py-4
+                    flex
+                    items-center
+                    justify-between
+                "
+            >
+
+                <div>
+
+                    <h2
+                        class="
+                            text-2xl
+                            font-bold
+                        "
+                    >
+                        Dashboard
+                    </h2>
+
+                    <p
+                        class="
+                            text-sm
+                            text-slate-500
+                            mt-1
+                        "
+                    >
+                        ภาพรวมทะเบียนเบิกจ่ายเงิน
+                    </p>
+
                 </div>
-                
-                <div class="flex items-center gap-4">
-                    <button onclick="toggleDarkMode()" class="p-3 rounded-2xl hover:bg-purple-100">
-                        <i id="theme-icon" class="fas fa-moon text-xl"></i>
+
+                <div
+                    class="
+                        flex
+                        items-center
+                        gap-3
+                    "
+                >
+
+                    <button
+                        id="refreshButton"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            border
+                            border-slate-300
+                            hover:bg-slate-100
+                            dark:border-slate-700
+                            dark:hover:bg-slate-800
+                            transition
+                        "
+                    >
+                        Refresh
                     </button>
-                    <div onclick="logout()" class="cursor-pointer flex items-center gap-2 text-purple-700 hover:text-purple-900">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span class="hidden sm:inline">ออกจากระบบ</span>
-                    </div>
+
+                    <button
+                        id="printButton"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            bg-blue-600
+                            hover:bg-blue-700
+                            text-white
+                            transition
+                        "
+                    >
+                        Print
+                    </button>
+
                 </div>
-            </div>
-        </div>
-    </header>
 
-    <div class="max-w-7xl mx-auto px-6 py-8">
-        <h2 class="text-3xl font-bold text-purple-900 mb-8 flex items-center gap-3">
-            <i class="fas fa-tachometer-alt"></i> ภาพรวมระบบ
-        </h2>
+            </header>
 
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10" id="summary-cards">
-            <!-- Cards generated by JS -->
-        </div>
+            <!-- Content -->
+            <div
+                class="
+                    p-4
+                    lg:p-8
+                    space-y-6
+                "
+            >
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Average Processing Time -->
-            <div class="card p-6" id="avg-time-card">
-                <h3 class="text-lg font-semibold text-purple-800 mb-4">ระยะเวลาการดำเนินการเฉลี่ย</h3>
-                <div class="text-5xl font-bold text-emerald-600" id="avg-days">0</div>
-                <p class="text-purple-600">วัน (รับเอกสาร → อนุมัติ)</p>
-            </div>
+                <!-- Status -->
+                <div
+                    class="
+                        flex
+                        flex-col
+                        lg:flex-row
+                        lg:items-center
+                        lg:justify-between
+                        gap-3
+                    "
+                >
 
-            <!-- Progress -->
-            <div class="card p-6 lg:col-span-2">
-                <h3 class="text-lg font-semibold text-purple-800 mb-4">ความก้าวหน้าการเบิกจ่าย</h3>
-                <div class="flex items-center gap-6">
-                    <div class="flex-1">
-                        <div class="h-4 bg-purple-100 rounded-full overflow-hidden">
-                            <div id="progress-bar" class="progress-bar h-full w-0 transition-all"></div>
+                    <div
+                        class="
+                            text-sm
+                            text-slate-500
+                        "
+                    >
+
+                        Last Update:
+                        <span id="lastUpdate">
+                            -
+                        </span>
+
+                    </div>
+
+                    <div
+                        id="dashboardStatus"
+                        class="
+                            text-sm
+                            text-green-600
+                            font-medium
+                        "
+                    >
+                        Ready
+                    </div>
+
+                </div>
+
+                <!-- Summary -->
+                <section
+                    id="printSummary"
+                >
+
+                    <div
+                        id="summaryCards"
+                        class="
+                            grid
+                            grid-cols-1
+                            sm:grid-cols-2
+                            xl:grid-cols-4
+                            gap-5
+                        "
+                    >
+
+                        <!-- Skeleton -->
+                        <div
+                            class="
+                                skeleton
+                                h-40
+                                rounded-2xl
+                            "
+                        ></div>
+
+                        <div
+                            class="
+                                skeleton
+                                h-40
+                                rounded-2xl
+                            "
+                        ></div>
+
+                        <div
+                            class="
+                                skeleton
+                                h-40
+                                rounded-2xl
+                            "
+                        ></div>
+
+                        <div
+                            class="
+                                skeleton
+                                h-40
+                                rounded-2xl
+                            "
+                        ></div>
+
+                    </div>
+
+                </section>
+
+                <!-- Charts -->
+                <section
+                    class="
+                        grid
+                        grid-cols-1
+                        xl:grid-cols-2
+                        gap-6
+                    "
+                >
+
+                    <!-- Money Chart -->
+                    <div
+                        class="
+                            bg-white
+                            dark:bg-slate-900
+                            rounded-2xl
+                            shadow-sm
+                            border
+                            border-slate-200
+                            dark:border-slate-800
+                            p-5
+                            card-hover
+                        "
+                    >
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                justify-between
+                                mb-5
+                            "
+                        >
+
+                            <h3
+                                class="
+                                    text-lg
+                                    font-semibold
+                                "
+                            >
+                                ประเภทเงิน
+                            </h3>
+
+                            <span
+                                class="
+                                    text-xs
+                                    text-slate-400
+                                "
+                            >
+                                Updated 5m
+                            </span>
+
                         </div>
+
+                        <div
+                            class="
+                                h-80
+                            "
+                        >
+
+                            <canvas
+                                id="moneyChart"
+                            ></canvas>
+
+                        </div>
+
                     </div>
-                    <div class="text-4xl font-bold text-purple-700" id="progress-percent">0%</div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Charts -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-            <!-- Chart 1: By Department -->
-            <div class="card p-6">
-                <h3 class="text-lg font-semibold text-purple-800 mb-4">สถิติการเบิกจ่ายตามหน่วยงาน</h3>
-                <canvas id="deptChart" height="120"></canvas>
+                    <!-- Department Chart -->
+                    <div
+                        class="
+                            bg-white
+                            dark:bg-slate-900
+                            rounded-2xl
+                            shadow-sm
+                            border
+                            border-slate-200
+                            dark:border-slate-800
+                            p-5
+                            card-hover
+                        "
+                    >
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                justify-between
+                                mb-5
+                            "
+                        >
+
+                            <h3
+                                class="
+                                    text-lg
+                                    font-semibold
+                                "
+                            >
+                                หน่วยงาน
+                            </h3>
+
+                            <span
+                                class="
+                                    text-xs
+                                    text-slate-400
+                                "
+                            >
+                                Updated 5m
+                            </span>
+
+                        </div>
+
+                        <div
+                            class="
+                                h-80
+                            "
+                        >
+
+                            <canvas
+                                id="deptChart"
+                            ></canvas>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- KPI -->
+                <section
+                    class="
+                        grid
+                        grid-cols-1
+                        lg:grid-cols-3
+                        gap-6
+                    "
+                >
+
+                    <!-- Progress -->
+                    <div
+                        class="
+                            bg-white
+                            dark:bg-slate-900
+                            rounded-2xl
+                            shadow-sm
+                            border
+                            border-slate-200
+                            dark:border-slate-800
+                            p-6
+                        "
+                    >
+
+                        <h3
+                            class="
+                                text-lg
+                                font-semibold
+                                mb-4
+                            "
+                        >
+                            ความคืบหน้า
+                        </h3>
+
+                        <div
+                            class="
+                                text-5xl
+                                font-bold
+                                mb-3
+                            "
+                            id="progressPercent"
+                        >
+                            0%
+                        </div>
+
+                        <div
+                            class="
+                                w-full
+                                bg-slate-200
+                                dark:bg-slate-700
+                                rounded-full
+                                h-3
+                                overflow-hidden
+                            "
+                        >
+
+                            <div
+                                id="progressBar"
+                                class="
+                                    h-full
+                                    bg-blue-600
+                                    rounded-full
+                                "
+                                style="width:0%"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Avg Time -->
+                    <div
+                        class="
+                            bg-white
+                            dark:bg-slate-900
+                            rounded-2xl
+                            shadow-sm
+                            border
+                            border-slate-200
+                            dark:border-slate-800
+                            p-6
+                        "
+                    >
+
+                        <h3
+                            class="
+                                text-lg
+                                font-semibold
+                                mb-4
+                            "
+                        >
+                            ระยะเวลาดำเนินการเฉลี่ย
+                        </h3>
+
+                        <div
+                            class="
+                                text-5xl
+                                font-bold
+                            "
+                            id="avgTime"
+                        >
+                            0
+                        </div>
+
+                        <div
+                            class="
+                                text-sm
+                                text-slate-500
+                                mt-2
+                            "
+                        >
+                            วัน
+                        </div>
+
+                    </div>
+
+                    <!-- User -->
+                    <div
+                        class="
+                            bg-white
+                            dark:bg-slate-900
+                            rounded-2xl
+                            shadow-sm
+                            border
+                            border-slate-200
+                            dark:border-slate-800
+                            p-6
+                        "
+                    >
+
+                        <h3
+                            class="
+                                text-lg
+                                font-semibold
+                                mb-4
+                            "
+                        >
+                            ผู้ใช้งาน
+                        </h3>
+
+                        <div
+                            class="
+                                text-xl
+                                font-semibold
+                            "
+                            id="currentUserName"
+                        >
+                            -
+                        </div>
+
+                        <div
+                            class="
+                                text-sm
+                                text-slate-500
+                                mt-2
+                            "
+                            id="currentUserRole"
+                        >
+                            -
+                        </div>
+
+                    </div>
+
+                </section>
+
             </div>
 
-            <!-- Chart 2: By Money Type -->
-            <div class="card p-6">
-                <h3 class="text-lg font-semibold text-purple-800 mb-4">สถิติตามประเภทเงิน</h3>
-                <canvas id="moneyTypeChart" height="120"></canvas>
-            </div>
-        </div>
+        </main>
 
-        <!-- Monthly Trend -->
-        <div class="card p-6 mt-6">
-            <h3 class="text-lg font-semibold text-purple-800 mb-4">จำนวนฎีกาแต่ละเดือน (2 ปีงบประมาณ)</h3>
-            <canvas id="monthlyChart" height="100"></canvas>
-        </div>
     </div>
 
-    <script src="js/api-config.js"></script>
-    <script src="js/main.js"></script>
-   
+    <!-- Script -->
     <script>
 
-// Version: 00122
-// Dashboard Controller - Srdh Pay
+        'use strict';
 
-let deptChart, moneyTypeChart, monthlyChart;
+        // ======================
+        // STATE
+        // ======================
 
-async function loadDashboard() {
-    try {
-        const data = await callGAS('getDashboardData');
-        
-        if (!data.success) {
-            console.error(data.message);
-            return;
+        let moneyChart = null;
+
+        let deptChart = null;
+
+        const DASHBOARD_CACHE_KEY =
+            'dashboard_cache_v1';
+
+        const DASHBOARD_CACHE_TIME =
+            5 * 60 * 1000;
+
+        // ======================
+        // INIT
+        // ======================
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            initializeDashboard
+        );
+
+        async function initializeDashboard() {
+
+            bindEvents();
+
+            renderUserInfo();
+
+            await loadDashboard();
         }
 
-        renderSummaryCards(data.summary);
-        renderAverageTime(data.avgTime);
-        renderProgress(data.progress);
-        renderDepartmentChart(data.deptData);
-        renderMoneyTypeChart(data.moneyTypeData);
-        renderMonthlyChart(data.monthlyData);
+        // ======================
+        // EVENTS
+        // ======================
 
-    } catch (error) {
-        console.error("Dashboard load error:", error);
-        alert("ไม่สามารถโหลดข้อมูล Dashboard ได้");
-    }
-}
+        function bindEvents() {
 
-// Render Summary Cards
-function renderSummaryCards(summary) {
-    const container = document.getElementById('summary-cards');
-    container.innerHTML = '';
+            document
+                .getElementById(
+                    'refreshButton'
+                )
+                .addEventListener(
+                    'click',
+                    async () => {
 
-    const types = [
-        { key: 'งบประมาณ', label: 'เงินงบประมาณ', color: 'purple' },
-        { key: 'บำรุง', label: 'เงินบำรุง', color: 'amber' },
-        { key: 'ประกันสุขภาพ', label: 'เงินประกันสุขภาพ', color: 'orange' },
-        { key: 'อื่น', label: 'เงินอื่นๆ', color: 'slate' }
-    ];
+                        await loadDashboard(
+                            true
+                        );
+                    }
+                );
 
-    types.forEach(type => {
-        const s = summary[type.key] || { total: 0, approved: 0, waiting: 0 };
-        
-        const cardHTML = `
-            <div class="card p-6 border-l-4 border-${type.color}-500">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-sm font-medium text-${type.color}-600">${type.label}</p>
-                        <p class="text-3xl font-bold text-gray-800 mt-2">${s.approved.toLocaleString()} <span class="text-sm font-normal text-gray-500">ฎีกา</span></p>
-                    </div>
-                    <div class="text-4xl text-${type.color}-200">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                    </div>
-                </div>
-                <div class="mt-6 space-y-3 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-emerald-600 font-medium">เบิกแล้ว</span>
-                        <span class="font-semibold">${formatCurrency(s.approvedAmount)}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-red-500">รอตรวจสอบ</span>
-                        <span>${formatCurrency(s.waitingAmount)}</span>
-                    </div>
-                    <div class="flex justify-between border-t pt-2">
-                        <span class="font-medium">ขอเบิกทั้งสิ้น</span>
-                        <span class="font-bold">${formatCurrency(s.totalAmount)}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        container.innerHTML += cardHTML;
-    });
-}
+            document
+                .getElementById(
+                    'printButton'
+                )
+                .addEventListener(
+                    'click',
+                    () => {
 
-function renderAverageTime(days) {
-    document.getElementById('avg-days').textContent = Math.floor(days || 0);
-}
-
-function renderProgress(percent) {
-    document.getElementById('progress-bar').style.width = `${percent}%`;
-    document.getElementById('progress-percent').textContent = `${Math.round(percent)}%`;
-}
-
-// Charts
-function renderDepartmentChart(data) {
-    if (deptChart) deptChart.destroy();
-    
-    deptChart = new Chart(document.getElementById('deptChart'), {
-        type: 'bar',
-        data: {
-            labels: data.labels || [],
-            datasets: [{
-                label: 'จำนวนเงิน (บาท)',
-                data: data.values || [],
-                backgroundColor: '#7C3AED',
-                borderRadius: 8,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } }
+                        window.print();
+                    }
+                );
         }
-    });
-}
 
-function renderMoneyTypeChart(data) {
-    if (moneyTypeChart) moneyTypeChart.destroy();
-    
-    moneyTypeChart = new Chart(document.getElementById('moneyTypeChart'), {
-        type: 'doughnut',
-        data: {
-            labels: data.labels || [],
-            datasets: [{
-                data: data.values || [],
-                backgroundColor: ['#7C3AED', '#C026D3', '#F59E0B', '#10B981', '#6366F1']
-            }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
-}
+        // ======================
+        // LOAD
+        // ======================
 
-function renderMonthlyChart(data) {
-    if (monthlyChart) monthlyChart.destroy();
-    
-    monthlyChart = new Chart(document.getElementById('monthlyChart'), {
-        type: 'bar',
-        data: {
-            labels: data.months || [],
-            datasets: [
-                {
-                    label: 'ปีปัจจุบัน',
-                    data: data.currentYear || [],
-                    backgroundColor: '#7C3AED'
-                },
-                {
-                    label: 'ปีก่อนหน้า',
-                    data: data.previousYear || [],
-                    backgroundColor: '#C4B5FD'
+        async function loadDashboard(
+            forceRefresh = false
+        ) {
+
+            try {
+
+                setDashboardStatus(
+                    'Loading...',
+                    'text-amber-500'
+                );
+
+                const cached =
+                    getDashboardCache();
+
+                if (
+                    cached &&
+                    !forceRefresh
+                ) {
+
+                    renderDashboard(
+                        cached
+                    );
+
+                    setDashboardStatus(
+                        'Loaded from cache',
+                        'text-green-600'
+                    );
+
+                    return;
                 }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } }
-        }
-    });
-}
 
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    initAuth();
-    checkDarkMode();
-    loadDashboard();
-});
+                UI.showLoading();
+
+                const result =
+                    await DashboardAPI
+                        .getDashboardData();
+
+                if (
+                    !result.success
+                ) {
+
+                    throw new Error(
+                        result.message
+                    );
+                }
+
+                saveDashboardCache(
+                    result
+                );
+
+                renderDashboard(
+                    result
+                );
+
+                setDashboardStatus(
+                    'Updated',
+                    'text-green-600'
+                );
+
+            } catch (error) {
+
+                console.error(error);
+
+                setDashboardStatus(
+                    'Load failed',
+                    'text-red-500'
+                );
+
+                UI.showToast(
+                    error.message,
+                    'error'
+                );
+
+            } finally {
+
+                UI.hideLoading();
+            }
+        }
+
+        // ======================
+        // RENDER
+        // ======================
+
+        function renderDashboard(
+            data
+        ) {
+
+            renderSummaryCards(
+                data.summary
+            );
+
+            renderCharts(data);
+
+            renderProgress(
+                data.progress
+            );
+
+            renderAvgTime(
+                data.avgTime
+            );
+
+            updateLastUpdate();
+        }
+
+        // ======================
+        // SUMMARY
+        // ======================
+
+        function renderSummaryCards(
+            summary
+        ) {
+
+            const container =
+                document
+                    .getElementById(
+                        'summaryCards'
+                    );
+
+            container.innerHTML = '';
+
+            Object.keys(summary)
+                .forEach(type => {
+
+                    const item =
+                        summary[type];
+
+                    const card =
+                        document.createElement(
+                            'div'
+                        );
+
+                    card.className =
+                        `
+                        bg-white
+                        dark:bg-slate-900
+                        rounded-2xl
+                        shadow-sm
+                        border
+                        border-slate-200
+                        dark:border-slate-800
+                        p-5
+                        card-hover
+                        `;
+
+                    card.innerHTML =
+                        `
+                        <div class="
+                            flex
+                            items-center
+                            justify-between
+                            mb-5
+                        ">
+
+                            <h3 class="
+                                text-lg
+                                font-semibold
+                            ">
+                                ${type}
+                            </h3>
+
+                            <span class="
+                                text-sm
+                                text-slate-400
+                            ">
+                                ${item.total} รายการ
+                            </span>
+
+                        </div>
+
+                        <div class="
+                            space-y-3
+                        ">
+
+                            <div>
+
+                                <div class="
+                                    text-sm
+                                    text-slate-500
+                                ">
+                                    รวมทั้งหมด
+                                </div>
+
+                                <div class="
+                                    text-2xl
+                                    font-bold
+                                ">
+                                    ${Formatter.currency(
+                                        item.totalAmount
+                                    )}
+                                </div>
+
+                            </div>
+
+                            <div class="
+                                grid
+                                grid-cols-2
+                                gap-3
+                                text-sm
+                            ">
+
+                                <div>
+
+                                    <div class="
+                                        text-slate-500
+                                    ">
+                                        อนุมัติ
+                                    </div>
+
+                                    <div class="
+                                        font-semibold
+                                        text-green-600
+                                    ">
+                                        ${Formatter.currency(
+                                            item.approvedAmount
+                                        )}
+                                    </div>
+
+                                </div>
+
+                                <div>
+
+                                    <div class="
+                                        text-slate-500
+                                    ">
+                                        รอดำเนินการ
+                                    </div>
+
+                                    <div class="
+                                        font-semibold
+                                        text-amber-600
+                                    ">
+                                        ${Formatter.currency(
+                                            item.waitingAmount
+                                        )}
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                        `;
+
+                    container.appendChild(
+                        card
+                    );
+                });
+        }
+
+        // ======================
+        // CHARTS
+        // ======================
+
+        function renderCharts(
+            data
+        ) {
+
+            renderMoneyChart(
+                data.summary
+            );
+
+            renderDeptChart(
+                data.summary
+            );
+        }
+
+        function renderMoneyChart(
+            summary
+        ) {
+
+            const labels =
+                Object.keys(summary);
+
+            const values =
+                labels.map(
+                    key =>
+                    summary[key]
+                        .totalAmount
+                );
+
+            if (moneyChart) {
+
+                moneyChart.destroy();
+            }
+
+            moneyChart =
+                new Chart(
+                    document
+                        .getElementById(
+                            'moneyChart'
+                        ),
+                    {
+                        type: 'doughnut',
+
+                        data: {
+
+                            labels,
+
+                            datasets: [
+
+                                {
+                                    data: values
+                                }
+                            ]
+                        },
+
+                        options: {
+
+                            responsive: true,
+
+                            maintainAspectRatio:
+                                false
+                        }
+                    }
+                );
+        }
+
+        function renderDeptChart(
+            summary
+        ) {
+
+            const labels =
+                Object.keys(summary);
+
+            const values =
+                labels.map(
+                    key =>
+                    summary[key]
+                        .approvedAmount
+                );
+
+            if (deptChart) {
+
+                deptChart.destroy();
+            }
+
+            deptChart =
+                new Chart(
+                    document
+                        .getElementById(
+                            'deptChart'
+                        ),
+                    {
+                        type: 'bar',
+
+                        data: {
+
+                            labels,
+
+                            datasets: [
+
+                                {
+                                    data: values
+                                }
+                            ]
+                        },
+
+                        options: {
+
+                            responsive: true,
+
+                            maintainAspectRatio:
+                                false
+                        }
+                    }
+                );
+        }
+
+        // ======================
+        // KPI
+        // ======================
+
+        function renderProgress(
+            progress
+        ) {
+
+            const value =
+                Math.round(
+                    progress || 0
+                );
+
+            document
+                .getElementById(
+                    'progressPercent'
+                )
+                .textContent =
+                    `${value}%`;
+
+            document
+                .getElementById(
+                    'progressBar'
+                )
+                .style.width =
+                    `${value}%`;
+        }
+
+        function renderAvgTime(
+            avgTime
+        ) {
+
+            document
+                .getElementById(
+                    'avgTime'
+                )
+                .textContent =
+                    Math.round(
+                        avgTime || 0
+                    );
+        }
+
+        function renderUserInfo() {
+
+            const user =
+                SessionManager
+                    .getUser();
+
+            if (!user) {
+
+                return;
+            }
+
+            document
+                .getElementById(
+                    'currentUserName'
+                )
+                .textContent =
+                    user.username ||
+                    '-';
+
+            document
+                .getElementById(
+                    'currentUserRole'
+                )
+                .textContent =
+                    user.role ||
+                    '-';
+        }
+
+        // ======================
+        // CACHE
+        // ======================
+
+        function saveDashboardCache(
+            data
+        ) {
+
+            localStorage.setItem(
+                DASHBOARD_CACHE_KEY,
+                JSON.stringify({
+
+                    timestamp:
+                        Date.now(),
+
+                    data
+                })
+            );
+        }
+
+        function getDashboardCache() {
+
+            const raw =
+                localStorage.getItem(
+                    DASHBOARD_CACHE_KEY
+                );
+
+            if (!raw) {
+
+                return null;
+            }
+
+            try {
+
+                const parsed =
+                    JSON.parse(raw);
+
+                const expired =
+                    (
+                        Date.now() -
+                        parsed.timestamp
+                    ) >
+                    DASHBOARD_CACHE_TIME;
+
+                if (expired) {
+
+                    localStorage.removeItem(
+                        DASHBOARD_CACHE_KEY
+                    );
+
+                    return null;
+                }
+
+                return parsed.data;
+
+            } catch {
+
+                return null;
+            }
+        }
+
+        // ======================
+        // STATUS
+        // ======================
+
+        function setDashboardStatus(
+            text,
+            className
+        ) {
+
+            const element =
+                document
+                    .getElementById(
+                        'dashboardStatus'
+                    );
+
+            element.className =
+                `
+                text-sm
+                font-medium
+                ${className}
+                `;
+
+            element.textContent =
+                text;
+        }
+
+        function updateLastUpdate() {
+
+            document
+                .getElementById(
+                    'lastUpdate'
+                )
+                .textContent =
+                    Formatter.thaiDate(
+                        new Date()
+                    ) +
+                    ' ' +
+                    new Date()
+                        .toLocaleTimeString(
+                            'th-TH'
+                        );
+        }
+
     </script>
-    
+
 </body>
+
 </html>
