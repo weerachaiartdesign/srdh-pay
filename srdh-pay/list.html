@@ -1,462 +1,1805 @@
-<!-- Version: 00122.3
-     list.html -->
+<!-- Version: 00123.0 -->
+<!-- list.html -->
+<!-- SRDH PAY Register List -->
 
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ทะเบียนฎีกา - Srdh Pay</title>
+
+    <meta charset="UTF-8" />
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+        SRDH PAY - ทะเบียน
+    </title>
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&amp;family=Prompt:wght@400;500;600&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#7C3AED">
-    <link rel="apple-touch-icon" href="icons/register_acc-touch-icon.png">
-</head>
-<body class="bg-purple-50 text-gray-800" data-theme="light">
-    <!-- Header -->
-    <header class="bg-white border-b border-purple-200 shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 bg-gradient-to-br from-purple-600 to-violet-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">รพส</div>
-                    <div>
-                        <h1 class="text-xl font-semibold text-purple-900">ทะเบียนฎีกาเบิกจ่ายเงิน</h1>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-4">
-                    <button onclick="toggleDarkMode()" class="p-3 rounded-2xl hover:bg-purple-100">
-                        <i id="theme-icon" class="fas fa-moon text-xl"></i>
-                    </button>
-                    <button onclick="window.location.href='dashboard.html'" 
-                            class="px-5 py-2 text-purple-700 hover:bg-purple-100 rounded-2xl transition-all flex items-center gap-2">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span class="hidden md:inline">Dashboard</span>
-                    </button>
-                    <div onclick="logout()" class="cursor-pointer text-purple-700 hover:text-red-600 flex items-center gap-2">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
 
-    <div class="max-w-7xl mx-auto px-6 py-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <h2 class="text-3xl font-bold text-purple-900 flex items-center gap-3">
-                <i class="fas fa-list"></i> ทะเบียนฎีกา
-            </h2>
-            
-            <div class="flex flex-wrap gap-3">
-                <button onclick="showAdvancedSearch()" 
-                        class="btn-primary px-5 py-3 rounded-2xl text-white flex items-center gap-2">
-                    <i class="fas fa-search"></i>
-                    <span>ค้นหาแบบละเอียด</span>
-                </button>
-                
-                <button onclick="refreshList()" 
-                        class="px-5 py-3 border border-purple-300 hover:bg-purple-50 rounded-2xl flex items-center gap-2">
-                    <i class="fas fa-sync-alt"></i>
-                    <span>รีเฟรช</span>
-                </button>
-            </div>
-        </div>
+    <!-- Runtime -->
+    <script src="api-config.js"></script>
+    <script src="main.js"></script>
 
-        <!-- Search and Filter -->
-        <div class="bg-white rounded-3xl p-6 shadow-sm mb-6">
-            <div class="flex flex-col md:flex-row gap-4">
-                <div class="flex-1">
-                    <input type="text" id="searchInput" 
-                           onkeyup="if(event.key === 'Enter') searchTable()"
-                           placeholder="ค้นหา เลขที่ฎีกา, ชื่อบริษัท, รายการ..." 
-                           class="w-full px-5 py-4 border border-purple-200 rounded-2xl focus:outline-none focus:border-purple-500">
-                </div>
-                
-                <div class="flex gap-3">
-                    <select id="filterMoneyType" onchange="filterTable()" 
-                            class="px-4 py-4 border border-purple-200 rounded-2xl focus:outline-none">
-                        <option value="">ทุกประเภทเงิน</option>
-                    </select>
-                    <select id="filterDept" onchange="filterTable()" 
-                            class="px-4 py-4 border border-purple-200 rounded-2xl focus:outline-none">
-                        <option value="">ทุกหน่วยงาน</option>
-                    </select>
-                    <select id="filterStatus" onchange="filterTable()" 
-                            class="px-4 py-4 border border-purple-200 rounded-2xl focus:outline-none">
-                        <option value="">ทุกสถานะ</option>
-                    </select>
-                </div>
-                
-                <button onclick="clearFilters()" 
-                        class="px-6 py-4 text-purple-600 hover:bg-purple-100 rounded-2xl border border-purple-200">
-                    ล้างตัวกรอง
-                </button>
-            </div>
-        </div>
+    <style>
 
-        <!-- Table / Cards Container -->
-        <div class="bg-white rounded-3xl shadow overflow-hidden" id="data-container">
-            <!-- Desktop Table -->
-            <div class="hidden md:block overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-purple-100">
-                        <tr>
-                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">ลำดับ / วันที่รับ</th>
-                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">สถานะ</th>
-                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">เลขที่เอกสาร</th>
-                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">ชื่อเจ้าหนี้</th>
-                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">รายการ</th>
-                            <th class="px-6 py-5 text-right text-purple-800 font-semibold">จำนวนเงิน</th>
-                            <th class="px-6 py-5 text-left text-purple-800 font-semibold">ประเภทเงิน</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body" class="divide-y"></tbody>
-                </table>
-            </div>
+        html,
+        body {
 
-            <!-- Mobile Cards -->
-            <div class="md:hidden p-4 space-y-4" id="mobile-cards"></div>
-        </div>
-
-        <!-- Pagination -->
-        <div class="flex justify-between items-center mt-6 px-4">
-            <div class="flex items-center gap-3">
-                <span class="text-sm text-purple-600">แสดง</span>
-                <select id="pageSize" onchange="changePageSize()" class="border border-purple-200 rounded-xl px-3 py-2">
-                    <option value="50">50</option>
-                    <option value="100" selected>100</option>
-                    <option value="200">200</option>
-                    <option value="500">500</option>
-                </select>
-            </div>
-            <div id="pagination" class="flex gap-2"></div>
-        </div>
-    </div>
-
-    <!-- Detail Popup -->
-    <div id="detailPopup" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
-        <div class="bg-white rounded-3xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-auto">
-            <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white rounded-t-3xl">
-                <h3 class="text-xl font-semibold text-purple-900">รายละเอียดฎีกา</h3>
-                <button onclick="closePopup()" class="text-3xl text-purple-400 hover:text-red-500">×</button>
-            </div>
-            <div id="popup-content" class="p-6 space-y-6"></div>
-        </div>
-    </div>
-
-    <script src="js/api-config.js"></script>
-    <script src="js/main.js"></script>
-
-    <script>
- // Version: 00122-
-// List Page Controller - ทะเบียนฎีกา
-
-let allData = [];
-let filteredData = [];
-let currentPage = 1;
-let pageSize = 100;
-
-// โหลดข้อมูลทั้งหมด
-async function loadRegisterData() {
-    try {
-        const result = await callGAS('getRegisterData');
-        if (result.success) {
-            allData = result.data || [];
-            filteredData = [...allData];
-            renderTable();
-            populateFilters();
+            height: 100%;
         }
-    } catch (error) {
-        console.error("Load data error:", error);
-        alert("ไม่สามารถโหลดข้อมูลทะเบียนได้");
-    }
-}
 
-// เติมข้อมูลในตัวกรอง
-function populateFilters() {
-    const moneyTypes = new Set();
-    const depts = new Set();
-    const statuses = new Set();
+        body {
 
-    allData.forEach(item => {
-        if (item[0]) moneyTypes.add(item[0]); // ประเภทเงิน (Column A)
-        if (item[1]) depts.add(item[1]);       // หน่วยงาน (Column B)
-        const status = getStatus(item);
-        if (status) statuses.add(status);
-    });
+            font-family:
+                system-ui,
+                sans-serif;
+        }
 
-    // Populate money type filter
-    const mtSelect = document.getElementById('filterMoneyType');
-    Array.from(moneyTypes).sort().forEach(type => {
-        const opt = document.createElement('option');
-        opt.value = type;
-        opt.textContent = type;
-        mtSelect.appendChild(opt);
-    });
+        .status-paid {
 
-    // Populate department filter
-    const deptSelect = document.getElementById('filterDept');
-    Array.from(depts).sort().forEach(dept => {
-        const opt = document.createElement('option');
-        opt.value = dept;
-        opt.textContent = dept;
-        deptSelect.appendChild(opt);
-    });
-}
+            background:
+                #dcfce7;
 
-// หาสถานะของแต่ละรายการ
-function getStatus(row) {
-    if (row[23]) return "ยกเลิก";           // X = วันที่ยกเลิก
-    if (row[22]) return "จ่ายแล้ว";         // W
-    if (row[21]) return "อนุมัติ";          // V
-    if (row[20]) return "เสนอ";             // U
-    if (row[19]) return "ตรวจผ่าน";         // T
-    if (row[18]) return "รับคืน";           // S
-    if (row[17]) return "ส่งแก้ไข";         // R
-    if (row[16]) return "รับเอกสาร";        // Q
-    if (row[15]) return "รอเอกสาร";         // P
-    return "รออนุมัติ";
-}
+            color:
+                #166534;
+        }
 
-// Render Desktop Table
-function renderTable() {
-    const tbody = document.getElementById('table-body');
-    const mobileContainer = document.getElementById('mobile-cards');
-    tbody.innerHTML = '';
-    mobileContainer.innerHTML = '';
+        .status-wait {
 
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    const pageData = filteredData.slice(start, end);
+            background:
+                #fef3c7;
 
-    pageData.forEach((row, index) => {
-        const globalIndex = start + index;
-        const status = getStatus(row);
-        const moneyType = row[0] || '-';
+            color:
+                #92400e;
+        }
 
-        // Desktop Row
-        const tr = document.createElement('tr');
-        tr.className = `table-row cursor-pointer hover:bg-purple-50`;
-        tr.innerHTML = `
-            <td class="px-6 py-5">
-                <div class="text-sm">${formatThaiDate(row[16])}</div>
-                <div class="font-medium text-purple-700">เลขรับ: ${row[10] || '-'}</div>
-            </td>
-            <td class="px-6 py-5">
-                <span class="px-4 py-1.5 rounded-2xl text-xs font-medium ${getStatusClass(status)}">${status}</span>
-            </td>
-            <td class="px-6 py-5">
-                <div>ใบขอเบิก: ${row[12] || '-'}</div>
-                <div class="font-medium">ฎีกา: ${row[13] || '-'}</div>
-            </td>
-            <td class="px-6 py-5 font-semibold text-gray-800">${row[4] || '-'}</td>
-            <td class="px-6 py-5 max-w-xs truncate">${row[6] || '-'}</td>
-            <td class="px-6 py-5 text-right font-bold text-lg">${formatCurrency(row[5])}</td>
-            <td class="px-6 py-5">
-                <span class="money-type-${moneyType.replace(/ /g,'')} px-4 py-1 rounded-2xl text-xs">${moneyType}</span>
-            </td>
-        `;
-        tr.onclick = () => showDetailPopup(globalIndex);
-        tbody.appendChild(tr);
+        .status-cancel {
 
-        // Mobile Card
-        const card = document.createElement('div');
-        card.className = `card p-5 cursor-pointer`;
-        card.innerHTML = `
-            <div class="flex justify-between">
+            background:
+                #fee2e2;
+
+            color:
+                #991b1b;
+        }
+
+        .status-default {
+
+            background:
+                #e2e8f0;
+
+            color:
+                #334155;
+        }
+
+        .table-row {
+
+            transition:
+                background 0.2s ease;
+        }
+
+        .table-row:hover {
+
+            background:
+                rgba(0,0,0,0.03);
+        }
+
+        @media print {
+
+            body * {
+
+                visibility: hidden;
+            }
+
+            #printArea,
+            #printArea * {
+
+                visibility: visible;
+            }
+
+            #printArea {
+
+                position: absolute;
+
+                inset: 0;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body
+    class="
+        bg-slate-100
+        dark:bg-slate-950
+        text-slate-800
+        dark:text-slate-100
+    "
+>
+
+    <!-- Layout -->
+    <div
+        class="
+            min-h-screen
+            flex
+        "
+    >
+
+        <!-- Sidebar -->
+        <aside
+            class="
+                hidden
+                lg:flex
+                w-64
+                bg-white
+                dark:bg-slate-900
+                border-r
+                border-slate-200
+                dark:border-slate-800
+                flex-col
+            "
+        >
+
+            <!-- Logo -->
+            <div
+                class="
+                    px-6
+                    py-5
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                "
+            >
+
+                <h1
+                    class="
+                        text-2xl
+                        font-bold
+                        text-blue-600
+                    "
+                >
+                    SRDH PAY
+                </h1>
+
+                <p
+                    class="
+                        text-sm
+                        text-slate-500
+                        mt-1
+                    "
+                >
+                    Register System
+                </p>
+
+            </div>
+
+            <!-- Menu -->
+            <nav
+                id="sidebarMenu"
+                class="
+                    flex-1
+                    p-4
+                "
+            ></nav>
+
+            <!-- Footer -->
+            <div
+                class="
+                    p-4
+                    border-t
+                    border-slate-200
+                    dark:border-slate-800
+                    text-xs
+                    text-slate-500
+                "
+            >
+                Version 00123.0
+            </div>
+
+        </aside>
+
+        <!-- Main -->
+        <main
+            class="
+                flex-1
+                overflow-x-hidden
+            "
+        >
+
+            <!-- Header -->
+            <header
+                class="
+                    bg-white
+                    dark:bg-slate-900
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                    px-4
+                    lg:px-8
+                    py-4
+                    flex
+                    flex-col
+                    gap-4
+                    lg:flex-row
+                    lg:items-center
+                    lg:justify-between
+                "
+            >
+
                 <div>
-                    <div class="text-xs text-purple-500">${formatThaiDate(row[16])}</div>
-                    <div class="font-semibold">เลขรับ ${row[10] || '-'}</div>
+
+                    <h2
+                        class="
+                            text-2xl
+                            font-bold
+                        "
+                    >
+                        ทะเบียนเบิกจ่าย
+                    </h2>
+
+                    <p
+                        class="
+                            text-sm
+                            text-slate-500
+                            mt-1
+                        "
+                    >
+                        ตรวจสอบรายการและสถานะ
+                    </p>
+
                 </div>
-                <span class="px-4 py-1 text-xs font-medium rounded-2xl ${getStatusClass(status)}">${status}</span>
-            </div>
-            <div class="mt-3 font-bold text-lg">${row[4] || '-'}</div>
-            <div class="text-sm text-gray-600 line-clamp-2">${row[6] || '-'}</div>
-            <div class="flex justify-between items-end mt-4">
-                <div>
-                    <span class="money-type-${moneyType.replace(/ /g,'')} px-3 py-1 text-xs rounded-2xl">${moneyType}</span>
+
+                <div
+                    class="
+                        flex
+                        flex-wrap
+                        items-center
+                        gap-3
+                    "
+                >
+
+                    <button
+                        id="refreshButton"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            border
+                            border-slate-300
+                            hover:bg-slate-100
+                            dark:border-slate-700
+                            dark:hover:bg-slate-800
+                            transition
+                        "
+                    >
+                        Refresh
+                    </button>
+
+                    <button
+                        id="printButton"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            bg-blue-600
+                            hover:bg-blue-700
+                            text-white
+                            transition
+                        "
+                    >
+                        Print
+                    </button>
+
+                    <button
+                        id="exportButton"
+                        data-permission="export"
+                        class="
+                            px-4
+                            py-2
+                            rounded-xl
+                            bg-emerald-600
+                            hover:bg-emerald-700
+                            text-white
+                            transition
+                        "
+                    >
+                        Export
+                    </button>
+
                 </div>
-                <div class="text-right">
-                    <div class="text-xl font-bold">${formatCurrency(row[5])}</div>
-                </div>
+
+            </header>
+
+            <!-- Content -->
+            <div
+                class="
+                    p-4
+                    lg:p-8
+                    space-y-6
+                "
+            >
+
+                <!-- Filters -->
+                <section
+                    class="
+                        bg-white
+                        dark:bg-slate-900
+                        rounded-2xl
+                        border
+                        border-slate-200
+                        dark:border-slate-800
+                        p-5
+                        shadow-sm
+                    "
+                >
+
+                    <div
+                        class="
+                            grid
+                            grid-cols-1
+                            md:grid-cols-2
+                            xl:grid-cols-5
+                            gap-4
+                        "
+                    >
+
+                        <!-- Search -->
+                        <div
+                            class="
+                                xl:col-span-2
+                            "
+                        >
+
+                            <label
+                                class="
+                                    block
+                                    text-sm
+                                    font-medium
+                                    mb-2
+                                "
+                            >
+                                ค้นหา
+                            </label>
+
+                            <input
+                                type="text"
+                                id="searchInput"
+                                placeholder="
+                                เลขทะเบียน / เจ้าหนี้ / หน่วยงาน
+                                "
+                                class="
+                                    w-full
+                                    rounded-xl
+                                    border
+                                    border-slate-300
+                                    dark:border-slate-700
+                                    bg-white
+                                    dark:bg-slate-900
+                                    px-4
+                                    py-3
+                                    outline-none
+                                    focus:ring-2
+                                    focus:ring-blue-500
+                                "
+                            />
+
+                        </div>
+
+                        <!-- Status -->
+                        <div>
+
+                            <label
+                                class="
+                                    block
+                                    text-sm
+                                    font-medium
+                                    mb-2
+                                "
+                            >
+                                สถานะ
+                            </label>
+
+                            <select
+                                id="statusFilter"
+                                class="
+                                    w-full
+                                    rounded-xl
+                                    border
+                                    border-slate-300
+                                    dark:border-slate-700
+                                    bg-white
+                                    dark:bg-slate-900
+                                    px-4
+                                    py-3
+                                "
+                            >
+
+                                <option value="">
+                                    ทั้งหมด
+                                </option>
+
+                                <option value="จ่ายแล้ว">
+                                    จ่ายแล้ว
+                                </option>
+
+                                <option value="อนุมัติ">
+                                    อนุมัติ
+                                </option>
+
+                                <option value="รออนุมัติ">
+                                    รออนุมัติ
+                                </option>
+
+                                <option value="ยกเลิก">
+                                    ยกเลิก
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <!-- Money Type -->
+                        <div>
+
+                            <label
+                                class="
+                                    block
+                                    text-sm
+                                    font-medium
+                                    mb-2
+                                "
+                            >
+                                ประเภทเงิน
+                            </label>
+
+                            <select
+                                id="moneyTypeFilter"
+                                class="
+                                    w-full
+                                    rounded-xl
+                                    border
+                                    border-slate-300
+                                    dark:border-slate-700
+                                    bg-white
+                                    dark:bg-slate-900
+                                    px-4
+                                    py-3
+                                "
+                            >
+
+                                <option value="">
+                                    ทั้งหมด
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <!-- Page Size -->
+                        <div>
+
+                            <label
+                                class="
+                                    block
+                                    text-sm
+                                    font-medium
+                                    mb-2
+                                "
+                            >
+                                Rows
+                            </label>
+
+                            <select
+                                id="pageSize"
+                                class="
+                                    w-full
+                                    rounded-xl
+                                    border
+                                    border-slate-300
+                                    dark:border-slate-700
+                                    bg-white
+                                    dark:bg-slate-900
+                                    px-4
+                                    py-3
+                                "
+                            >
+
+                                <option value="10">
+                                    10
+                                </option>
+
+                                <option value="25" selected>
+                                    25
+                                </option>
+
+                                <option value="50">
+                                    50
+                                </option>
+
+                                <option value="100">
+                                    100
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- Table -->
+                <section
+                    id="printArea"
+                    class="
+                        bg-white
+                        dark:bg-slate-900
+                        rounded-2xl
+                        border
+                        border-slate-200
+                        dark:border-slate-800
+                        shadow-sm
+                        overflow-hidden
+                    "
+                >
+
+                    <!-- Desktop -->
+                    <div
+                        id="registerDesktopTable"
+                        class="
+                            hidden
+                            lg:block
+                            overflow-x-auto
+                        "
+                    >
+
+                        <table
+                            class="
+                                w-full
+                                min-w-[1400px]
+                            "
+                        >
+
+                            <thead
+                                class="
+                                    bg-slate-100
+                                    dark:bg-slate-800
+                                "
+                            >
+
+                                <tr
+                                    class="
+                                        text-left
+                                        text-sm
+                                    "
+                                >
+
+                                    <th class="px-5 py-4">
+                                        #
+                                    </th>
+
+                                    <th class="px-5 py-4">
+                                        เลขทะเบียน
+                                    </th>
+
+                                    <th class="px-5 py-4">
+                                        เลขรับ
+                                    </th>
+
+                                    <th class="px-5 py-4">
+                                        เจ้าหนี้
+                                    </th>
+
+                                    <th class="px-5 py-4">
+                                        จำนวนเงิน
+                                    </th>
+
+                                    <th class="px-5 py-4">
+                                        ประเภทเงิน
+                                    </th>
+
+                                    <th class="px-5 py-4">
+                                        หน่วยงาน
+                                    </th>
+
+                                    <th class="px-5 py-4">
+                                        สถานะ
+                                    </th>
+
+                                    <th class="px-5 py-4">
+                                        Actions
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody
+                                id="tableBody"
+                            ></tbody>
+
+                        </table>
+
+                    </div>
+
+                    <!-- Mobile -->
+                    <div
+                        id="registerMobileCard"
+                        class="
+                            lg:hidden
+                            p-4
+                            space-y-4
+                        "
+                    ></div>
+
+                    <!-- Pagination -->
+                    <div
+                        class="
+                            px-5
+                            py-4
+                            border-t
+                            border-slate-200
+                            dark:border-slate-800
+                            flex
+                            flex-col
+                            lg:flex-row
+                            gap-4
+                            lg:items-center
+                            lg:justify-between
+                        "
+                    >
+
+                        <div
+                            id="paginationInfo"
+                            class="
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            -
+                        </div>
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                gap-2
+                            "
+                        >
+
+                            <button
+                                id="prevPage"
+                                class="
+                                    px-4
+                                    py-2
+                                    rounded-lg
+                                    border
+                                "
+                            >
+                                ก่อนหน้า
+                            </button>
+
+                            <div
+                                id="pageNumber"
+                                class="
+                                    text-sm
+                                    font-medium
+                                    px-4
+                                "
+                            >
+                                1
+                            </div>
+
+                            <button
+                                id="nextPage"
+                                class="
+                                    px-4
+                                    py-2
+                                    rounded-lg
+                                    border
+                                "
+                            >
+                                ถัดไป
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
             </div>
-        `;
-        card.onclick = () => showDetailPopup(globalIndex);
-        mobileContainer.appendChild(card);
-    });
 
-    renderPagination();
-}
+        </main>
 
-function getStatusClass(status) {
-    if (status.includes("จ่ายแล้ว") || status.includes("อนุมัติ")) return "bg-emerald-100 text-emerald-700";
-    if (status.includes("ยกเลิก")) return "bg-red-100 text-red-700";
-    if (status.includes("แก้ไข")) return "bg-amber-100 text-amber-700";
-    return "bg-blue-100 text-blue-700";
-}
+    </div>
 
-// Popup แสดงรายละเอียด
-function showDetailPopup(index) {
-    const row = filteredData[index];
-    if (!row) return;
+    <!-- Detail Modal -->
+    <div
+        id="detailModal"
+        class="
+            hidden
+            fixed
+            inset-0
+            bg-black/50
+            z-50
+            flex
+            items-center
+            justify-center
+            p-4
+        "
+    >
 
-    const html = `
-        <div class="grid grid-cols-2 gap-4 text-sm">
-            <div><strong>ประเภทเงิน:</strong> ${row[0] || '-'}</div>
-            <div><strong>หน่วยงาน:</strong> ${row[1] || '-'}</div>
-            <div><strong>เลขที่รับ:</strong> ${row[10] || '-'}</div>
-            <div><strong>เลขที่ฎีกา:</strong> ${row[13] || '-'}</div>
-            <div class="col-span-2"><strong>ชื่อเจ้าหนี้:</strong> ${row[4] || '-'}</div>
-            <div class="col-span-2"><strong>รายการ:</strong> ${row[6] || '-'}</div>
-            <div><strong>จำนวนเงิน:</strong> <span class="font-bold">${formatCurrency(row[5])}</span></div>
-            <div><strong>สถานะ:</strong> ${getStatus(row)}</div>
-        </div>
-        
-        <div class="mt-8">
-            <h4 class="font-semibold mb-3 text-purple-800">ไทม์ไลน์การดำเนินการ</h4>
-            <div class="space-y-4">
-                ${generateTimeline(row)}
-            </div>
-        </div>
+        <div
+            class="
+                bg-white
+                dark:bg-slate-900
+                rounded-2xl
+                shadow-2xl
+                w-full
+                max-w-3xl
+                max-h-[90vh]
+                overflow-y-auto
+            "
+        >
 
-        ${getActionButtons(row, index)}
-    `;
+            <!-- Header -->
+            <div
+                class="
+                    px-6
+                    py-5
+                    border-b
+                    border-slate-200
+                    dark:border-slate-800
+                    flex
+                    items-center
+                    justify-between
+                "
+            >
 
-    document.getElementById('popup-content').innerHTML = html;
-    document.getElementById('detailPopup').classList.remove('hidden');
-}
+                <h3
+                    class="
+                        text-xl
+                        font-bold
+                    "
+                >
+                    รายละเอียดรายการ
+                </h3>
 
-function generateTimeline(row) {
-    const steps = [
-        { label: "ลงทะเบียน", date: row[15] },
-        { label: "รับเอกสาร", date: row[16] },
-        { label: "ตรวจผ่าน", date: row[19] },
-        { label: "อนุมัติ", date: row[21] },
-        { label: "จ่ายเช็ค", date: row[22] }
-    ];
-
-    return steps.map(step => `
-        <div class="flex gap-4">
-            <div class="w-24 text-right text-purple-500">${step.label}</div>
-            <div class="flex-1 border-l-2 border-purple-200 pl-6">
-                ${step.date ? formatThaiDate(step.date) : '<span class="text-gray-400">รอดำเนินการ</span>'}
-            </div>
-        </div>
-    `).join('');
-}
-
-function getActionButtons(row, index) {
-    const role = currentUser ? currentUser.role : 'guest';
-    let buttons = '';
-
-    if (role === 'admin' || role === 'editor') {
-        buttons = `
-            <div class="flex gap-3 mt-8">
-                <button onclick="editRecord(${index})" 
-                        class="flex-1 btn-primary py-4 rounded-2xl text-white">
-                    แก้ไขข้อมูล
+                <button
+                    id="closeModal"
+                    class="
+                        text-slate-500
+                        hover:text-red-500
+                    "
+                >
+                    ✕
                 </button>
+
             </div>
-        `;
-    }
-    return buttons;
-}
 
-function closePopup() {
-    document.getElementById('detailPopup').classList.add('hidden');
-}
+            <!-- Body -->
+            <div
+                id="modalContent"
+                class="
+                    p-6
+                "
+            ></div>
 
-// Search & Filter
-function searchTable() {
-    const term = document.getElementById('searchInput').value.toLowerCase().trim();
-    if (!term) {
-        filteredData = [...allData];
-    } else {
-        filteredData = allData.filter(row => 
-            row.some(cell => cell && String(cell).toLowerCase().includes(term))
+        </div>
+
+    </div>
+
+    <!-- Script -->
+    <script>
+
+        'use strict';
+
+        // ======================
+        // STATE
+        // ======================
+
+        let registerData = [];
+
+        let filteredData = [];
+
+        let currentPage = 1;
+
+        const CACHE_KEY =
+            'register_cache_v1';
+
+        const CACHE_TIME =
+            5 * 60 * 1000;
+
+        // ======================
+        // INIT
+        // ======================
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            initializePage
         );
-    }
-    currentPage = 1;
-    renderTable();
-}
 
-function filterTable() {
-    const money = document.getElementById('filterMoneyType').value;
-    const dept = document.getElementById('filterDept').value;
-    const statusFilter = document.getElementById('filterStatus').value;
+        async function initializePage() {
 
-    filteredData = allData.filter(row => {
-        let match = true;
-        if (money && row[0] !== money) match = false;
-        if (dept && row[1] !== dept) match = false;
-        if (statusFilter && getStatus(row) !== statusFilter) match = false;
-        return match;
-    });
+            bindEvents();
 
-    currentPage = 1;
-    renderTable();
-}
+            await loadRegisterData();
+        }
 
-function clearFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('filterMoneyType').value = '';
-    document.getElementById('filterDept').value = '';
-    document.getElementById('filterStatus').value = '';
-    filteredData = [...allData];
-    currentPage = 1;
-    renderTable();
-}
+        // ======================
+        // EVENTS
+        // ======================
 
-// Pagination
-function renderPagination() {
-    // Implementation can be expanded
-    document.getElementById('pagination').innerHTML = `
-        <button onclick="prevPage()" class="px-4 py-2 border rounded-xl">ก่อนหน้า</button>
-        <span class="px-4 py-2">หน้า ${currentPage}</span>
-        <button onclick="nextPage()" class="px-4 py-2 border rounded-xl">ถัดไป</button>
-    `;
-}
+        function bindEvents() {
 
-function changePageSize() {
-    pageSize = parseInt(document.getElementById('pageSize').value);
-    currentPage = 1;
-    renderTable();
-}
+            document
+                .getElementById(
+                    'refreshButton'
+                )
+                .addEventListener(
+                    'click',
+                    async () => {
 
-function prevPage() {
-    if (currentPage > 1) {
-        currentPage--;
-        renderTable();
-    }
-}
+                        await loadRegisterData(
+                            true
+                        );
+                    }
+                );
 
-function nextPage() {
-    const totalPages = Math.ceil(filteredData.length / pageSize);
-    if (currentPage < totalPages) {
-        currentPage++;
-        renderTable();
-    }
-}
+            document
+                .getElementById(
+                    'printButton'
+                )
+                .addEventListener(
+                    'click',
+                    () => {
 
-function refreshList() {
-    loadRegisterData();
-}
+                        window.print();
+                    }
+                );
 
-function editRecord(index) {
-    alert("ฟังก์ชันแก้ไขข้อมูล (จะเชื่อมต่อกับ Popup แก้ไขในเวอร์ชันถัดไป)");
-    // TODO: Implement full edit modal
-}
+            document
+                .getElementById(
+                    'searchInput'
+                )
+                .addEventListener(
+                    'input',
+                    debounce(
+                        applyFilters,
+                        300
+                    )
+                );
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    initAuth();
-    checkDarkMode();
-    loadRegisterData();
-});
-     </script>
+            document
+                .getElementById(
+                    'statusFilter'
+                )
+                .addEventListener(
+                    'change',
+                    applyFilters
+                );
+
+            document
+                .getElementById(
+                    'moneyTypeFilter'
+                )
+                .addEventListener(
+                    'change',
+                    applyFilters
+                );
+
+            document
+                .getElementById(
+                    'pageSize'
+                )
+                .addEventListener(
+                    'change',
+                    () => {
+
+                        currentPage = 1;
+
+                        renderTable();
+                    }
+                );
+
+            document
+                .getElementById(
+                    'prevPage'
+                )
+                .addEventListener(
+                    'click',
+                    previousPage
+                );
+
+            document
+                .getElementById(
+                    'nextPage'
+                )
+                .addEventListener(
+                    'click',
+                    nextPage
+                );
+
+            document
+                .getElementById(
+                    'closeModal'
+                )
+                .addEventListener(
+                    'click',
+                    closeModal
+                );
+        }
+
+        // ======================
+        // LOAD
+        // ======================
+
+        async function loadRegisterData(
+            forceRefresh = false
+        ) {
+
+            try {
+
+                UI.showLoading();
+
+                const cached =
+                    getCache();
+
+                if (
+                    cached &&
+                    !forceRefresh
+                ) {
+
+                    registerData =
+                        cached;
+
+                    initializeData();
+
+                    return;
+                }
+
+                const result =
+                    await RegisterAPI
+                        .getRegisterData();
+
+                if (
+                    !result.success
+                ) {
+
+                    throw new Error(
+                        result.message
+                    );
+                }
+
+                registerData =
+                    result.data || [];
+
+                sortByRegisterNumber();
+
+                saveCache(
+                    registerData
+                );
+
+                initializeData();
+
+            } catch (error) {
+
+                console.error(error);
+
+                UI.showToast(
+                    error.message,
+                    'error'
+                );
+
+            } finally {
+
+                UI.hideLoading();
+            }
+        }
+
+        // ======================
+        // INIT DATA
+        // ======================
+
+        function initializeData() {
+
+            populateMoneyTypes();
+
+            applyFilters();
+        }
+
+        // ======================
+        // FILTER
+        // ======================
+
+        function applyFilters() {
+
+            const keyword =
+                document
+                    .getElementById(
+                        'searchInput'
+                    )
+                    .value
+                    .trim()
+                    .toLowerCase();
+
+            const status =
+                document
+                    .getElementById(
+                        'statusFilter'
+                    )
+                    .value;
+
+            const moneyType =
+                document
+                    .getElementById(
+                        'moneyTypeFilter'
+                    )
+                    .value;
+
+            filteredData =
+                registerData.filter(
+                    row => {
+
+                        const text =
+                            row.join(' ')
+                                .toLowerCase();
+
+                        const rowStatus =
+                            getStatus(row);
+
+                        const keywordMatch =
+                            !keyword ||
+                            text.includes(
+                                keyword
+                            );
+
+                        const statusMatch =
+                            !status ||
+                            rowStatus ===
+                            status;
+
+                        const moneyMatch =
+                            !moneyType ||
+                            row[0] ===
+                            moneyType;
+
+                        return (
+                            keywordMatch &&
+                            statusMatch &&
+                            moneyMatch
+                        );
+                    }
+                );
+
+            currentPage = 1;
+
+            renderTable();
+        }
+
+        // ======================
+        // RENDER
+        // ======================
+
+        function renderTable() {
+
+            renderDesktopTable();
+
+            renderMobileCards();
+
+            renderPagination();
+        }
+
+        // ======================
+        // DESKTOP
+        // ======================
+
+        function renderDesktopTable() {
+
+            const body =
+                document
+                    .getElementById(
+                        'tableBody'
+                    );
+
+            body.innerHTML = '';
+
+            const rows =
+                getCurrentPageData();
+
+            rows.forEach(
+                (row, index) => {
+
+                    const status =
+                        getStatus(row);
+
+                    const tr =
+                        document
+                            .createElement(
+                                'tr'
+                            );
+
+                    tr.className =
+                        `
+                        table-row
+                        border-b
+                        border-slate-200
+                        dark:border-slate-800
+                        `;
+
+                    tr.innerHTML =
+                        `
+                        <td class="px-5 py-4">
+                            ${index + 1}
+                        </td>
+
+                        <td class="px-5 py-4 font-medium">
+                            ${row[9] || '-'}
+                        </td>
+
+                        <td class="px-5 py-4">
+                            ${row[10] || '-'}
+                        </td>
+
+                        <td class="px-5 py-4">
+                            ${row[4] || '-'}
+                        </td>
+
+                        <td class="px-5 py-4">
+                            ${Formatter.currency(
+                                row[5]
+                            )}
+                        </td>
+
+                        <td class="px-5 py-4">
+                            ${row[0] || '-'}
+                        </td>
+
+                        <td class="px-5 py-4">
+                            ${row[1] || '-'}
+                        </td>
+
+                        <td class="px-5 py-4">
+                            <span class="
+                                px-3
+                                py-1
+                                rounded-full
+                                text-xs
+                                font-medium
+                                ${getStatusClass(
+                                    status
+                                )}
+                            ">
+                                ${status}
+                            </span>
+                        </td>
+
+                        <td class="px-5 py-4">
+
+                            <button
+                                onclick="openDetail(${getRowIndex(row)})"
+                                class="
+                                    px-3
+                                    py-2
+                                    rounded-lg
+                                    bg-blue-600
+                                    hover:bg-blue-700
+                                    text-white
+                                    text-sm
+                                "
+                            >
+                                Detail
+                            </button>
+
+                        </td>
+                        `;
+
+                    body.appendChild(tr);
+                });
+        }
+
+        // ======================
+        // MOBILE
+        // ======================
+
+        function renderMobileCards() {
+
+            const container =
+                document
+                    .getElementById(
+                        'registerMobileCard'
+                    );
+
+            container.innerHTML = '';
+
+            const rows =
+                getCurrentPageData();
+
+            rows.forEach(row => {
+
+                const status =
+                    getStatus(row);
+
+                const card =
+                    document
+                        .createElement(
+                            'div'
+                        );
+
+                card.className =
+                    `
+                    bg-white
+                    dark:bg-slate-900
+                    border
+                    border-slate-200
+                    dark:border-slate-800
+                    rounded-2xl
+                    p-4
+                    shadow-sm
+                    `;
+
+                card.innerHTML =
+                    `
+                    <div class="
+                        flex
+                        items-start
+                        justify-between
+                        gap-3
+                    ">
+
+                        <div>
+
+                            <div class="
+                                text-lg
+                                font-semibold
+                            ">
+                                ${row[4] || '-'}
+                            </div>
+
+                            <div class="
+                                text-sm
+                                text-slate-500
+                                mt-1
+                            ">
+                                ${row[9] || '-'}
+                            </div>
+
+                        </div>
+
+                        <span class="
+                            px-3
+                            py-1
+                            rounded-full
+                            text-xs
+                            font-medium
+                            ${getStatusClass(
+                                status
+                            )}
+                        ">
+                            ${status}
+                        </span>
+
+                    </div>
+
+                    <div class="
+                        mt-4
+                        grid
+                        grid-cols-2
+                        gap-3
+                        text-sm
+                    ">
+
+                        <div>
+
+                            <div class="
+                                text-slate-500
+                            ">
+                                จำนวนเงิน
+                            </div>
+
+                            <div class="
+                                font-medium
+                            ">
+                                ${Formatter.currency(
+                                    row[5]
+                                )}
+                            </div>
+
+                        </div>
+
+                        <div>
+
+                            <div class="
+                                text-slate-500
+                            ">
+                                ประเภทเงิน
+                            </div>
+
+                            <div class="
+                                font-medium
+                            ">
+                                ${row[0] || '-'}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <button
+                        onclick="openDetail(${getRowIndex(row)})"
+                        class="
+                            mt-4
+                            w-full
+                            px-4
+                            py-3
+                            rounded-xl
+                            bg-blue-600
+                            hover:bg-blue-700
+                            text-white
+                        "
+                    >
+                        ดูรายละเอียด
+                    </button>
+                    `;
+
+                container.appendChild(
+                    card
+                );
+            });
+        }
+
+        // ======================
+        // DETAIL
+        // ======================
+
+        function openDetail(index) {
+
+            const row =
+                filteredData[index];
+
+            if (!row) {
+
+                return;
+            }
+
+            const modal =
+                document
+                    .getElementById(
+                        'detailModal'
+                    );
+
+            const content =
+                document
+                    .getElementById(
+                        'modalContent'
+                    );
+
+            content.innerHTML =
+                `
+                <div class="
+                    grid
+                    grid-cols-1
+                    md:grid-cols-2
+                    gap-5
+                ">
+
+                    ${renderDetailItem(
+                        'ประเภทเงิน',
+                        row[0]
+                    )}
+
+                    ${renderDetailItem(
+                        'หน่วยงาน',
+                        row[1]
+                    )}
+
+                    ${renderDetailItem(
+                        'ผู้ส่งเอกสาร',
+                        row[2]
+                    )}
+
+                    ${renderDetailItem(
+                        'Invoice',
+                        row[3]
+                    )}
+
+                    ${renderDetailItem(
+                        'เจ้าหนี้',
+                        row[4]
+                    )}
+
+                    ${renderDetailItem(
+                        'จำนวนเงิน',
+                        Formatter.currency(
+                            row[5]
+                        )
+                    )}
+
+                    ${renderDetailItem(
+                        'รายการ',
+                        row[6]
+                    )}
+
+                    ${renderDetailItem(
+                        'เลขทะเบียน',
+                        row[9]
+                    )}
+
+                    ${renderDetailItem(
+                        'เลขรับ',
+                        row[10]
+                    )}
+
+                    ${renderDetailItem(
+                        'เลขใบขอเบิก',
+                        row[12]
+                    )}
+
+                    ${renderDetailItem(
+                        'เลขฎีกา',
+                        row[13]
+                    )}
+
+                    ${renderDetailItem(
+                        'สถานะ',
+                        getStatus(row)
+                    )}
+
+                </div>
+                `;
+
+            modal.classList.remove(
+                'hidden'
+            );
+        }
+
+        function closeModal() {
+
+            document
+                .getElementById(
+                    'detailModal'
+                )
+                .classList.add(
+                    'hidden'
+                );
+        }
+
+        function renderDetailItem(
+            label,
+            value
+        ) {
+
+            return `
+            <div>
+
+                <div class="
+                    text-sm
+                    text-slate-500
+                    mb-1
+                ">
+                    ${label}
+                </div>
+
+                <div class="
+                    font-medium
+                    break-words
+                ">
+                    ${value || '-'}
+                </div>
+
+            </div>
+            `;
+        }
+
+        // ======================
+        // STATUS
+        // ======================
+
+        function getStatus(row) {
+
+            if (row[23]) {
+
+                return 'ยกเลิก';
+            }
+
+            if (row[22]) {
+
+                return 'จ่ายแล้ว';
+            }
+
+            if (row[21]) {
+
+                return 'อนุมัติ';
+            }
+
+            return 'รออนุมัติ';
+        }
+
+        function getStatusClass(
+            status
+        ) {
+
+            switch (status) {
+
+                case 'จ่ายแล้ว':
+
+                    return 'status-paid';
+
+                case 'ยกเลิก':
+
+                    return 'status-cancel';
+
+                case 'อนุมัติ':
+
+                    return 'status-default';
+
+                default:
+
+                    return 'status-wait';
+            }
+        }
+
+        // ======================
+        // PAGINATION
+        // ======================
+
+        function getCurrentPageData() {
+
+            const size =
+                Number(
+                    document
+                        .getElementById(
+                            'pageSize'
+                        )
+                        .value
+                );
+
+            const start =
+                (
+                    currentPage - 1
+                ) * size;
+
+            return filteredData.slice(
+                start,
+                start + size
+            );
+        }
+
+        function renderPagination() {
+
+            const size =
+                Number(
+                    document
+                        .getElementById(
+                            'pageSize'
+                        )
+                        .value
+                );
+
+            const totalPages =
+                Math.ceil(
+                    filteredData.length /
+                    size
+                );
+
+            document
+                .getElementById(
+                    'pageNumber'
+                )
+                .textContent =
+                    `
+                    ${currentPage}
+                    /
+                    ${totalPages || 1}
+                    `;
+
+            document
+                .getElementById(
+                    'paginationInfo'
+                )
+                .textContent =
+                    `
+                    ${filteredData.length}
+                    รายการ
+                    `;
+        }
+
+        function previousPage() {
+
+            if (
+                currentPage <= 1
+            ) {
+
+                return;
+            }
+
+            currentPage--;
+
+            renderTable();
+        }
+
+        function nextPage() {
+
+            const size =
+                Number(
+                    document
+                        .getElementById(
+                            'pageSize'
+                        )
+                        .value
+                );
+
+            const totalPages =
+                Math.ceil(
+                    filteredData.length /
+                    size
+                );
+
+            if (
+                currentPage >= totalPages
+            ) {
+
+                return;
+            }
+
+            currentPage++;
+
+            renderTable();
+        }
+
+        // ======================
+        // UTIL
+        // ======================
+
+        function populateMoneyTypes() {
+
+            const select =
+                document
+                    .getElementById(
+                        'moneyTypeFilter'
+                    );
+
+            const unique =
+                [
+                    ...new Set(
+                        registerData.map(
+                            row => row[0]
+                        )
+                    )
+                ];
+
+            unique.forEach(type => {
+
+                if (!type) {
+
+                    return;
+                }
+
+                const option =
+                    document
+                        .createElement(
+                            'option'
+                        );
+
+                option.value =
+                    type;
+
+                option.textContent =
+                    type;
+
+                select.appendChild(
+                    option
+                );
+            });
+        }
+
+        function sortByRegisterNumber() {
+
+            registerData.sort(
+                (a, b) => {
+
+                    return (
+                        String(
+                            b[9] || ''
+                        )
+                    ).localeCompare(
+                        String(
+                            a[9] || ''
+                        )
+                    );
+                }
+            );
+        }
+
+        function getRowIndex(row) {
+
+            return filteredData.indexOf(
+                row
+            );
+        }
+
+        // ======================
+        // CACHE
+        // ======================
+
+        function saveCache(data) {
+
+            localStorage.setItem(
+                CACHE_KEY,
+                JSON.stringify({
+
+                    timestamp:
+                        Date.now(),
+
+                    data
+                })
+            );
+        }
+
+        function getCache() {
+
+            const raw =
+                localStorage.getItem(
+                    CACHE_KEY
+                );
+
+            if (!raw) {
+
+                return null;
+            }
+
+            try {
+
+                const parsed =
+                    JSON.parse(raw);
+
+                const expired =
+                    (
+                        Date.now() -
+                        parsed.timestamp
+                    ) >
+                    CACHE_TIME;
+
+                if (expired) {
+
+                    localStorage.removeItem(
+                        CACHE_KEY
+                    );
+
+                    return null;
+                }
+
+                return parsed.data;
+
+            } catch {
+
+                return null;
+            }
+        }
+
+        // ======================
+        // AUTO REFRESH
+        // ======================
+
+        setInterval(
+            async () => {
+
+                await loadRegisterData(
+                    true
+                );
+
+            },
+            5 * 60 * 1000
+        );
+
+    </script>
 
 </body>
+
 </html>
