@@ -1,4 +1,4 @@
-<!-- Version: 00123.0 -->
+<!-- Version: 0200 -->
 <!-- login.html -->
 <!-- SRDH PAY SYSTEM -->
 
@@ -497,7 +497,7 @@
                 </p>
 
                 <p class="mt-1">
-                    Version 00123.0
+                    Version 0200
                 </p>
 
             </div>
@@ -511,154 +511,76 @@
 
         'use strict';
 
-        // ======================
+        // ============================================================
         // INIT
-        // ======================
+        // ============================================================
 
-        document.addEventListener(
-            'DOMContentLoaded',
-            initializeLoginPage
-        );
+        document.addEventListener('DOMContentLoaded', initLoginPage);
 
-        async function initializeLoginPage() {
+        async function initLoginPage() {
+
+            // ถ้า login อยู่แล้ว redirect เลย
+            if (SessionManager.isLoggedIn()) {
+                redirectByRole();
+                return;
+            }
 
             restoreRememberedEmail();
-
             bindEvents();
-
-            await checkExistingSession();
         }
 
-        // ======================
-        // SESSION CHECK
-        // ======================
-
-        async function checkExistingSession() {
-
-            if (
-                SessionManager.isLoggedIn()
-            ) {
-
-                redirectByRole();
-            }
-        }
-
-        // ======================
+        // ============================================================
         // EVENTS
-        // ======================
+        // ============================================================
 
         function bindEvents() {
 
-            document
-                .getElementById('loginForm')
-                .addEventListener(
-                    'submit',
-                    handleLogin
-                );
+            document.getElementById('loginForm')
+                .addEventListener('submit', handleLogin);
 
-            document
-                .getElementById('guestButton')
-                .addEventListener(
-                    'click',
-                    handleGuestAccess
-                );
+            document.getElementById('guestButton')
+                .addEventListener('click', handleGuestAccess);
 
-            document
-                .getElementById('togglePassword')
-                .addEventListener(
-                    'click',
-                    togglePassword
-                );
+            document.getElementById('togglePassword')
+                .addEventListener('click', togglePassword);
 
-            document
-                .getElementById('password')
-                .addEventListener(
-                    'keyup',
-                    detectCapslock
-                );
+            document.getElementById('password')
+                .addEventListener('keyup',  detectCapslock);
 
-            document
-                .getElementById('password')
-                .addEventListener(
-                    'keydown',
-                    detectCapslock
-                );
+            document.getElementById('password')
+                .addEventListener('keydown', detectCapslock);
         }
 
-        // ======================
+        // ============================================================
         // LOGIN
-        // ======================
+        // ============================================================
 
         async function handleLogin(event) {
 
             event.preventDefault();
-
             clearErrors();
 
-            const email =
-                document
-                    .getElementById('email')
-                    .value
-                    .trim();
+            const email    = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
 
-            const password =
-                document
-                    .getElementById('password')
-                    .value
-                    .trim();
-
-            if (
-                !validateForm(
-                    email,
-                    password
-                )
-            ) {
-
-                return;
-            }
+            if (!validateForm(email, password)) return;
 
             setLoading(true);
 
             try {
 
-                const result =
-                    await AuthAPI.login(
-                        email,
-                        password
-                    );
-
-                if (
-                    !result.success
-                ) {
-
-                    UI.showToast(
-                        result.message,
-                        'error'
-                    );
-
-                    return;
-                }
+                const result = await AuthAPI.login(email, password);
 
                 saveRememberEmail();
 
-                UI.showToast(
-                    'เข้าสู่ระบบสำเร็จ'
-                );
+                UI.showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ' + (result.user?.username || ''));
 
-                setTimeout(() => {
-
-                    redirectByRole();
-
-                }, 700);
+                setTimeout(() => redirectByRole(), 700);
 
             } catch (error) {
 
-                console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
+                console.error('login error:', error);
+                UI.showToast(error.message, 'error');
 
             } finally {
 
@@ -666,9 +588,9 @@
             }
         }
 
-        // ======================
+        // ============================================================
         // GUEST ACCESS
-        // ======================
+        // ============================================================
 
         async function handleGuestAccess() {
 
@@ -676,41 +598,16 @@
 
             try {
 
-                const result =
-                    await AuthAPI
-                        .guestLogin();
+                await AuthAPI.guestAccess();
 
-                if (
-                    !result.success
-                ) {
+                UI.showToast('เข้าสู่โหมดผู้เยี่ยมชม');
 
-                    UI.showToast(
-                        result.message,
-                        'error'
-                    );
-
-                    return;
-                }
-
-                UI.showToast(
-                    'เข้าสู่โหมดผู้เยี่ยมชม'
-                );
-
-                setTimeout(() => {
-
-                    window.location.href =
-                        'dashboard.html';
-
-                }, 700);
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 700);
 
             } catch (error) {
 
-                console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
+                console.error('guest error:', error);
+                UI.showToast(error.message, 'error');
 
             } finally {
 
@@ -718,308 +615,133 @@
             }
         }
 
-        // ======================
-        // REDIRECT
-        // ======================
+        // ============================================================
+        // REDIRECT BY ROLE
+        // ============================================================
 
         function redirectByRole() {
 
-            const user =
-                SessionManager.getUser();
-
-            if (!user) {
-
-                return;
-            }
-
-            const role =
-                user.role;
+            const user = SessionManager.getUser();
+            if (!user) return;
 
             const routes = {
-
-                admin:
-                    'dashboard.html',
-
-                editor:
-                    'approve.html',
-
-                checker:
-                    'report.html',
-
-                staff:
-                    'import.html',
-
-                guest:
-                    'dashboard.html'
+                admin  : 'dashboard.html',
+                editor : 'approve.html',
+                checker: 'report.html',
+                staff  : 'import.html',
+                guest  : 'dashboard.html'
             };
 
-            window.location.href =
-                routes[role] ||
-                'dashboard.html';
+            window.location.href = routes[user.role] || 'dashboard.html';
         }
 
-        // ======================
-        // VALIDATION
-        // ======================
+        // ============================================================
+        // FORM VALIDATION
+        // ============================================================
 
-        function validateForm(
-            email,
-            password
-        ) {
+        function validateForm(email, password) {
 
             let valid = true;
 
             if (!email) {
-
-                showFieldError(
-                    'emailError',
-                    'กรุณากรอกอีเมล'
-                );
-
+                showFieldError('emailError', 'กรุณากรอกอีเมล');
                 valid = false;
             }
 
             if (!password) {
-
-                showFieldError(
-                    'passwordError',
-                    'กรุณากรอกรหัสผ่าน'
-                );
-
+                showFieldError('passwordError', 'กรุณากรอกรหัสผ่าน');
                 valid = false;
             }
 
             return valid;
         }
 
-        function showFieldError(
-            elementId,
-            message
-        ) {
-
-            const element =
-                document
-                    .getElementById(
-                        elementId
-                    );
-
-            element.textContent =
-                message;
-
-            element.classList.remove(
-                'hidden'
-            );
+        function showFieldError(id, message) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = message;
+            el.classList.remove('hidden');
         }
 
         function clearErrors() {
-
-            document
-                .querySelectorAll(
-                    '#emailError, #passwordError'
-                )
-                .forEach(element => {
-
-                    element.classList.add(
-                        'hidden'
-                    );
-                });
+            document.querySelectorAll('#emailError, #passwordError')
+                .forEach(el => el.classList.add('hidden'));
         }
 
-        // ======================
-        // PASSWORD
-        // ======================
+        // ============================================================
+        // PASSWORD TOGGLE
+        // ============================================================
 
         function togglePassword() {
 
-            const passwordInput =
-                document
-                    .getElementById(
-                        'password'
-                    );
+            const input  = document.getElementById('password');
+            const btn    = document.getElementById('togglePassword');
+            const isPass = input.type === 'password';
 
-            const toggleButton =
-                document
-                    .getElementById(
-                        'togglePassword'
-                    );
-
-            if (
-                passwordInput.type ===
-                'password'
-            ) {
-
-                passwordInput.type =
-                    'text';
-
-                toggleButton.textContent =
-                    'ซ่อน';
-
-            } else {
-
-                passwordInput.type =
-                    'password';
-
-                toggleButton.textContent =
-                    'แสดง';
-            }
+            input.type       = isPass ? 'text' : 'password';
+            btn.textContent  = isPass ? 'ซ่อน' : 'แสดง';
         }
 
-        // ======================
-        // CAPSLOCK
-        // ======================
+        // ============================================================
+        // CAPSLOCK DETECTION
+        // ============================================================
 
-        function detectCapslock(
-            event
-        ) {
+        function detectCapslock(event) {
 
-            const warning =
-                document
-                    .getElementById(
-                        'capslockWarning'
-                    );
+            const warning = document.getElementById('capslockWarning');
+            if (!warning) return;
 
-            if (
-                event.getModifierState &&
-                event.getModifierState(
-                    'CapsLock'
-                )
-            ) {
+            const isOn = event.getModifierState && event.getModifierState('CapsLock');
 
-                warning.classList
-                    .remove('hidden');
-
-            } else {
-
-                warning.classList
-                    .add('hidden');
-            }
+            warning.classList.toggle('hidden', !isOn);
         }
 
-        // ======================
+        // ============================================================
         // REMEMBER EMAIL
-        // ======================
+        // ============================================================
 
         function saveRememberEmail() {
 
-            const remember =
-                document
-                    .getElementById(
-                        'rememberEmail'
-                    )
-                    .checked;
-
-            const email =
-                document
-                    .getElementById(
-                        'email'
-                    )
-                    .value
-                    .trim();
+            const remember = document.getElementById('rememberEmail')?.checked;
+            const email    = document.getElementById('email')?.value.trim();
 
             if (remember) {
-
-                localStorage.setItem(
-                    'remember_email',
-                    email
-                );
-
+                localStorage.setItem('srdh_remember_email', email);
             } else {
-
-                localStorage.removeItem(
-                    'remember_email'
-                );
+                localStorage.removeItem('srdh_remember_email');
             }
         }
 
         function restoreRememberedEmail() {
 
-            const email =
-                localStorage.getItem(
-                    'remember_email'
-                );
+            const email = localStorage.getItem('srdh_remember_email');
+            if (!email) return;
 
-            if (!email) {
+            const emailInput    = document.getElementById('email');
+            const rememberCheck = document.getElementById('rememberEmail');
 
-                return;
-            }
-
-            document
-                .getElementById(
-                    'email'
-                )
-                .value = email;
-
-            document
-                .getElementById(
-                    'rememberEmail'
-                )
-                .checked = true;
+            if (emailInput)    emailInput.value   = email;
+            if (rememberCheck) rememberCheck.checked = true;
         }
 
-        // ======================
-        // LOADING
-        // ======================
+        // ============================================================
+        // LOADING STATE
+        // ============================================================
 
         function setLoading(state) {
 
-            const loginButton =
-                document
-                    .getElementById(
-                        'loginButton'
-                    );
+            const loginBtn = document.getElementById('loginButton');
+            const guestBtn = document.getElementById('guestButton');
 
-            const guestButton =
-                document
-                    .getElementById(
-                        'guestButton'
-                    );
-
-            loginButton.disabled =
-                state;
-
-            guestButton.disabled =
-                state;
-
-            if (state) {
-
-                loginButton.innerHTML =
-                    'กำลังเข้าสู่ระบบ...';
-
-            } else {
-
-                loginButton.innerHTML =
-                    'เข้าสู่ระบบ';
+            if (loginBtn) {
+                loginBtn.disabled = state;
+                loginBtn.innerHTML = state
+                    ? '<span class="inline-flex items-center gap-2"><span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>กำลังเข้าสู่ระบบ...</span>'
+                    : 'เข้าสู่ระบบ';
             }
+
+            if (guestBtn) guestBtn.disabled = state;
         }
-
-        // ======================
-        // SOFT SECURITY
-        // ======================
-
-        document.addEventListener(
-            'keydown',
-            function(event) {
-
-                if (
-                    event.key === 'F12'
-                ) {
-
-                    event.preventDefault();
-                }
-
-                if (
-                    event.ctrlKey &&
-                    event.shiftKey &&
-                    (
-                        event.key === 'I' ||
-                        event.key === 'J'
-                    )
-                ) {
-
-                    event.preventDefault();
-                }
-            }
-        );
 
     </script>
 
