@@ -1,4 +1,4 @@
-<!-- Version: 00123.0 -->
+<!-- Version: 0200 -->
 <!-- list.html -->
 <!-- SRDH PAY Register List -->
 
@@ -22,8 +22,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Runtime -->
-    <script src="api-config.js"></script>
-    <script src="main.js"></script>
+    <script src="js/api-config.js"></script>
+    <script src="js/main.js"></script>
 
     <style>
 
@@ -685,15 +685,9 @@
                             </button>
 
                             <div
-                                id="pageNumber"
-                                class="
-                                    text-sm
-                                    font-medium
-                                    px-4
-                                "
-                            >
-                                1
-                            </div>
+                                id="paginationContainer"
+                                class="flex items-center gap-1"
+                            ></div>
 
                             <button
                                 id="nextPage"
@@ -800,202 +794,136 @@
 
         'use strict';
 
-        // ======================
+        // ============================================================
         // STATE
-        // ======================
+        // ============================================================
 
-        let registerData = [];
+        let currentPage  = 1;
+        let pageSize     = 20;
+        let totalPages   = 1;
+        let totalRows    = 0;
+        let currentRows  = [];   // rows ในหน้าปัจจุบัน (objects จาก server)
+        let masterData   = null; // moneyTypes, statuses
 
-        let filteredData = [];
-
-        let currentPage = 1;
-
-        const CACHE_KEY =
-            'register_cache_v1';
-
-        const CACHE_TIME =
-            5 * 60 * 1000;
-
-        // ======================
+        // ============================================================
         // INIT
-        // ======================
+        // ============================================================
 
-        document.addEventListener(
-            'DOMContentLoaded',
-            initializePage
-        );
+        document.addEventListener('DOMContentLoaded', initializePage);
 
         async function initializePage() {
-
             bindEvents();
-
+            await loadMasterData();
             await loadRegisterData();
         }
 
-        // ======================
+        // ============================================================
+        // MASTER DATA (moneyTypes สำหรับ dropdown)
+        // ============================================================
+
+        async function loadMasterData() {
+            try {
+                const result = await RegisterAPI.getMasterData();
+                masterData   = result.data || {};
+                populateMoneyTypeFilter(masterData.moneyTypes || []);
+            } catch (e) {
+                console.warn('loadMasterData error:', e);
+            }
+        }
+
+        function populateMoneyTypeFilter(types) {
+            const select = document.getElementById('moneyTypeFilter');
+            if (!select) return;
+            // เก็บ option แรก (ทั้งหมด) ไว้
+            const first = select.options[0];
+            select.innerHTML = '';
+            select.appendChild(first);
+            types.forEach(t => {
+                const opt   = document.createElement('option');
+                opt.value   = t;
+                opt.textContent = t;
+                select.appendChild(opt);
+            });
+        }
+
+        // ============================================================
         // EVENTS
-        // ======================
+        // ============================================================
 
         function bindEvents() {
 
-            document
-                .getElementById(
-                    'refreshButton'
-                )
-                .addEventListener(
-                    'click',
-                    async () => {
+            _on('refreshButton', 'click', () => loadRegisterData(true));
+            _on('printButton',   'click', () => window.print());
+            _on('exportButton',  'click', handleExport);
+            _on('closeModal',    'click', closeModal);
+            _on('prevPage',      'click', () => goToPage(currentPage - 1));
+            _on('nextPage',      'click', () => goToPage(currentPage + 1));
 
-                        await loadRegisterData(
-                            true
-                        );
-                    }
-                );
+            // Search — debounce แล้ว reset page
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', debounce(() => {
+                    currentPage = 1;
+                    loadRegisterData();
+                }, 400));
+            }
 
-            document
-                .getElementById(
-                    'printButton'
-                )
-                .addEventListener(
-                    'click',
-                    () => {
+            // Filters — reset page แล้วโหลดใหม่ทันที
+            ['statusFilter', 'moneyTypeFilter'].forEach(id => {
+                _on(id, 'change', () => { currentPage = 1; loadRegisterData(); });
+            });
 
-                        window.print();
-                    }
-                );
+            // Page size
+            _on('pageSize', 'change', () => {
+                pageSize    = Number(document.getElementById('pageSize').value) || 20;
+                currentPage = 1;
+                loadRegisterData();
+            });
 
-            document
-                .getElementById(
-                    'searchInput'
-                )
-                .addEventListener(
-                    'input',
-                    debounce(
-                        applyFilters,
-                        300
-                    )
-                );
-
-            document
-                .getElementById(
-                    'statusFilter'
-                )
-                .addEventListener(
-                    'change',
-                    applyFilters
-                );
-
-            document
-                .getElementById(
-                    'moneyTypeFilter'
-                )
-                .addEventListener(
-                    'change',
-                    applyFilters
-                );
-
-            document
-                .getElementById(
-                    'pageSize'
-                )
-                .addEventListener(
-                    'change',
-                    () => {
-
-                        currentPage = 1;
-
-                        renderTable();
-                    }
-                );
-
-            document
-                .getElementById(
-                    'prevPage'
-                )
-                .addEventListener(
-                    'click',
-                    previousPage
-                );
-
-            document
-                .getElementById(
-                    'nextPage'
-                )
-                .addEventListener(
-                    'click',
-                    nextPage
-                );
-
-            document
-                .getElementById(
-                    'closeModal'
-                )
-                .addEventListener(
-                    'click',
-                    closeModal
-                );
+            // ปิด modal เมื่อคลิก backdrop
+            const modal = document.getElementById('detailModal');
+            if (modal) {
+                modal.addEventListener('click', e => {
+                    if (e.target === modal) closeModal();
+                });
+            }
         }
 
-        // ======================
-        // LOAD
-        // ======================
+        // ============================================================
+        // LOAD DATA (server-side filter + pagination)
+        // ============================================================
 
-        async function loadRegisterData(
-            forceRefresh = false
-        ) {
+        async function loadRegisterData(forceRefresh = false) {
 
             try {
 
                 UI.showLoading();
 
-                const cached =
-                    getCache();
+                const params = _buildParams();
 
-                if (
-                    cached &&
-                    !forceRefresh
-                ) {
+                const result = await RegisterAPI.getList(params);
 
-                    registerData =
-                        cached;
+                currentRows = result.data || [];
 
-                    initializeData();
+                const pagination = result.pagination || {};
+                currentPage  = pagination.page       || 1;
+                pageSize     = pagination.pageSize    || 20;
+                totalPages   = pagination.totalPages  || 1;
+                totalRows    = pagination.total       || 0;
 
-                    return;
-                }
-
-                const result =
-                    await RegisterAPI
-                        .getRegisterData();
-
-                if (
-                    !result.success
-                ) {
-
-                    throw new Error(
-                        result.message
-                    );
-                }
-
-                registerData =
-                    result.data || [];
-
-                sortByRegisterNumber();
-
-                saveCache(
-                    registerData
+                renderTable();
+                renderPaginationInfo();
+                Pagination.render(
+                    document.getElementById('paginationContainer'),
+                    currentPage,
+                    totalPages,
+                    goToPage
                 );
-
-                initializeData();
 
             } catch (error) {
 
-                console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
+                console.error('loadRegisterData error:', error);
+                UI.showToast(error.message, 'error');
 
             } finally {
 
@@ -1003,800 +931,321 @@
             }
         }
 
-        // ======================
-        // INIT DATA
-        // ======================
-
-        function initializeData() {
-
-            populateMoneyTypes();
-
-            applyFilters();
+        function _buildParams() {
+            return {
+                page      : currentPage,
+                pageSize  : pageSize,
+                keyword   : document.getElementById('searchInput')?.value.trim()    || '',
+                status    : document.getElementById('statusFilter')?.value          || '',
+                moneyType : document.getElementById('moneyTypeFilter')?.value       || '',
+                sortDir   : 'desc'
+            };
         }
 
-        // ======================
-        // FILTER
-        // ======================
-
-        function applyFilters() {
-
-            const keyword =
-                document
-                    .getElementById(
-                        'searchInput'
-                    )
-                    .value
-                    .trim()
-                    .toLowerCase();
-
-            const status =
-                document
-                    .getElementById(
-                        'statusFilter'
-                    )
-                    .value;
-
-            const moneyType =
-                document
-                    .getElementById(
-                        'moneyTypeFilter'
-                    )
-                    .value;
-
-            filteredData =
-                registerData.filter(
-                    row => {
-
-                        const text =
-                            row.join(' ')
-                                .toLowerCase();
-
-                        const rowStatus =
-                            getStatus(row);
-
-                        const keywordMatch =
-                            !keyword ||
-                            text.includes(
-                                keyword
-                            );
-
-                        const statusMatch =
-                            !status ||
-                            rowStatus ===
-                            status;
-
-                        const moneyMatch =
-                            !moneyType ||
-                            row[0] ===
-                            moneyType;
-
-                        return (
-                            keywordMatch &&
-                            statusMatch &&
-                            moneyMatch
-                        );
-                    }
-                );
-
-            currentPage = 1;
-
-            renderTable();
+        function goToPage(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadRegisterData();
         }
 
-        // ======================
-        // RENDER
-        // ======================
+        // ============================================================
+        // RENDER TABLE
+        // ============================================================
 
         function renderTable() {
-
             renderDesktopTable();
-
             renderMobileCards();
-
-            renderPagination();
+            RegisterResponsive.render();
         }
-
-        // ======================
-        // DESKTOP
-        // ======================
 
         function renderDesktopTable() {
 
-            const body =
-                document
-                    .getElementById(
-                        'tableBody'
-                    );
+            const body = document.getElementById('tableBody');
+            if (!body) return;
 
-            body.innerHTML = '';
-
-            const rows =
-                getCurrentPageData();
-
-            rows.forEach(
-                (row, index) => {
-
-                    const status =
-                        getStatus(row);
-
-                    const tr =
-                        document
-                            .createElement(
-                                'tr'
-                            );
-
-                    tr.className =
-                        `
-                        table-row
-                        border-b
-                        border-slate-200
-                        dark:border-slate-800
-                        `;
-
-                    tr.innerHTML =
-                        `
-                        <td class="px-5 py-4">
-                            ${index + 1}
+            if (!currentRows.length) {
+                body.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center py-10 text-slate-400 text-sm">
+                            ไม่พบข้อมูล
                         </td>
+                    </tr>`;
+                return;
+            }
 
-                        <td class="px-5 py-4 font-medium">
-                            ${row[9] || '-'}
-                        </td>
+            const startNo = (currentPage - 1) * pageSize + 1;
 
-                        <td class="px-5 py-4">
-                            ${row[10] || '-'}
-                        </td>
-
-                        <td class="px-5 py-4">
-                            ${row[4] || '-'}
-                        </td>
-
-                        <td class="px-5 py-4">
-                            ${Formatter.currency(
-                                row[5]
-                            )}
-                        </td>
-
-                        <td class="px-5 py-4">
-                            ${row[0] || '-'}
-                        </td>
-
-                        <td class="px-5 py-4">
-                            ${row[1] || '-'}
-                        </td>
-
-                        <td class="px-5 py-4">
-                            <span class="
-                                px-3
-                                py-1
-                                rounded-full
-                                text-xs
-                                font-medium
-                                ${getStatusClass(
-                                    status
-                                )}
-                            ">
-                                ${status}
-                            </span>
-                        </td>
-
-                        <td class="px-5 py-4">
-
-                            <button
-                                onclick="openDetail(${getRowIndex(row)})"
-                                class="
-                                    px-3
-                                    py-2
-                                    rounded-lg
-                                    bg-blue-600
-                                    hover:bg-blue-700
-                                    text-white
-                                    text-sm
-                                "
-                            >
-                                Detail
-                            </button>
-
-                        </td>
-                        `;
-
-                    body.appendChild(tr);
-                });
+            body.innerHTML = currentRows.map((row, i) => `
+                <tr class="table-row border-b border-slate-200 text-sm cursor-pointer hover:bg-violet-50"
+                    onclick="openDetail('${escapeHtml(row.uuid)}')">
+                    <td class="px-5 py-3 text-slate-400">${startNo + i}</td>
+                    <td class="px-5 py-3 font-medium font-mono text-xs">${escapeHtml(row.registerNo || '-')}</td>
+                    <td class="px-5 py-3 font-mono text-xs">${escapeHtml(Formatter.runningNo(row.receiveNo) || '-')}</td>
+                    <td class="px-5 py-3">${escapeHtml(row.vendor || '-')}</td>
+                    <td class="px-5 py-3 text-right font-medium">${Formatter.currency(row.amount)}</td>
+                    <td class="px-5 py-3">
+                        <span class="px-2 py-0.5 rounded text-xs ${_moneyTypeBg(row.moneyType)}">
+                            ${escapeHtml(row.moneyType || '-')}
+                        </span>
+                    </td>
+                    <td class="px-5 py-3 text-slate-500 text-xs">${escapeHtml(row.dept || '-')}</td>
+                    <td class="px-5 py-3">${StatusHelper.badge(row.status)}</td>
+                    <td class="px-5 py-3">
+                        <button onclick="event.stopPropagation(); openDetail('${escapeHtml(row.uuid)}')"
+                            class="px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs">
+                            รายละเอียด
+                        </button>
+                    </td>
+                </tr>`
+            ).join('');
         }
-
-        // ======================
-        // MOBILE
-        // ======================
 
         function renderMobileCards() {
 
-            const container =
-                document
-                    .getElementById(
-                        'registerMobileCard'
-                    );
+            const container = document.getElementById('registerMobileCard');
+            if (!container) return;
 
-            container.innerHTML = '';
+            if (!currentRows.length) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-slate-400 text-sm">ไม่พบข้อมูล</div>`;
+                return;
+            }
 
-            const rows =
-                getCurrentPageData();
-
-            rows.forEach(row => {
-
-                const status =
-                    getStatus(row);
-
-                const card =
-                    document
-                        .createElement(
-                            'div'
-                        );
-
-                card.className =
-                    `
-                    bg-white
-                    dark:bg-slate-900
-                    border
-                    border-slate-200
-                    dark:border-slate-800
-                    rounded-2xl
-                    p-4
-                    shadow-sm
-                    `;
-
-                card.innerHTML =
-                    `
-                    <div class="
-                        flex
-                        items-start
-                        justify-between
-                        gap-3
-                    ">
-
+            container.innerHTML = currentRows.map(row => `
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm"
+                     onclick="openDetail('${escapeHtml(row.uuid)}')">
+                    <div class="flex items-start justify-between gap-3 mb-3">
                         <div>
-
-                            <div class="
-                                text-lg
-                                font-semibold
-                            ">
-                                ${row[4] || '-'}
-                            </div>
-
-                            <div class="
-                                text-sm
-                                text-slate-500
-                                mt-1
-                            ">
-                                ${row[9] || '-'}
-                            </div>
-
+                            <div class="font-semibold">${escapeHtml(row.vendor || '-')}</div>
+                            <div class="text-xs text-slate-400 mt-0.5 font-mono">${escapeHtml(row.registerNo || '-')}</div>
                         </div>
-
-                        <span class="
-                            px-3
-                            py-1
-                            rounded-full
-                            text-xs
-                            font-medium
-                            ${getStatusClass(
-                                status
-                            )}
-                        ">
-                            ${status}
-                        </span>
-
+                        ${StatusHelper.badge(row.status)}
                     </div>
-
-                    <div class="
-                        mt-4
-                        grid
-                        grid-cols-2
-                        gap-3
-                        text-sm
-                    ">
-
+                    <div class="grid grid-cols-2 gap-2 text-sm">
                         <div>
-
-                            <div class="
-                                text-slate-500
-                            ">
-                                จำนวนเงิน
-                            </div>
-
-                            <div class="
-                                font-medium
-                            ">
-                                ${Formatter.currency(
-                                    row[5]
-                                )}
-                            </div>
-
+                            <div class="text-slate-400 text-xs">จำนวนเงิน</div>
+                            <div class="font-medium">${Formatter.currency(row.amount)}</div>
                         </div>
-
                         <div>
-
-                            <div class="
-                                text-slate-500
-                            ">
-                                ประเภทเงิน
-                            </div>
-
-                            <div class="
-                                font-medium
-                            ">
-                                ${row[0] || '-'}
-                            </div>
-
+                            <div class="text-slate-400 text-xs">ประเภทเงิน</div>
+                            <div class="font-medium text-xs">${escapeHtml(row.moneyType || '-')}</div>
                         </div>
-
                     </div>
-
-                    <button
-                        onclick="openDetail(${getRowIndex(row)})"
-                        class="
-                            mt-4
-                            w-full
-                            px-4
-                            py-3
-                            rounded-xl
-                            bg-blue-600
-                            hover:bg-blue-700
-                            text-white
-                        "
-                    >
-                        ดูรายละเอียด
-                    </button>
-                    `;
-
-                container.appendChild(
-                    card
-                );
-            });
+                </div>`
+            ).join('');
         }
 
-        // ======================
-        // DETAIL
-        // ======================
+        // ============================================================
+        // PAGINATION INFO
+        // ============================================================
 
-        function openDetail(index) {
+        function renderPaginationInfo() {
 
-            const row =
-                filteredData[index];
+            const el = document.getElementById('paginationInfo');
+            if (!el) return;
 
-            if (!row) {
+            const start = totalRows === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+            const end   = Math.min(currentPage * pageSize, totalRows);
 
-                return;
-            }
-
-            const modal =
-                document
-                    .getElementById(
-                        'detailModal'
-                    );
-
-            const content =
-                document
-                    .getElementById(
-                        'modalContent'
-                    );
-
-            content.innerHTML =
-                `
-                <div class="
-                    grid
-                    grid-cols-1
-                    md:grid-cols-2
-                    gap-5
-                ">
-
-                    ${renderDetailItem(
-                        'ประเภทเงิน',
-                        row[0]
-                    )}
-
-                    ${renderDetailItem(
-                        'หน่วยงาน',
-                        row[1]
-                    )}
-
-                    ${renderDetailItem(
-                        'ผู้ส่งเอกสาร',
-                        row[2]
-                    )}
-
-                    ${renderDetailItem(
-                        'Invoice',
-                        row[3]
-                    )}
-
-                    ${renderDetailItem(
-                        'เจ้าหนี้',
-                        row[4]
-                    )}
-
-                    ${renderDetailItem(
-                        'จำนวนเงิน',
-                        Formatter.currency(
-                            row[5]
-                        )
-                    )}
-
-                    ${renderDetailItem(
-                        'รายการ',
-                        row[6]
-                    )}
-
-                    ${renderDetailItem(
-                        'เลขทะเบียน',
-                        row[9]
-                    )}
-
-                    ${renderDetailItem(
-                        'เลขรับ',
-                        row[10]
-                    )}
-
-                    ${renderDetailItem(
-                        'เลขใบขอเบิก',
-                        row[12]
-                    )}
-
-                    ${renderDetailItem(
-                        'เลขฎีกา',
-                        row[13]
-                    )}
-
-                    ${renderDetailItem(
-                        'สถานะ',
-                        getStatus(row)
-                    )}
-
-                </div>
-                `;
-
-            modal.classList.remove(
-                'hidden'
-            );
+            el.textContent = `แสดง ${start}–${end} จาก ${totalRows.toLocaleString('th-TH')} รายการ`;
         }
 
-        function closeModal() {
+        // ============================================================
+        // DETAIL MODAL
+        // ============================================================
 
-            document
-                .getElementById(
-                    'detailModal'
-                )
-                .classList.add(
-                    'hidden'
-                );
-        }
+        async function openDetail(uuid) {
 
-        function renderDetailItem(
-            label,
-            value
-        ) {
+            if (!uuid) return;
 
-            return `
-            <div>
+            const modal   = document.getElementById('detailModal');
+            const content = document.getElementById('modalContent');
 
-                <div class="
-                    text-sm
-                    text-slate-500
-                    mb-1
-                ">
-                    ${label}
-                </div>
+            if (!modal || !content) return;
 
-                <div class="
-                    font-medium
-                    break-words
-                ">
-                    ${value || '-'}
-                </div>
-
-            </div>
-            `;
-        }
-
-        // ======================
-        // STATUS
-        // ======================
-
-        function getStatus(row) {
-
-            if (row[23]) {
-
-                return 'ยกเลิก';
-            }
-
-            if (row[22]) {
-
-                return 'จ่ายแล้ว';
-            }
-
-            if (row[21]) {
-
-                return 'อนุมัติ';
-            }
-
-            return 'รออนุมัติ';
-        }
-
-        function getStatusClass(
-            status
-        ) {
-
-            switch (status) {
-
-                case 'จ่ายแล้ว':
-
-                    return 'status-paid';
-
-                case 'ยกเลิก':
-
-                    return 'status-cancel';
-
-                case 'อนุมัติ':
-
-                    return 'status-default';
-
-                default:
-
-                    return 'status-wait';
-            }
-        }
-
-        // ======================
-        // PAGINATION
-        // ======================
-
-        function getCurrentPageData() {
-
-            const size =
-                Number(
-                    document
-                        .getElementById(
-                            'pageSize'
-                        )
-                        .value
-                );
-
-            const start =
-                (
-                    currentPage - 1
-                ) * size;
-
-            return filteredData.slice(
-                start,
-                start + size
-            );
-        }
-
-        function renderPagination() {
-
-            const size =
-                Number(
-                    document
-                        .getElementById(
-                            'pageSize'
-                        )
-                        .value
-                );
-
-            const totalPages =
-                Math.ceil(
-                    filteredData.length /
-                    size
-                );
-
-            document
-                .getElementById(
-                    'pageNumber'
-                )
-                .textContent =
-                    `
-                    ${currentPage}
-                    /
-                    ${totalPages || 1}
-                    `;
-
-            document
-                .getElementById(
-                    'paginationInfo'
-                )
-                .textContent =
-                    `
-                    ${filteredData.length}
-                    รายการ
-                    `;
-        }
-
-        function previousPage() {
-
-            if (
-                currentPage <= 1
-            ) {
-
-                return;
-            }
-
-            currentPage--;
-
-            renderTable();
-        }
-
-        function nextPage() {
-
-            const size =
-                Number(
-                    document
-                        .getElementById(
-                            'pageSize'
-                        )
-                        .value
-                );
-
-            const totalPages =
-                Math.ceil(
-                    filteredData.length /
-                    size
-                );
-
-            if (
-                currentPage >= totalPages
-            ) {
-
-                return;
-            }
-
-            currentPage++;
-
-            renderTable();
-        }
-
-        // ======================
-        // UTIL
-        // ======================
-
-        function populateMoneyTypes() {
-
-            const select =
-                document
-                    .getElementById(
-                        'moneyTypeFilter'
-                    );
-
-            const unique =
-                [
-                    ...new Set(
-                        registerData.map(
-                            row => row[0]
-                        )
-                    )
-                ];
-
-            unique.forEach(type => {
-
-                if (!type) {
-
-                    return;
-                }
-
-                const option =
-                    document
-                        .createElement(
-                            'option'
-                        );
-
-                option.value =
-                    type;
-
-                option.textContent =
-                    type;
-
-                select.appendChild(
-                    option
-                );
-            });
-        }
-
-        function sortByRegisterNumber() {
-
-            registerData.sort(
-                (a, b) => {
-
-                    return (
-                        String(
-                            b[9] || ''
-                        )
-                    ).localeCompare(
-                        String(
-                            a[9] || ''
-                        )
-                    );
-                }
-            );
-        }
-
-        function getRowIndex(row) {
-
-            return filteredData.indexOf(
-                row
-            );
-        }
-
-        // ======================
-        // CACHE
-        // ======================
-
-        function saveCache(data) {
-
-            localStorage.setItem(
-                CACHE_KEY,
-                JSON.stringify({
-
-                    timestamp:
-                        Date.now(),
-
-                    data
-                })
-            );
-        }
-
-        function getCache() {
-
-            const raw =
-                localStorage.getItem(
-                    CACHE_KEY
-                );
-
-            if (!raw) {
-
-                return null;
-            }
+            content.innerHTML = `<div class="text-center py-6 text-slate-400">กำลังโหลด...</div>`;
+            modal.classList.remove('hidden');
 
             try {
 
-                const parsed =
-                    JSON.parse(raw);
+                const result = await RegisterAPI.getDetail(uuid);
+                const row    = result.data;
 
-                const expired =
-                    (
-                        Date.now() -
-                        parsed.timestamp
-                    ) >
-                    CACHE_TIME;
+                content.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        ${_detailItem('ประเภทเงิน',     row.moneyType)}
+                        ${_detailItem('หน่วยงาน',        row.dept)}
+                        ${_detailItem('ผู้ส่งเอกสาร',    row.sender)}
+                        ${_detailItem('Invoice',          row.invoice)}
+                        ${_detailItem('เจ้าหนี้/บริษัท', row.vendor)}
+                        ${_detailItem('จำนวนเงิน',       Formatter.currency(row.amount) + ' บาท')}
+                        ${_detailItem('รายการ',           row.description)}
+                        ${_detailItem('งวด/เดือน',        row.period)}
+                        ${_detailItem('เลขทะเบียน',       row.registerNo)}
+                        ${_detailItem('เลขที่รับ',         Formatter.runningNo(row.receiveNo))}
+                        ${_detailItem('เลขใบขอเบิก',      row.requestNo)}
+                        ${_detailItem('เลขที่ฎีกา',        row.dkNo)}
+                        ${_detailItem('เลข e-GP',          row.egpNo)}
+                        ${_detailItem('ผู้ตรวจ',           row.checker)}
+                        ${_detailItem('สถานะ',             StatusHelper.badge(row.status))}
+                        ${_detailItem('วันที่ลงทะเบียน',  Formatter.thaiDate(row.registerDate))}
+                        ${_detailItem('วันที่รับเอกสาร',   Formatter.thaiDate(row.receiveDate))}
+                        ${_detailItem('วันที่ตรวจผ่าน',    Formatter.thaiDate(row.passDate))}
+                        ${_detailItem('วันที่เสนอ',         Formatter.thaiDate(row.proposeDate))}
+                        ${_detailItem('วันที่อนุมัติ',      Formatter.thaiDate(row.approveDate))}
+                        ${_detailItem('วันที่จ่ายเช็ค',    Formatter.thaiDate(row.payDate))}
+                        ${row.cancelDate ? _detailItem('วันที่ยกเลิก', Formatter.thaiDate(row.cancelDate)) : ''}
+                        ${row.cancelNote ? _detailItem('หมายเหตุยกเลิก', row.cancelNote) : ''}
+                        ${_detailItem('ปีงบประมาณ',        row.fiscalYear)}
+                        ${_detailItem('สร้างโดย',           row.createdBy)}
+                        ${_detailItem('สร้างเมื่อ',         Formatter.thaiDate(row.createdAt))}
+                    </div>
 
-                if (expired) {
+                    <!-- Timeline -->
+                    <div class="mt-5 border-t pt-4">
+                        <h3 class="text-sm font-semibold text-slate-600 mb-3">Timeline</h3>
+                        <div id="timelineContainer" class="text-center text-slate-400 text-sm py-2">
+                            กำลังโหลด...
+                        </div>
+                    </div>
 
-                    localStorage.removeItem(
-                        CACHE_KEY
-                    );
+                    <!-- Actions -->
+                    ${_renderDetailActions(row)}
+                `;
 
-                    return null;
-                }
+                // โหลด timeline
+                _loadTimeline(uuid);
 
-                return parsed.data;
-
-            } catch {
-
-                return null;
+            } catch (error) {
+                content.innerHTML = `
+                    <div class="text-center py-6 text-red-400 text-sm">${error.message}</div>`;
             }
         }
 
-        // ======================
-        // AUTO REFRESH
-        // ======================
+        async function _loadTimeline(uuid) {
+            try {
+                const result = await RegisterAPI.getTimeline(uuid);
+                const items  = result.data || [];
+                const el     = document.getElementById('timelineContainer');
+                if (!el) return;
 
-        setInterval(
-            async () => {
+                if (!items.length) {
+                    el.textContent = 'ไม่มีประวัติ';
+                    return;
+                }
 
-                await loadRegisterData(
-                    true
-                );
+                el.innerHTML = items.map(item => `
+                    <div class="flex gap-3 mb-2">
+                        <div class="w-2 h-2 rounded-full bg-violet-400 mt-1.5 flex-shrink-0"></div>
+                        <div>
+                            <span class="text-xs font-medium">${escapeHtml(item.action)}</span>
+                            <span class="text-xs text-slate-400 ml-2">${escapeHtml(item.user)}</span>
+                            <div class="text-xs text-slate-400">${Formatter.thaiDate(item.timestamp)}</div>
+                            ${item.note ? `<div class="text-xs text-slate-500 mt-0.5">${escapeHtml(item.note)}</div>` : ''}
+                        </div>
+                    </div>`
+                ).join('');
+            } catch (e) {
+                console.warn('timeline error:', e);
+            }
+        }
 
-            },
-            5 * 60 * 1000
-        );
+        function _renderDetailActions(row) {
+
+            const user = SessionManager.getUser();
+            if (!user) return '';
+
+            const canEdit   = ['admin','editor'].includes(user.role);
+            const canDelete = user.role === 'admin';
+
+            if (!canEdit && !canDelete) return '';
+
+            return `
+                <div class="mt-4 pt-4 border-t flex gap-2 justify-end">
+                    ${canDelete ? `
+                        <button onclick="handleDelete('${escapeHtml(row.uuid)}')"
+                            class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm">
+                            ลบรายการ
+                        </button>` : ''}
+                </div>`;
+        }
+
+        async function handleDelete(uuid) {
+
+            const ok = await UI.confirmWithInput(
+                'ลบรายการ',
+                'การลบไม่สามารถกู้คืนได้ กรุณายืนยัน',
+                'DELETE'
+            );
+
+            if (!ok) return;
+
+            try {
+                UI.showLoading();
+                await RegisterAPI.delete(uuid);
+                UI.showToast('ลบรายการสำเร็จ');
+                closeModal();
+                await loadRegisterData(true);
+            } catch (error) {
+                UI.showToast(error.message, 'error');
+            } finally {
+                UI.hideLoading();
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('detailModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // ============================================================
+        // EXPORT
+        // ============================================================
+
+        async function handleExport() {
+            try {
+                UI.showLoading();
+                const params = _buildParams();
+                const result = await ReportAPI.export('excel', {
+                    keyword  : params.keyword,
+                    status   : params.status,
+                    moneyType: params.moneyType
+                });
+                UI.showToast('ส่งออกข้อมูลสำเร็จ ' + (result.data?.length || 0) + ' รายการ');
+            } catch (error) {
+                UI.showToast(error.message, 'error');
+            } finally {
+                UI.hideLoading();
+            }
+        }
+
+        // ============================================================
+        // HELPERS
+        // ============================================================
+
+        function _detailItem(label, value) {
+            return `
+                <div>
+                    <div class="text-slate-400 text-xs mb-0.5">${label}</div>
+                    <div class="font-medium break-words">${value || '-'}</div>
+                </div>`;
+        }
+
+        function _moneyTypeBg(type) {
+            const map = {
+                'เงินงบประมาณ'    : 'money-type-เงินงบประมาณ',
+                'เงินบำรุง'       : 'money-type-เงินบำรุง',
+                'เงินประกันสุขภาพ': 'money-type-เงินประกันสุขภาพ',
+                'เงินอุดหนุน'     : 'money-type-เงินอุดหนุน',
+                'เงินแพทยศาสตร์'  : 'money-type-เงินแพทยศาสตร์'
+            };
+            return map[type] || 'money-type-เงินอื่น';
+        }
+
+        function _on(id, event, handler) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener(event, handler);
+        }
 
     </script>
 
