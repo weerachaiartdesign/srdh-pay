@@ -1,4 +1,4 @@
-<!-- Version: 00123.0 -->
+<!-- Version: 0200 -->
 <!-- import.html -->
 <!-- SRDH PAY Import XLSX -->
 
@@ -25,8 +25,8 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
     <!-- Runtime -->
-    <script src="api-config.js"></script>
-    <script src="main.js"></script>
+    <script src="js/api-config.js"></script>
+    <script src="js/main.js"></script>
 
     <style>
 
@@ -303,6 +303,7 @@
                     "
                 >
 
+                    <div id="dropzoneSection">
                     <div
                         id="dropzone"
                         class="
@@ -365,6 +366,7 @@
 
                     </div>
 
+                    </div><!-- /dropzoneSection -->
                 </section>
 
                 <!-- Import Summary -->
@@ -401,7 +403,7 @@
                         </div>
 
                         <div
-                            id="totalRows"
+                            id="summaryTotal"
                             class="
                                 mt-2
                                 text-3xl
@@ -435,7 +437,7 @@
                         </div>
 
                         <div
-                            id="validRows"
+                            id="summaryValid"
                             class="
                                 mt-2
                                 text-3xl
@@ -470,7 +472,7 @@
                         </div>
 
                         <div
-                            id="errorRows"
+                            id="summaryError"
                             class="
                                 mt-2
                                 text-3xl
@@ -505,7 +507,7 @@
                         </div>
 
                         <div
-                            id="duplicateRows"
+                            id="summaryDup"
                             class="
                                 mt-2
                                 text-3xl
@@ -516,6 +518,22 @@
                             0
                         </div>
 
+                    </div>
+
+                    <div
+                        class="
+                            bg-white
+                            dark:bg-slate-900
+                            rounded-2xl
+                            p-5
+                            border
+                            border-slate-200
+                            dark:border-slate-800
+                        "
+                    >
+                        <div class="text-sm text-slate-500">เลือก</div>
+                        <div id="summarySelected"
+                            class="mt-2 text-3xl font-bold text-violet-600">0</div>
                     </div>
 
                 </section>
@@ -636,6 +654,8 @@
                             >
                                 แก้ไขข้อมูลก่อน Confirm Import
                             </p>
+
+                            <div id="previewStatus" class="text-sm font-medium mt-1"></div>
 
                         </div>
 
@@ -786,6 +806,32 @@
 
             </div>
 
+            <!-- Import History -->
+            <section class="mt-6 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100">
+                    <h2 class="font-semibold text-slate-700">ประวัติ Import</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+                            <tr>
+                                <th class="px-4 py-3 text-left">วันที่</th>
+                                <th class="px-4 py-3 text-left">ผู้ Import</th>
+                                <th class="px-4 py-3 text-left">ไฟล์</th>
+                                <th class="px-4 py-3 text-center">รวม</th>
+                                <th class="px-4 py-3 text-center">สำเร็จ/ล้มเหลว</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-6 text-slate-400 text-sm">กำลังโหลด...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+
         </main>
 
     </div>
@@ -896,234 +942,90 @@
 
         'use strict';
 
-        // ======================
-        // CONFIG
-        // ======================
-
-        const MAX_FILE_SIZE =
-            5 * 1024 * 1024;
-
-        const MAX_ROWS =
-            15;
-
-        // ======================
+        // ============================================================
         // STATE
-        // ======================
+        // ============================================================
 
-        let importedRows = [];
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+        const MAX_ROWS      = 15;
 
-        let duplicateRows = [];
-
-        let currentFile = null;
-
+        let currentFile    = null;
         let currentHeaders = [];
+        let importedRows   = [];    // rows หลัง mapRow (client-side)
+        let previewRows    = [];    // rows หลัง previewImport (server-side)
+        let duplicateRows  = [];
 
-        // ======================
-        // MAPPING
-        // ======================
-
-        const DEFAULT_MAPPING = {
-
-            bgtype_name:
-                'moneyType',
-
-            bgdk_paytonm:
-                'vendor',
-
-            bgdk_note:
-                'description',
-
-            bgdk_rcvno:
-                'requestNo',
-
-            bgdk_dkno:
-                'dikaNo',
-
-            bgdk_dkamt:
-                'amount',
-
-            bgdk_vatamt:
-                'vat',
-
-            bgdk_chqdate:
-                'payDate'
-        };
-
-        // ======================
+        // ============================================================
         // INIT
-        // ======================
+        // ============================================================
 
-        document.addEventListener(
-            'DOMContentLoaded',
-            initializePage
-        );
+        document.addEventListener('DOMContentLoaded', initializePage);
 
         async function initializePage() {
-
             bindEvents();
-
             await loadImportHistory();
         }
 
-        // ======================
+        // ============================================================
         // EVENTS
-        // ======================
+        // ============================================================
 
         function bindEvents() {
 
-            const dropzone =
-                document.getElementById(
-                    'dropzone'
-                );
+            const dropzone  = document.getElementById('dropzone');
+            const fileInput = document.getElementById('fileInput');
 
-            const fileInput =
-                document.getElementById(
-                    'fileInput'
-                );
+            dropzone.addEventListener('click', () => fileInput.click());
 
-            dropzone.addEventListener(
-                'click',
-                () => {
+            fileInput.addEventListener('change', e => handleFiles(e.target.files));
 
-                    fileInput.click();
-                }
-            );
-
-            fileInput.addEventListener(
-                'change',
-                event => {
-
-                    handleFiles(
-                        event.target.files
-                    );
-                }
-            );
-
-            [
-                'dragenter',
-                'dragover'
-            ].forEach(eventName => {
-
-                dropzone.addEventListener(
-                    eventName,
-                    event => {
-
-                        event.preventDefault();
-
-                        dropzone.classList.add(
-                            'dropzone-active'
-                        );
-                    }
-                );
+            ['dragenter', 'dragover'].forEach(ev => {
+                dropzone.addEventListener(ev, e => {
+                    e.preventDefault();
+                    dropzone.classList.add('dropzone-active');
+                });
             });
 
-            [
-                'dragleave',
-                'drop'
-            ].forEach(eventName => {
-
-                dropzone.addEventListener(
-                    eventName,
-                    event => {
-
-                        event.preventDefault();
-
-                        dropzone.classList.remove(
-                            'dropzone-active'
-                        );
-                    }
-                );
+            ['dragleave', 'drop'].forEach(ev => {
+                dropzone.addEventListener(ev, e => {
+                    e.preventDefault();
+                    dropzone.classList.remove('dropzone-active');
+                });
             });
 
-            dropzone.addEventListener(
-                'drop',
-                event => {
+            dropzone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
 
-                    handleFiles(
-                        event.dataTransfer.files
-                    );
-                }
-            );
-
-            document
-                .getElementById(
-                    'confirmImportButton'
-                )
-                .addEventListener(
-                    'click',
-                    openConfirmModal
-                );
-
-            document
-                .getElementById(
-                    'cancelConfirmButton'
-                )
-                .addEventListener(
-                    'click',
-                    closeConfirmModal
-                );
-
-            document
-                .getElementById(
-                    'executeImportButton'
-                )
-                .addEventListener(
-                    'click',
-                    executeImport
-                );
-
-            document
-                .getElementById(
-                    'clearButton'
-                )
-                .addEventListener(
-                    'click',
-                    resetImport
-                );
+            _on('confirmImportButton', 'click', openConfirmModal);
+            _on('cancelConfirmButton', 'click', closeConfirmModal);
+            _on('executeImportButton', 'click', executeImport);
+            _on('clearButton',         'click', resetImport);
         }
 
-        // ======================
-        // FILE
-        // ======================
+        // ============================================================
+        // FILE HANDLING
+        // ============================================================
 
-        async function handleFiles(
-            files
-        ) {
+        async function handleFiles(files) {
+
+            if (!files || !files.length) return;
+
+            const file = files[0];
+
+            if (!validateFile(file)) return;
+
+            currentFile = file;
 
             try {
 
-                if (
-                    !files ||
-                    !files.length
-                ) {
-
-                    return;
-                }
-
-                const file =
-                    files[0];
-
-                validateFile(file);
-
-                currentFile = file;
-
                 UI.showLoading();
 
-                const rows =
-                    await parseXlsx(
-                        file
-                    );
+                const rows = await parseXlsx(file);
 
                 prepareRows(rows);
 
             } catch (error) {
 
-                console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
+                UI.showToast(error.message, 'error');
 
             } finally {
 
@@ -1133,627 +1035,351 @@
 
         function validateFile(file) {
 
-            if (
-                !file.name
-                    .toLowerCase()
-                    .endsWith(
-                        '.xlsx'
-                    )
-            ) {
+            const ext = file.name.split('.').pop().toLowerCase();
 
-                throw new Error(
-                    'รองรับเฉพาะไฟล์ .xlsx'
-                );
+            if (!['xlsx', 'xls'].includes(ext)) {
+                UI.showToast('รองรับเฉพาะไฟล์ .xlsx และ .xls', 'error');
+                return false;
             }
 
-            if (
-                file.size >
-                MAX_FILE_SIZE
-            ) {
-
-                throw new Error(
-                    'ไฟล์เกิน 5MB'
-                );
+            if (file.size > MAX_FILE_SIZE) {
+                UI.showToast('ไฟล์ขนาดใหญ่เกิน 5 MB', 'error');
+                return false;
             }
+
+            return true;
         }
 
-        // ======================
-        // PARSE XLSX
-        // ======================
+        async function parseXlsx(file) {
 
-        async function parseXlsx(
-            file
-        ) {
+            return new Promise((resolve, reject) => {
 
-            return new Promise(
-                (
-                    resolve,
-                    reject
-                ) => {
+                const reader = new FileReader();
 
-                    const reader =
-                        new FileReader();
+                reader.onload = e => {
+                    try {
+                        const data     = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                        const sheet    = workbook.Sheets[workbook.SheetNames[0]];
+                        const rows     = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                        resolve(rows);
+                    } catch (err) {
+                        reject(new Error('อ่านไฟล์ไม่สำเร็จ: ' + err.message));
+                    }
+                };
 
-                    reader.onload =
-                        event => {
-
-                            try {
-
-                                const data =
-                                    new Uint8Array(
-                                        event
-                                            .target
-                                            .result
-                                    );
-
-                                const workbook =
-                                    XLSX.read(
-                                        data,
-                                        {
-                                            type:
-                                                'array'
-                                        }
-                                    );
-
-                                const sheetName =
-                                    workbook
-                                        .SheetNames[0];
-
-                                const worksheet =
-                                    workbook
-                                        .Sheets[
-                                        sheetName
-                                        ];
-
-                                const json =
-                                    XLSX.utils
-                                        .sheet_to_json(
-                                            worksheet,
-                                            {
-                                                defval:
-                                                    ''
-                                            }
-                                        );
-
-                                resolve(
-                                    json
-                                );
-
-                            } catch (error) {
-
-                                reject(
-                                    error
-                                );
-                            }
-                        };
-
-                    reader.readAsArrayBuffer(
-                        file
-                    );
-                }
-            );
+                reader.onerror = () => reject(new Error('อ่านไฟล์ไม่สำเร็จ'));
+                reader.readAsArrayBuffer(file);
+            });
         }
 
-        // ======================
-        // PREPARE
-        // ======================
+        // ============================================================
+        // PREPARE ROWS (client-side mapping)
+        // ============================================================
 
-        function prepareRows(
-            rows
-        ) {
+        async function prepareRows(rows) {
 
-            if (
-                !rows.length
-            ) {
+            if (!rows.length)           throw new Error('ไม่พบข้อมูลในไฟล์');
+            if (rows.length > MAX_ROWS) throw new Error('Import ได้สูงสุด ' + MAX_ROWS + ' รายการ');
 
-                throw new Error(
-                    'ไม่พบข้อมูลในไฟล์'
-                );
-            }
-
-            if (
-                rows.length >
-                MAX_ROWS
-            ) {
-
-                throw new Error(
-                    `Import ได้สูงสุด ${MAX_ROWS} rows`
-                );
-            }
-
-            currentHeaders =
-                Object.keys(
-                    rows[0]
-                );
+            currentHeaders = Object.keys(rows[0]);
 
             renderMapping();
 
-            importedRows =
-                rows.map(
-                    mapRow
-                );
+            // ดึง user profile สำหรับ dept + sender
+            const user = SessionManager.getUser();
+
+            importedRows = rows.map(raw => mapRow(raw, user));
 
             validateRows();
 
             renderPreview();
-
             renderSummary();
-
             showSections();
+
+            // ---- Server-side preview (duplicate check) ----
+            await runServerPreview();
         }
 
-        // ======================
-        // MAP
-        // ======================
+        // ============================================================
+        // MAP ROW (client-side field mapping)
+        // ============================================================
 
-        function mapRow(raw) {
+        function mapRow(raw, user) {
 
-            const amount =
-                Number(
-                    raw.bgdk_dkamt || 0
-                );
-
-            const vat =
-                Number(
-                    raw.bgdk_vatamt || 0
-                );
+            const dkAmt  = Number(raw.bgdk_dkamt  || 0);
+            const vatAmt = Number(raw.bgdk_vatamt  || 0);
+            const amount = (dkAmt + vatAmt) || Number(raw.amount || 0);
 
             return {
-
-                selected:
-                    true,
-
-                duplicate:
-                    false,
-
-                errors: [],
-
-                moneyType:
-                    raw.bgtype_name || '',
-
-                dept:
-                    '',
-
-                sender:
-                    '',
-
-                vendor:
-                    raw.bgdk_paytonm || '',
-
-                amount:
-                    amount + vat,
-
-                description:
-                    getFirstLine(
-                        raw.bgdk_note
-                    ),
-
-                requestNo:
-                    formatRequestNo(
-                        raw.bgdk_rcvno
-                    ),
-
-                rawRequestNo:
-                    raw.bgdk_rcvno || '',
-
-                dikaNo:
-                    raw.bgdk_dkno || '',
-
-                payDate:
-                    raw.bgdk_chqdate || '',
-
-                status:
-                    raw.bgdk_chqdate
-                        ? 'จ่ายแล้ว'
-                        : 'รออนุมัติ'
+                selected    : true,
+                duplicate   : false,
+                overwrite   : false,
+                errors      : [],
+                // Fields จาก XLSX
+                moneyType   : raw.bgtype_name     || raw.moneyType   || '',
+                vendor      : raw.bgdk_paytonm    || raw.vendor      || '',
+                invoice     : raw.bgdk_invno      || raw.invoice     || '',
+                amount,
+                description : _firstLine(raw.bgdk_note    || raw.description || ''),
+                requestNo   : _formatRequestNo(raw.bgdk_rcvno || raw.requestNo   || ''),
+                rawRequestNo: String(raw.bgdk_rcvno || ''),
+                dkNo        : raw.bgdk_dkno       || raw.dkNo        || '',
+                payDate     : raw.bgdk_chqdate    || raw.payDate     || '',
+                egpNo       : raw.bgdk_egpno      || raw.egpNo       || '',
+                period      : raw.period          || '',
+                reserveNo   : raw.reserveNo       || '',
+                // ดึงจาก user profile อัตโนมัติ (แก้ไขได้ใน preview)
+                dept        : user?.dept     || '',
+                sender      : user?.username || ''
             };
         }
 
-        function getFirstLine(
-            value
-        ) {
+        // ============================================================
+        // SERVER PREVIEW (duplicate check)
+        // ============================================================
 
-            if (!value) {
+        async function runServerPreview() {
 
-                return '';
+            const validRows = importedRows.filter(r => r.selected && !r.errors.length);
+
+            if (!validRows.length) return;
+
+            try {
+
+                renderStatus('previewStatus', 'กำลังตรวจสอบ duplicate...', 'text-amber-500');
+
+                const result = await RegisterAPI.previewImport(
+                    validRows,
+                    currentFile?.name || 'unknown.xlsx'
+                );
+
+                previewRows    = result.rows || [];
+                duplicateRows  = previewRows.filter(r => r.duplicate);
+
+                // อัปเดต importedRows ด้วยข้อมูล duplicate จาก server
+                previewRows.forEach(pr => {
+                    const ir = importedRows.find(
+                        r => r.requestNo === (pr.data?.requestNo || '')
+                    );
+                    if (ir) {
+                        ir.duplicate     = pr.duplicate;
+                        ir.serverErrors  = pr.errors || [];
+                        ir.duplicateData = pr.duplicateData || null;
+                    }
+                });
+
+                renderPreview();   // re-render เพื่อแสดง duplicate badges
+                renderSummary();
+
+                const dupMsg = duplicateRows.length
+                    ? ` (พบ duplicate ${duplicateRows.length} รายการ)`
+                    : '';
+                renderStatus('previewStatus', 'ตรวจสอบเสร็จสิ้น' + dupMsg,
+                    duplicateRows.length ? 'text-orange-500' : 'text-green-600');
+
+            } catch (error) {
+
+                renderStatus('previewStatus', 'ตรวจสอบ duplicate ไม่สำเร็จ: ' + error.message, 'text-red-500');
+                console.error('previewImport error:', error);
             }
-
-            return String(value)
-                .split('\n')[0]
-                .trim();
         }
 
-        // ======================
-        // VALIDATION
-        // ======================
+        // ============================================================
+        // VALIDATE ROWS (client-side)
+        // ============================================================
 
         function validateRows() {
 
-            importedRows.forEach(
-                row => {
+            importedRows.forEach(row => {
 
-                    row.errors = [];
+                row.errors = [];
 
-                    if (
-                        !row.moneyType
-                    ) {
+                if (!row.moneyType)   row.errors.push('ประเภทเงิน');
+                if (!row.vendor)      row.errors.push('เจ้าหนี้');
+                if (!row.description) row.errors.push('รายการ');
+                if (!row.requestNo)   row.errors.push('เลขขอเบิก');
 
-                        row.errors.push(
-                            'ประเภทเงิน'
-                        );
-                    }
-
-                    if (
-                        !row.vendor
-                    ) {
-
-                        row.errors.push(
-                            'เจ้าหนี้'
-                        );
-                    }
-
-                    if (
-                        !row.amount ||
-                        isNaN(
-                            row.amount
-                        )
-                    ) {
-
-                        row.errors.push(
-                            'จำนวนเงิน'
-                        );
-                    }
-
-                    if (
-                        !row.requestNo
-                    ) {
-
-                        row.errors.push(
-                            'เลขใบขอเบิก'
-                        );
-                    }
-
-                    row.duplicate =
-                        false;
+                if (!row.amount || isNaN(row.amount) || row.amount <= 0) {
+                    row.errors.push('จำนวนเงิน');
                 }
-            );
+            });
         }
 
-        // ======================
-        // RENDER PREVIEW
-        // ======================
+        // ============================================================
+        // RENDER PREVIEW TABLE
+        // ============================================================
 
         function renderPreview() {
 
-            const body =
-                document.getElementById(
-                    'previewTableBody'
-                );
+            const tbody = document.getElementById('previewTableBody');
+            if (!tbody) return;
 
-            body.innerHTML = '';
+            if (!importedRows.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-6 text-slate-400">ไม่มีข้อมูล</td></tr>';
+                return;
+            }
 
-            importedRows.forEach(
-                (
-                    row,
-                    index
-                ) => {
+            tbody.innerHTML = importedRows.map((row, i) => {
 
-                    const tr =
-                        document.createElement(
-                            'tr'
-                        );
+                const hasError  = row.errors.length > 0;
+                const isDup     = row.duplicate;
+                const rowClass  = hasError ? 'row-error' : isDup ? 'bg-orange-50' : '';
 
-                    if (
-                        row.errors.length
-                    ) {
+                const dupBadge  = isDup
+                    ? `<span class="ml-1 px-1.5 py-0.5 rounded text-xs bg-orange-100 text-orange-600">duplicate</span>`
+                    : '';
 
-                        tr.classList.add(
-                            'row-error'
-                        );
-                    }
+                const errBadge  = hasError
+                    ? `<span class="text-xs text-red-500 block mt-0.5">${row.errors.join(', ')}</span>`
+                    : '';
 
-                    if (
-                        row.duplicate
-                    ) {
+                const overwriteChk = isDup
+                    ? `<label class="flex items-center gap-1 text-xs text-orange-600 mt-1 cursor-pointer">
+                         <input type="checkbox" onchange="toggleOverwrite(${i}, this.checked)"
+                           class="rounded"> overwrite
+                       </label>`
+                    : '';
 
-                        tr.classList.add(
-                            'row-duplicate'
-                        );
-                    }
-
-                    tr.innerHTML =
-                        `
-                        <td class="px-4 py-3">
-                            ${index + 1}
+                return `
+                    <tr class="border-b border-slate-100 text-sm ${rowClass}">
+                        <td class="px-3 py-2">
+                            <input type="checkbox" ${row.selected ? 'checked' : ''}
+                                ${hasError ? 'disabled' : ''}
+                                onchange="toggleRow(${i}, this.checked)"
+                                class="rounded">
                         </td>
-
-                        <td class="px-4 py-3">
-
-                            <input
-                                type="checkbox"
-                                ${row.selected ? 'checked' : ''}
-                                onchange="toggleRow(${index}, this.checked)"
-                            />
-
+                        <td class="px-3 py-2 text-slate-400 text-xs">${i + 1}</td>
+                        <td class="px-3 py-2">
+                            <input type="text" value="${escapeHtml(row.requestNo)}"
+                                onchange="updateField(${i}, 'requestNo', this.value)"
+                                class="border rounded px-2 py-1 text-xs w-24">
+                            ${dupBadge}${errBadge}
                         </td>
-
-                        <td class="px-4 py-3">
-                            <input
-                                value="${escapeHtml(row.moneyType)}"
-                                onchange="updateField(${index}, 'moneyType', this.value)"
-                                class="w-full px-3 py-2 rounded-lg border"
-                            />
+                        <td class="px-3 py-2">
+                            <input type="text" value="${escapeHtml(row.moneyType)}"
+                                onchange="updateField(${i}, 'moneyType', this.value)"
+                                class="border rounded px-2 py-1 text-xs w-24">
                         </td>
-
-                        <td class="px-4 py-3">
-                            <input
-                                value="${escapeHtml(row.dept)}"
-                                onchange="updateField(${index}, 'dept', this.value)"
-                                class="w-full px-3 py-2 rounded-lg border"
-                            />
+                        <td class="px-3 py-2">
+                            <input type="text" value="${escapeHtml(row.vendor)}"
+                                onchange="updateField(${i}, 'vendor', this.value)"
+                                class="border rounded px-2 py-1 text-xs w-32">
                         </td>
-
-                        <td class="px-4 py-3">
-                            <input
-                                value="${escapeHtml(row.sender)}"
-                                onchange="updateField(${index}, 'sender', this.value)"
-                                class="w-full px-3 py-2 rounded-lg border"
-                            />
+                        <td class="px-3 py-2 text-right font-medium">
+                            ${Formatter.currency(row.amount)}
                         </td>
-
-                        <td class="px-4 py-3">
-                            <input
-                                value="${escapeHtml(row.vendor)}"
-                                onchange="updateField(${index}, 'vendor', this.value)"
-                                class="w-full px-3 py-2 rounded-lg border"
-                            />
+                        <td class="px-3 py-2">
+                            <input type="text" value="${escapeHtml(row.dept)}"
+                                onchange="updateField(${i}, 'dept', this.value)"
+                                class="border rounded px-2 py-1 text-xs w-24">
                         </td>
-
-                        <td class="px-4 py-3">
-                            <input
-                                type="number"
-                                value="${row.amount}"
-                                onchange="updateField(${index}, 'amount', this.value)"
-                                class="w-40 px-3 py-2 rounded-lg border"
-                            />
+                        <td class="px-3 py-2">
+                            <input type="text" value="${escapeHtml(row.sender)}"
+                                onchange="updateField(${i}, 'sender', this.value)"
+                                class="border rounded px-2 py-1 text-xs w-24">
                         </td>
-
-                        <td class="px-4 py-3">
-                            <textarea
-                                onchange="updateField(${index}, 'description', this.value)"
-                                class="w-72 px-3 py-2 rounded-lg border"
-                            >${escapeHtml(row.description)}</textarea>
+                        <td class="px-3 py-2">
+                            ${row.payDate
+                                ? '<span class="px-1.5 py-0.5 rounded text-xs bg-indigo-100 text-indigo-700">จ่ายแล้ว</span>'
+                                : '<span class="px-1.5 py-0.5 rounded text-xs bg-amber-100 text-amber-700">รอ</span>'}
+                            ${overwriteChk}
                         </td>
+                    </tr>`;
+            }).join('');
+        }
 
-                        <td class="px-4 py-3">
-                            ${row.requestNo}
-                        </td>
+        // ============================================================
+        // SUMMARY CARDS
+        // ============================================================
 
-                        <td class="px-4 py-3">
-                            ${row.dikaNo || '-'}
-                        </td>
+        function renderSummaryCards() {
 
-                        <td class="px-4 py-3">
-                            ${row.payDate || '-'}
-                        </td>
+            const total     = importedRows.length;
+            const valid     = importedRows.filter(r => !r.errors.length).length;
+            const selected  = importedRows.filter(r => r.selected && !r.errors.length).length;
+            const dup       = importedRows.filter(r => r.duplicate).length;
+            const errCount  = importedRows.filter(r => r.errors.length).length;
 
-                        <td class="px-4 py-3">
+            _setEl('summaryTotal',    total);
+            _setEl('summaryValid',    valid);
+            _setEl('summarySelected', selected);
+            _setEl('summaryDup',      dup);
+            _setEl('summaryError',    errCount);
+        }
 
-                            ${renderStatus(row)}
-
-                        </td>
-                        `;
-
-                    body.appendChild(
-                        tr
-                    );
-                }
-            );
-
+        function renderSummary() {
+            renderSummaryCards();
             updateConfirmButton();
         }
 
-        function renderStatus(
-            row
-        ) {
+        // ============================================================
+        // ROW INTERACTIONS
+        // ============================================================
 
-            if (
-                row.errors.length
-            ) {
-
-                return `
-                <span class="
-                    px-3
-                    py-1
-                    rounded-full
-                    text-xs
-                    bg-red-100
-                    text-red-700
-                ">
-                    Error
-                </span>
-                `;
-            }
-
-            if (
-                row.duplicate
-            ) {
-
-                return `
-                <span class="
-                    px-3
-                    py-1
-                    rounded-full
-                    text-xs
-                    bg-amber-100
-                    text-amber-700
-                ">
-                    Duplicate
-                </span>
-                `;
-            }
-
-            return `
-            <span class="
-                px-3
-                py-1
-                rounded-full
-                text-xs
-                bg-emerald-100
-                text-emerald-700
-            ">
-                Ready
-            </span>
-            `;
-        }
-
-        // ======================
-        // UPDATE
-        // ======================
-
-        function updateField(
-            index,
-            field,
-            value
-        ) {
-
-            importedRows[index][field] =
-                value;
-
+        function updateField(index, field, value) {
+            if (!importedRows[index]) return;
+            importedRows[index][field] = value;
             validateRows();
-
-            renderPreview();
-
             renderSummary();
         }
 
-        function toggleRow(
-            index,
-            checked
-        ) {
-
-            importedRows[index].selected =
-                checked;
+        function toggleRow(index, checked) {
+            if (!importedRows[index]) return;
+            importedRows[index].selected = checked;
+            renderSummary();
         }
 
-        // ======================
-        // SUMMARY
-        // ======================
-
-        function renderSummary() {
-
-            const total =
-                importedRows.length;
-
-            const errors =
-                importedRows.filter(
-                    row => row.errors.length
-                ).length;
-
-            const duplicates =
-                importedRows.filter(
-                    row => row.duplicate
-                ).length;
-
-            const valid =
-                total - errors;
-
-            document.getElementById(
-                'totalRows'
-            ).textContent =
-                total;
-
-            document.getElementById(
-                'validRows'
-            ).textContent =
-                valid;
-
-            document.getElementById(
-                'errorRows'
-            ).textContent =
-                errors;
-
-            document.getElementById(
-                'duplicateRows'
-            ).textContent =
-                duplicates;
+        function toggleOverwrite(index, checked) {
+            if (!importedRows[index]) return;
+            importedRows[index].overwrite = checked;
+            renderSummary();
         }
 
-        // ======================
-        // IMPORT
-        // ======================
+        // ============================================================
+        // CONFIRM MODAL
+        // ============================================================
 
         function openConfirmModal() {
 
-            const validRows =
-                importedRows.filter(
-                    row =>
-                        row.selected &&
-                        !row.errors.length
-                );
+            const validRows = importedRows.filter(r => r.selected && !r.errors.length);
+            const dupRows   = validRows.filter(r => r.duplicate && !r.overwrite);
 
-            const summary =
-                document.getElementById(
-                    'confirmSummary'
-                );
+            const summary = document.getElementById('confirmSummary');
+            if (summary) {
+                summary.innerHTML = `
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">ชื่อไฟล์</span>
+                            <strong>${escapeHtml(currentFile?.name || '-')}</strong>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">รายการที่จะ import</span>
+                            <strong class="text-green-600">${validRows.length} รายการ</strong>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Duplicate (ข้าม)</span>
+                            <strong class="text-orange-500">${dupRows.length} รายการ</strong>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Duplicate (overwrite)</span>
+                            <strong class="text-blue-600">${validRows.filter(r => r.duplicate && r.overwrite).length} รายการ</strong>
+                        </div>
+                    </div>`;
+            }
 
-            summary.innerHTML =
-                `
-                <div class="
-                    flex
-                    justify-between
-                ">
-                    <span>
-                        Filename
-                    </span>
-
-                    <strong>
-                        ${currentFile.name}
-                    </strong>
-                </div>
-
-                <div class="
-                    flex
-                    justify-between
-                ">
-                    <span>
-                        Import Rows
-                    </span>
-
-                    <strong>
-                        ${validRows.length}
-                    </strong>
-                </div>
-
-                <div class="
-                    flex
-                    justify-between
-                ">
-                    <span>
-                        Duplicate
-                    </span>
-
-                    <strong>
-                        ${duplicateRows.length}
-                    </strong>
-                </div>
-                `;
-
-            document.getElementById(
-                'confirmModal'
-            ).classList.remove(
-                'hidden'
-            );
+            const modal = document.getElementById('confirmModal');
+            if (modal) modal.classList.remove('hidden');
         }
 
         function closeConfirmModal() {
-
-            document.getElementById(
-                'confirmModal'
-            ).classList.add(
-                'hidden'
-            );
+            const modal = document.getElementById('confirmModal');
+            if (modal) modal.classList.add('hidden');
         }
+
+        // ============================================================
+        // EXECUTE IMPORT (server confirmImport)
+        // ============================================================
 
         async function executeImport() {
 
@@ -1761,57 +1387,45 @@
 
                 UI.showLoading();
 
-                const rows =
-                    importedRows.filter(
-                        row =>
-                            row.selected &&
-                            !row.errors.length
-                    );
+                const rows = importedRows
+                    .filter(r => r.selected && !r.errors.length)
+                    .map(r => ({
+                        moneyType    : r.moneyType,
+                        dept         : r.dept,
+                        sender       : r.sender,
+                        invoice      : r.invoice      || '',
+                        vendor       : r.vendor,
+                        amount       : r.amount,
+                        description  : r.description,
+                        period       : r.period       || '',
+                        reserveNo    : r.reserveNo    || '',
+                        requestNo    : r.requestNo,
+                        dkNo         : r.dkNo         || '',
+                        payDate      : r.payDate      || '',
+                        egpNo        : r.egpNo        || '',
+                        overwrite    : r.overwrite    || false
+                    }));
 
-                if (!rows.length) {
+                if (!rows.length) throw new Error('ไม่มีรายการที่จะ import');
 
-                    throw new Error(
-                        'ไม่มีรายการ import'
-                    );
-                }
-
-                const result =
-                    await RegisterAPI
-                        .importXlsx({
-                            filename:
-                                currentFile.name,
-
-                            rows
-                        });
-
-                if (
-                    !result.success
-                ) {
-
-                    throw new Error(
-                        result.message
-                    );
-                }
-
-                UI.showToast(
-                    'Import สำเร็จ',
-                    'success'
+                const result = await RegisterAPI.confirmImport(
+                    rows,
+                    currentFile?.name || 'unknown.xlsx'
                 );
 
-                resetImport();
+                const success = result.successRows || 0;
+                const fail    = result.failRows    || 0;
+
+                UI.showToast(`Import สำเร็จ ${success} รายการ` + (fail ? ` (ล้มเหลว ${fail})` : ''));
 
                 closeConfirmModal();
-
+                resetImport();
                 await loadImportHistory();
 
             } catch (error) {
 
-                console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
+                console.error('executeImport error:', error);
+                UI.showToast(error.message, 'error');
 
             } finally {
 
@@ -1819,316 +1433,171 @@
             }
         }
 
-        // ======================
-        // HISTORY
-        // ======================
+        // ============================================================
+        // IMPORT HISTORY
+        // ============================================================
 
         async function loadImportHistory() {
 
             try {
 
-                const result =
-                    await RegisterAPI
-                        .getImportHistory();
-
-                if (
-                    !result.success
-                ) {
-
-                    return;
-                }
-
-                renderHistory(
-                    result.data || []
-                );
+                const result = await RegisterAPI.getImportHistory();
+                renderHistory(result.data || []);
 
             } catch (error) {
 
-                console.error(error);
+                console.warn('loadImportHistory error:', error.message);
             }
         }
 
-        function renderHistory(
-            rows
-        ) {
+        function renderHistory(rows) {
 
-            const container =
-                document.getElementById(
-                    'historyContainer'
-                );
-
-            container.innerHTML = '';
+            const tbody = document.getElementById('historyTableBody');
+            if (!tbody) return;
 
             if (!rows.length) {
-
-                container.innerHTML =
-                    `
-                    <div class="
-                        p-6
-                        text-center
-                        text-slate-500
-                    ">
-                        ไม่มีประวัติ import
-                    </div>
-                    `;
-
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-slate-400 text-sm">ยังไม่มีประวัติ</td></tr>';
                 return;
             }
 
-            rows.forEach(
-                row => {
-
-                    const item =
-                        document.createElement(
-                            'div'
-                        );
-
-                    item.className =
-                        `
-                        p-5
-                        flex
-                        flex-col
-                        lg:flex-row
-                        lg:items-center
-                        lg:justify-between
-                        gap-3
-                        `;
-
-                    item.innerHTML =
-                        `
-                        <div>
-
-                            <div class="
-                                font-semibold
-                            ">
-                                ${row.filename}
-                            </div>
-
-                            <div class="
-                                text-sm
-                                text-slate-500
-                                mt-1
-                            ">
-                                ${row.user}
-                            </div>
-
-                        </div>
-
-                        <div
-                            class="
-                                text-sm
-                                text-slate-500
-                            "
-                        >
-                            ${row.createdAt}
-                        </div>
-                        `;
-
-                    container.appendChild(
-                        item
-                    );
-                }
-            );
+            tbody.innerHTML = rows.map(row => `
+                <tr class="border-b border-slate-100 text-sm">
+                    <td class="px-4 py-2.5 text-slate-500 text-xs">${Formatter.thaiDate(row.timestamp)}</td>
+                    <td class="px-4 py-2.5">${escapeHtml(row.user || '-')}</td>
+                    <td class="px-4 py-2.5 text-xs font-mono">${escapeHtml(row.filename || '-')}</td>
+                    <td class="px-4 py-2.5 text-center">${row.totalRows || 0}</td>
+                    <td class="px-4 py-2.5 text-center">
+                        <span class="text-green-600 font-medium">${row.successRows || 0}</span>
+                        ${row.failRows ? ` / <span class="text-red-500">${row.failRows}</span>` : ''}
+                    </td>
+                </tr>`
+            ).join('');
         }
 
-        // ======================
-        // MAPPING UI
-        // ======================
+        // ============================================================
+        // COLUMN MAPPING DISPLAY
+        // ============================================================
 
         function renderMapping() {
 
-            const container =
-                document.getElementById(
-                    'mappingContainer'
-                );
+            const container = document.getElementById('mappingContainer');
+            if (!container) return;
 
-            container.innerHTML = '';
+            const knownMap = {
+                bgtype_name : 'ประเภทเงิน',
+                bgdk_paytonm: 'เจ้าหนี้/บริษัท',
+                bgdk_invno  : 'Invoice',
+                bgdk_dkamt  : 'จำนวนเงิน',
+                bgdk_vatamt : 'ภาษี',
+                bgdk_note   : 'รายการ',
+                bgdk_rcvno  : 'เลขขอเบิก',
+                bgdk_dkno   : 'เลขฎีกา',
+                bgdk_chqdate: 'วันที่จ่าย',
+                bgdk_egpno  : 'เลข e-GP'
+            };
 
-            currentHeaders.forEach(
-                header => {
-
-                    const div =
-                        document.createElement(
-                            'div'
-                        );
-
-                    div.className =
-                        `
-                        border
-                        border-slate-200
-                        dark:border-slate-700
-                        rounded-xl
-                        p-4
-                        `;
-
-                    div.innerHTML =
-                        `
-                        <div class="
-                            text-sm
-                            text-slate-500
-                            mb-2
-                        ">
-                            Source
-                        </div>
-
-                        <div class="
-                            font-semibold
-                            break-all
-                        ">
-                            ${header}
-                        </div>
-
-                        <div class="
-                            mt-4
-                            text-sm
-                            text-slate-500
-                        ">
-                            Mapping
-                        </div>
-
-                        <div class="
-                            mt-1
-                            font-medium
-                            text-blue-600
-                        ">
-                            ${DEFAULT_MAPPING[header] || '-'}
-                        </div>
-                        `;
-
-                    container.appendChild(
-                        div
-                    );
-                }
-            );
+            container.innerHTML = currentHeaders.map(h => {
+                const label = knownMap[h] || h;
+                const mapped = !!knownMap[h];
+                return `
+                    <div class="flex items-center gap-2 text-xs py-1">
+                        <span class="w-2 h-2 rounded-full ${mapped ? 'bg-green-400' : 'bg-slate-300'} flex-shrink-0"></span>
+                        <span class="font-mono text-slate-500 w-32 truncate">${escapeHtml(h)}</span>
+                        <span class="text-slate-400">→</span>
+                        <span class="${mapped ? 'text-green-700' : 'text-slate-400'}">${label}</span>
+                    </div>`;
+            }).join('');
         }
 
-        // ======================
-        // UTIL
-        // ======================
+        // ============================================================
+        // UI HELPERS
+        // ============================================================
 
-        function renderSummaryCards() {
-
-            renderSummary();
+        function renderStatus(id, text, className) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = text;
+            el.className   = 'text-sm font-medium ' + className;
         }
 
         function updateConfirmButton() {
 
-            const validRows =
-                importedRows.filter(
-                    row =>
-                        row.selected &&
-                        !row.errors.length
-                );
+            const btn      = document.getElementById('confirmImportButton');
+            if (!btn) return;
 
-            document.getElementById(
-                'confirmImportButton'
-            ).disabled =
-                !validRows.length;
+            const selected = importedRows.filter(r => r.selected && !r.errors.length).length;
+
+            btn.disabled   = selected === 0;
+            btn.textContent = selected > 0
+                ? `ยืนยัน Import ${selected} รายการ`
+                : 'ไม่มีรายการที่เลือก';
         }
 
         function showSections() {
 
-            [
-                'summarySection',
-                'mappingSection',
-                'previewSection'
-            ].forEach(id => {
-
-                document
-                    .getElementById(id)
-                    .classList.remove(
-                        'hidden'
-                    );
+            ['previewSection', 'summarySection', 'mappingSection'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('hidden');
             });
+
+            const dropzone = document.getElementById('dropzoneSection');
+            if (dropzone) dropzone.classList.add('hidden');
         }
 
         function resetImport() {
 
-            importedRows = [];
+            currentFile    = null;
+            currentHeaders = [];
+            importedRows   = [];
+            previewRows    = [];
+            duplicateRows  = [];
 
-            duplicateRows = [];
-
-            currentFile = null;
-
-            document.getElementById(
-                'previewTableBody'
-            ).innerHTML = '';
-
-            [
-                'summarySection',
-                'mappingSection',
-                'previewSection'
-            ].forEach(id => {
-
-                document
-                    .getElementById(id)
-                    .classList.add(
-                        'hidden'
-                    );
+            ['previewSection', 'summarySection', 'mappingSection'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
             });
 
-            document.getElementById(
-                'confirmImportButton'
-            ).disabled =
-                true;
+            const dropzone = document.getElementById('dropzoneSection');
+            if (dropzone) dropzone.classList.remove('hidden');
+
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) fileInput.value = '';
+
+            renderStatus('previewStatus', '', '');
+            updateConfirmButton();
         }
 
-        function formatRequestNo(
-            value
-        ) {
+        // ============================================================
+        // UTILITIES
+        // ============================================================
 
-            if (!value) {
+        function _formatRequestNo(value) {
 
-                return '';
-            }
+            if (!value) return '';
 
-            const text =
-                String(value);
+            const raw = String(value).replace(/\D/g, '');
 
-            if (
-                text.length >= 2
-            ) {
+            if (raw.length < 3) return String(value);
 
-                const year =
-                    text.substring(
-                        0,
-                        2
-                    );
+            // "680000007" -> "7/68"
+            const year    = raw.substring(0, 2);
+            const running = parseInt(raw.substring(2), 10);
 
-                const running =
-                    Number(
-                        text.substring(2)
-                    );
-
-                return `
-                ${running}/${year}
-                `;
-            }
-
-            return text;
+            return running + '/' + year;
         }
 
-        function escapeHtml(
-            value
-        ) {
+        function _firstLine(value) {
+            return String(value || '').split('\n')[0].trim();
+        }
 
-            return String(value || '')
-                .replaceAll(
-                    '&',
-                    '&amp;'
-                )
-                .replaceAll(
-                    '<',
-                    '&lt;'
-                )
-                .replaceAll(
-                    '>',
-                    '&gt;'
-                )
-                .replaceAll(
-                    '"',
-                    '&quot;'
-                );
+        function _setEl(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        }
+
+        function _on(id, event, handler) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener(event, handler);
         }
 
     </script>
