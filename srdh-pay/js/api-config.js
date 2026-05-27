@@ -1,86 +1,49 @@
-// Version: 00123.0
+// Version: 0200
 // api-config.js
-// Centralized Secure API Client
-// SRDH PAY SYSTEM
+// Centralized API Client — SRDH PAY
+// Backend: Google Apps Script (Code.gs v0200)
 
 'use strict';
 
-// ====================== CONFIG ======================
+// ============================================================
+// CONFIG
+// ============================================================
 
 const API_CONFIG = {
 
-    APP_NAME: 'SRDH PAY',
+    APP_NAME   : 'SRDH PAY',
+    APP_VERSION: '0200',
 
-    APP_VERSION: '00123.0',
-
-    API_URL:
-        'https://script.google.com/macros/s/AKfycbyz2K_SdqyfRaSPiqA9Yk9HW5nDg7ju6C6MfWPzdWgPeTGzIxtMveX5YupujzU61TP10A/exec',
+    // แก้เป็น URL จริงหลัง deploy GAS
+    API_URL: 'https://script.google.com/macros/s/AKfycbzT7wsv21jTPRjE9yvHhGwQ9E-_4aPnmjXPShs5DoAjcRh9b__YNr5xiLD-7IrqcGrsDw/exec',
 
     REQUEST_TIMEOUT: 30000,
-
-    MAX_RETRY: 2,
-
-    RETRY_DELAY: 1500,
-
-    SESSION_DURATION_HOURS: 2,
+    MAX_RETRY      : 2,
+    RETRY_DELAY    : 1500,
 
     STORAGE_KEYS: {
-
-        TOKEN: 'srdh_token',
-
-        USER: 'srdh_user',
-
+        TOKEN         : 'srdh_token',
+        USER          : 'srdh_user',
         SESSION_EXPIRE: 'srdh_session_expire',
-
-        GUEST_TOKEN: 'srdh_guest_token',
-
-        LAST_ACTIVITY: 'srdh_last_activity'
+        LAST_ACTIVITY : 'srdh_last_activity'
     }
 };
 
-// ====================== ROLE MATRIX ======================
+// ============================================================
+// ROLE PERMISSIONS (ใช้ตรวจสอบ UI ฝั่ง client)
+// ============================================================
 
 const ROLE_PERMISSIONS = {
-
-    admin: [
-        'dashboard',
-        'register',
-        'import',
-        'approve',
-        'report',
-        'settings',
-        'edit',
-        'delete',
-        'export'
-    ],
-
-    editor: [
-        'dashboard',
-        'register',
-        'approve',
-        'edit'
-    ],
-
-    checker: [
-        'dashboard',
-        'register',
-        'report'
-    ],
-
-    staff: [
-        'dashboard',
-        'register',
-        'import',
-        'report'
-    ],
-
-    guest: [
-        'dashboard',
-        'register'
-    ]
+    admin  : ['dashboard','register','import','approve','report','settings','edit','delete','export'],
+    editor : ['dashboard','register','approve','edit'],
+    checker: ['dashboard','register','report','approve'],
+    staff  : ['dashboard','register','import','report'],
+    guest  : ['dashboard','register']
 };
 
-// ====================== SESSION MANAGER ======================
+// ============================================================
+// SESSION MANAGER
+// ============================================================
 
 const SessionManager = {
 
@@ -90,82 +53,39 @@ const SessionManager = {
             throw new Error('Invalid session data');
         }
 
-        const expireAt = Date.now() +
-            (
-                API_CONFIG.SESSION_DURATION_HOURS *
-                60 *
-                60 *
-                1000
-            );
+        // ใช้ expireAt จาก server ถ้ามี ไม่งั้น fallback 8 ชม.
+        const expireAt = data.expireAt
+            ? new Date(data.expireAt).getTime()
+            : Date.now() + (8 * 60 * 60 * 1000);
 
-        localStorage.setItem(
-            API_CONFIG.STORAGE_KEYS.TOKEN,
-            data.token
-        );
-
-        localStorage.setItem(
-            API_CONFIG.STORAGE_KEYS.USER,
-            JSON.stringify(data.user)
-        );
-
-        localStorage.setItem(
-            API_CONFIG.STORAGE_KEYS.SESSION_EXPIRE,
-            expireAt
-        );
-
-        localStorage.setItem(
-            API_CONFIG.STORAGE_KEYS.LAST_ACTIVITY,
-            Date.now()
-        );
+        localStorage.setItem(API_CONFIG.STORAGE_KEYS.TOKEN,          data.token);
+        localStorage.setItem(API_CONFIG.STORAGE_KEYS.USER,           JSON.stringify(data.user));
+        localStorage.setItem(API_CONFIG.STORAGE_KEYS.SESSION_EXPIRE, String(expireAt));
+        localStorage.setItem(API_CONFIG.STORAGE_KEYS.LAST_ACTIVITY,  String(Date.now()));
     },
 
     getToken() {
-
-        return localStorage.getItem(
-            API_CONFIG.STORAGE_KEYS.TOKEN
-        );
+        return localStorage.getItem(API_CONFIG.STORAGE_KEYS.TOKEN);
     },
 
     getUser() {
-
-        const raw = localStorage.getItem(
-            API_CONFIG.STORAGE_KEYS.USER
-        );
-
-        if (!raw) {
-            return null;
-        }
-
         try {
-
-            return JSON.parse(raw);
-
-        } catch (error) {
-
-            console.error(error);
-
+            const raw = localStorage.getItem(API_CONFIG.STORAGE_KEYS.USER);
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) {
             return null;
         }
     },
 
     isLoggedIn() {
 
-        const token = this.getToken();
+        const token    = this.getToken();
+        const expireAt = Number(localStorage.getItem(API_CONFIG.STORAGE_KEYS.SESSION_EXPIRE));
 
-        const expireAt = Number(
-            localStorage.getItem(
-                API_CONFIG.STORAGE_KEYS.SESSION_EXPIRE
-            )
-        );
-
-        if (!token || !expireAt) {
-            return false;
-        }
+        if (!token || !expireAt) return false;
 
         if (Date.now() > expireAt) {
-
             this.clearSession();
-
             return false;
         }
 
@@ -173,201 +93,84 @@ const SessionManager = {
     },
 
     updateActivity() {
-
-        localStorage.setItem(
-            API_CONFIG.STORAGE_KEYS.LAST_ACTIVITY,
-            Date.now()
-        );
+        localStorage.setItem(API_CONFIG.STORAGE_KEYS.LAST_ACTIVITY, String(Date.now()));
     },
 
     clearSession() {
-
-        localStorage.removeItem(
-            API_CONFIG.STORAGE_KEYS.TOKEN
-        );
-
-        localStorage.removeItem(
-            API_CONFIG.STORAGE_KEYS.USER
-        );
-
-        localStorage.removeItem(
-            API_CONFIG.STORAGE_KEYS.SESSION_EXPIRE
-        );
-
-        localStorage.removeItem(
-            API_CONFIG.STORAGE_KEYS.LAST_ACTIVITY
-        );
-
+        Object.values(API_CONFIG.STORAGE_KEYS).forEach(key => {
+            localStorage.removeItem(key);
+        });
         sessionStorage.clear();
     }
 };
 
-// ====================== SECURITY ENGINE ======================
-
-const SecurityManager = {
-
-    generateTimestamp() {
-
-        return Date.now();
-    },
-
-    async sha256(message) {
-
-        const msgBuffer = new TextEncoder()
-            .encode(message);
-
-        const hashBuffer =
-            await crypto.subtle.digest(
-                'SHA-256',
-                msgBuffer
-            );
-
-        const hashArray =
-            Array.from(new Uint8Array(hashBuffer));
-
-        return hashArray
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join('');
-    },
-
-    async generateSignature(timestamp) {
-
-        const secret = 'SRDH_SECURE_SIGNATURE';
-
-        return await this.sha256(
-            secret + String(timestamp)
-        );
-    }
-};
-
-// ====================== API CLIENT ======================
+// ============================================================
+// API CLIENT
+// ============================================================
 
 const ApiClient = {
 
     async request(functionName, payload = {}) {
 
-        const timestamp =
-            SecurityManager.generateTimestamp();
-
-        const signature =
-            await SecurityManager
-                .generateSignature(timestamp);
-
         const requestPayload = {
-
             ...payload,
-
-            token: SessionManager.getToken(),
-
-            timestamp: timestamp,
-
-            signature: signature
+            function: functionName,
+            token   : SessionManager.getToken()
         };
 
-        return await this.fetchWithRetry(
-            functionName,
-            requestPayload
-        );
+        return await this._fetchWithRetry(functionName, requestPayload);
     },
 
-    async fetchWithRetry(
-        functionName,
-        payload,
-        retryCount = 0
-    ) {
+    async _fetchWithRetry(functionName, payload, retryCount = 0) {
 
         try {
 
-            return await this.fetch(
-                functionName,
-                payload
-            );
+            return await this._fetch(payload);
 
         } catch (error) {
 
-            console.error(
-                'API Retry:',
-                retryCount,
-                error
-            );
-
-            if (
-                retryCount <
-                API_CONFIG.MAX_RETRY
-            ) {
-
-                await this.delay(
-                    API_CONFIG.RETRY_DELAY
-                );
-
-                return await this.fetchWithRetry(
-                    functionName,
-                    payload,
-                    retryCount + 1
-                );
+            if (retryCount < API_CONFIG.MAX_RETRY) {
+                await this._delay(API_CONFIG.RETRY_DELAY);
+                return await this._fetchWithRetry(functionName, payload, retryCount + 1);
             }
 
             throw error;
         }
     },
 
-    async fetch(functionName, payload) {
+    async _fetch(payload) {
 
-        const controller =
-            new AbortController();
-
-        const timeoutId = setTimeout(() => {
-
-            controller.abort();
-
-        }, API_CONFIG.REQUEST_TIMEOUT);
+        const controller = new AbortController();
+        const timeoutId  = setTimeout(() => controller.abort(), API_CONFIG.REQUEST_TIMEOUT);
 
         try {
 
-            const response = await fetch(
-
-                `${API_CONFIG.API_URL}?function=${functionName}`,
-
-                {
-                    method: 'POST',
-
-                    headers: {
-                        'Content-Type':
-                            'application/json'
-                    },
-
-                    body: JSON.stringify(payload),
-
-                    signal: controller.signal
-                }
-            );
+            const response = await fetch(API_CONFIG.API_URL, {
+                method : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body   : JSON.stringify(payload),
+                signal : controller.signal
+            });
 
             clearTimeout(timeoutId);
 
             if (!response.ok) {
-
-                throw new Error(
-                    `HTTP ${response.status}`
-                );
+                throw new Error('HTTP ' + response.status);
             }
 
-            const result =
-                await response.json();
+            const result = await response.json();
+
+            // Session หมดอายุ
+            if (!result.success &&
+                (result.message === 'Session expired' ||
+                 result.message === 'Session invalid'  ||
+                 result.message === 'Session token required')) {
+                _handleSessionExpired();
+                throw new Error(result.message);
+            }
 
             if (!result.success) {
-
-                if (
-                    result.code ===
-                    'SESSION_EXPIRED'
-                ) {
-
-                    handleSessionExpired();
-                }
-
-                throw new Error(
-                    result.message ||
-                    'API Error'
-                );
+                throw new Error(result.message || 'API Error');
             }
 
             SessionManager.updateActivity();
@@ -378,83 +181,49 @@ const ApiClient = {
 
             clearTimeout(timeoutId);
 
-            if (
-                error.name === 'AbortError'
-            ) {
-
-                throw new Error(
-                    'Request timeout'
-                );
+            if (error.name === 'AbortError') {
+                throw new Error('Request timeout — กรุณาลองใหม่');
             }
 
             throw error;
         }
     },
 
-    delay(ms) {
-
-        return new Promise(resolve => {
-
-            setTimeout(resolve, ms);
-
-        });
+    _delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 };
 
-// ====================== AUTH API ======================
+// ============================================================
+// AUTH API
+// ============================================================
 
 const AuthAPI = {
 
     async login(email, password) {
 
-        const result =
-            await ApiClient.request(
-                'loginUser',
-                {
-                    email: email,
-                    password: password
-                }
-            );
+        const result = await ApiClient.request('loginUser', { email, password });
 
-        if (
-            result.success &&
-            result.token
-        ) {
-
+        if (result.token && result.user) {
             SessionManager.setSession({
-
-                token: result.token,
-
-                user: result.user
+                token   : result.token,
+                user    : result.user,
+                expireAt: result.expireAt
             });
         }
 
         return result;
     },
 
-    async guestLogin() {
+    async guestAccess() {
 
-        const guestId =
-            'guest_' + Date.now();
+        const result = await ApiClient.request('guestAccess', {});
 
-        const result =
-            await ApiClient.request(
-                'guestLogin',
-                {
-                    guestId: guestId
-                }
-            );
-
-        if (
-            result.success &&
-            result.token
-        ) {
-
+        if (result.token && result.user) {
             SessionManager.setSession({
-
-                token: result.token,
-
-                user: result.user
+                token   : result.token,
+                user    : result.user,
+                expireAt: result.expireAt
             });
         }
 
@@ -464,237 +233,277 @@ const AuthAPI = {
     async logout() {
 
         try {
-
-            await ApiClient.request(
-                'logoutUser'
-            );
-
-        } catch (error) {
-
-            console.warn(error);
-
+            await ApiClient.request('logoutUser', {});
+        } catch (e) {
+            console.warn('logout error:', e);
         } finally {
-
             SessionManager.clearSession();
-
-            window.location.href =
-                'index.html';
+            window.location.href = 'login.html';
         }
+    },
+
+    async validateToken() {
+        return await ApiClient.request('validateToken', {});
     }
 };
 
-// ====================== REGISTER API ======================
+// ============================================================
+// REGISTER API
+// ============================================================
 
 const RegisterAPI = {
 
-    async getAll(filters = {}) {
-
-        return await ApiClient.request(
-            'getRegisterData',
-            filters
-        );
+    // ดึงรายการ พร้อม pagination + filter
+    async getList(params = {}) {
+        return await ApiClient.request('getRegisterList', params);
     },
 
-    async updateStatus(data) {
-
-        return await ApiClient.request(
-            'updateStatus',
-            data
-        );
+    // ดึงรายการเดียว
+    async getDetail(uuid) {
+        return await ApiClient.request('getRegisterDetail', { uuid });
     },
 
-    async delete(uuid) {
+    // ค้นหา
+    async search(keyword) {
+        return await ApiClient.request('searchRegister', { keyword });
+    },
 
-        return await ApiClient.request(
-            'deleteRegisterRow',
-            {
-                uuid: uuid
-            }
-        );
+    // สร้างใหม่ (manual)
+    async create(items) {
+        return await ApiClient.request('createRegister', { items });
+    },
+
+    // แก้ไข
+    async update(uuid, data, note = '') {
+        return await ApiClient.request('updateRegisterRow', { uuid, data, note });
+    },
+
+    // ลบ (ต้องส่ง confirmText: 'DELETE')
+    async delete(uuid, note = '') {
+        return await ApiClient.request('deleteRegisterRow', {
+            uuid,
+            confirmText: 'DELETE',
+            note
+        });
+    },
+
+    // อัปเดตสถานะ
+    async updateStatus(uuid, action, note = '') {
+        return await ApiClient.request('updateStatus', { uuid, action, note });
+    },
+
+    // อัปเดตสถานะหลายรายการ
+    async batchUpdateStatus(uuids, action, note = '') {
+        return await ApiClient.request('batchUpdateStatus', { uuids, action, note });
+    },
+
+    // ดู timeline
+    async getTimeline(uuid) {
+        return await ApiClient.request('getTimeline', { uuid });
+    },
+
+    // ตรวจสอบ duplicate ก่อน import
+    async previewImport(rows, filename) {
+        return await ApiClient.request('previewImport', { rows, filename });
+    },
+
+    // ยืนยัน import จริง
+    async confirmImport(rows, filename) {
+        return await ApiClient.request('confirmImport', { rows, filename });
+    },
+
+    // ประวัติ import
+    async getImportHistory() {
+        return await ApiClient.request('getImportHistory', {});
+    },
+
+    // Master data (moneyTypes, depts, statuses ฯลฯ)
+    async getMasterData() {
+        return await ApiClient.request('getMasterData', {});
     }
 };
 
-// ====================== IMPORT API ======================
-
-const ImportAPI = {
-
-    async save(data) {
-
-        return await ApiClient.request(
-            'saveImportData',
-            data
-        );
-    }
-};
-
-// ====================== DASHBOARD API ======================
+// ============================================================
+// DASHBOARD API
+// ============================================================
 
 const DashboardAPI = {
 
     async getSummary() {
-
-        return await ApiClient.request(
-            'getDashboardData'
-        );
+        return await ApiClient.request('getDashboardData', {});
     }
 };
 
-// ====================== REPORT API ======================
+// ============================================================
+// REPORT API
+// ============================================================
 
 const ReportAPI = {
 
     async getReport(filters = {}) {
+        return await ApiClient.request('getReportData', { filters });
+    },
 
-        return await ApiClient.request(
-            'getReportData',
-            filters
-        );
+    async getPrintSummary(filters = {}) {
+        return await ApiClient.request('getPrintSummary', { filters });
+    },
+
+    async export(type, filters = {}) {
+        return await ApiClient.request('exportReport', { type, filters });
     }
 };
 
-// ====================== SETTINGS API ======================
+// ============================================================
+// SETTINGS API
+// ============================================================
 
 const SettingsAPI = {
 
     async getAll() {
-
-        return await ApiClient.request(
-            'getSettings'
-        );
+        return await ApiClient.request('getSettingsData', {});
     },
 
-    async add(type, value) {
-
-        return await ApiClient.request(
-            'addSetting',
-            {
-                type: type,
-                value: value
-            }
-        );
+    // type: 'money_type' | 'checker' | 'alias' | 'vendor'
+    async add(type, name, color = '') {
+        return await ApiClient.request('addSetting', { type, name, color });
     },
 
-    async delete(type, value) {
+    async update(id, fields = {}) {
+        return await ApiClient.request('updateSetting', { id, ...fields });
+    },
 
-        return await ApiClient.request(
-            'deleteSetting',
-            {
-                type: type,
-                value: value
-            }
-        );
+    // ต้องส่ง confirmText: 'DELETE'
+    async delete(id) {
+        return await ApiClient.request('deleteSetting', {
+            id,
+            confirmText: 'DELETE'
+        });
     }
 };
 
-// ====================== PERMISSION ENGINE ======================
+// ============================================================
+// USER API
+// ============================================================
+
+const UserAPI = {
+
+    async getAll() {
+        return await ApiClient.request('getUsers', {});
+    },
+
+    async create(data) {
+        return await ApiClient.request('createUser', data);
+    },
+
+    async update(email, data) {
+        return await ApiClient.request('updateUser', { email, ...data });
+    },
+
+    async toggleStatus(email) {
+        return await ApiClient.request('toggleUserStatus', { email });
+    }
+};
+
+// ============================================================
+// SYSTEM API
+// ============================================================
+
+const SystemAPI = {
+
+    async getStatus() {
+        return await ApiClient.request('getSystemStatus', {});
+    },
+
+    async getAuditLogs() {
+        return await ApiClient.request('getAuditLogs', {});
+    },
+
+    async backup() {
+        return await ApiClient.request('backupSystem', {});
+    },
+
+    async clearCache() {
+        return await ApiClient.request('clearCache', {});
+    },
+
+    async initializeSheets() {
+        return await ApiClient.request('initializeSheets', {});
+    },
+
+    async healthCheck() {
+        return await ApiClient.request('healthCheck', {});
+    }
+};
+
+// ============================================================
+// PERMISSION MANAGER
+// ============================================================
 
 const PermissionManager = {
 
     hasRole(role) {
-
-        const user =
-            SessionManager.getUser();
-
-        if (!user) {
-            return false;
-        }
-
-        return user.role === role;
+        const user = SessionManager.getUser();
+        return user ? user.role === role : false;
     },
 
     canAccess(permission) {
-
-        const user =
-            SessionManager.getUser();
-
-        if (!user) {
-            return false;
-        }
-
-        const permissions =
-            ROLE_PERMISSIONS[user.role] || [];
-
-        return permissions.includes(permission);
+        const user = SessionManager.getUser();
+        if (!user) return false;
+        const perms = ROLE_PERMISSIONS[user.role] || [];
+        return perms.includes(permission);
     },
 
     require(permission) {
-
         if (!this.canAccess(permission)) {
-
-            alert(
-                'คุณไม่มีสิทธิ์เข้าถึงส่วนนี้'
-            );
-
-            window.location.href =
-                'dashboard.html';
-
+            UI.showToast('ไม่มีสิทธิ์เข้าถึงส่วนนี้', 'error');
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
             return false;
         }
-
         return true;
     }
 };
 
-// ====================== SESSION EXPIRED ======================
+// ============================================================
+// SESSION EXPIRED HANDLER
+// ============================================================
 
-function handleSessionExpired() {
-
+function _handleSessionExpired() {
     SessionManager.clearSession();
-
-    alert(
-        'Session หมดอายุ กรุณาเข้าสู่ระบบใหม่'
-    );
-
-    window.location.href =
-        'index.html';
+    UI.showToast('Session หมดอายุ กรุณาเข้าสู่ระบบใหม่', 'error');
+    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
 }
 
-// ====================== MULTI TAB SYNC ======================
+// ============================================================
+// MULTI TAB SYNC
+// ============================================================
 
-window.addEventListener(
-    'storage',
-    function(event) {
-
-        if (
-            event.key ===
-            API_CONFIG.STORAGE_KEYS.TOKEN &&
-            !event.newValue
-        ) {
-
-            alert(
-                'คุณถูกออกจากระบบ'
-            );
-
-            window.location.href =
-                'index.html';
-        }
+window.addEventListener('storage', function (event) {
+    if (event.key === API_CONFIG.STORAGE_KEYS.TOKEN && !event.newValue) {
+        _handleSessionExpired();
     }
-);
+});
 
-// ====================== AUTO SESSION CHECK ======================
+// ============================================================
+// AUTO SESSION CHECK (ทุก 1 นาที)
+// ============================================================
 
-setInterval(function() {
+setInterval(function () {
+    if (SessionManager.isLoggedIn()) return;
 
-    if (!SessionManager.isLoggedIn()) {
+    const page = window.location.pathname.split('/').pop();
+    const publicPages = ['login.html', 'index.html', ''];
 
-        handleSessionExpired();
+    if (!publicPages.includes(page)) {
+        _handleSessionExpired();
     }
-
 }, 60000);
 
-// ====================== GLOBAL ERROR HANDLER ======================
+// ============================================================
+// GLOBAL UNHANDLED REJECTION
+// ============================================================
 
-window.addEventListener(
-    'unhandledrejection',
-    function(event) {
+window.addEventListener('unhandledrejection', function (event) {
+    console.error('Unhandled Promise Error:', event.reason);
+});
 
-        console.error(
-            'Unhandled Promise Error:',
-            event.reason
-        );
-    }
-);
-
-console.log(
-    `${API_CONFIG.APP_NAME} API Client Loaded`
-);
+console.log(API_CONFIG.APP_NAME + ' API Client v' + API_CONFIG.APP_VERSION + ' loaded');
