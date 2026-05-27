@@ -1,53 +1,130 @@
 {
-  "//": "Version 00122",
-  "name": "ทะเบียนเบิกจ่ายเงิน รพส.",
-  "short_name": "Srdh Pay",
-  "description": "ระบบทะเบียนฎีกาเบิกจ่ายเงิน โรงพยาบาลสิริน",
-  "start_url": "/login.html",
-  "display": "standalone",
-  "background_color": "#F3E8FF",
-  "theme_color": "#7C3AED",
-  "orientation": "portrait-primary",
+  "name": "manifest.json",
+  "short_name": "SRDH Pay",
+  "description": "ระบบทะเบียนเบิกจ่ายเงิน รพส.",
+  "lang": "th",
+  "start_url": "/login.html?v=0200",
   "scope": "/",
-  "lang": "th-TH",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "orientation": "portrait-primary",
+  "background_color": "#f5f7fb",
+  "theme_color": "#2563eb",
+  "categories": [
+    "finance",
+    "productivity",
+    "business"
+  ],
   "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "icons/register_acc-192.png",
+      "src": "/assets/icons/icon-72.png?v=0200",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-96.png?v=0200",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-128.png?v=0200",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-144.png?v=0200",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/register_acc-152.png?v=0200",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/register_acc-192.png?v=0200",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     },
     {
-      "src": "icons/register_acc-512.png",
+      "src": "/assets/icons/icon-384.png?v=0200",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icons/register_acc-512.png?v=0200",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "เปิดหน้า Dashboard",
+      "url": "/dashboard.html?v=0200",
+      "icons": [
+        {
+          "src": "icons/register_acc-192.png?v=0200",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
-      "src": "icons/register_acc-152.png",
-      "sizes": "152x152",
-      "type": "image/png"
+      "name": "รายการทะเบียน",
+      "short_name": "รายการ",
+      "description": "เปิดหน้ารายการทะเบียน",
+      "url": "/list.html?v=0200",
+      "icons": [
+        {
+          "src": "icons/register_acc-192.png?v=0200",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
-      "src": "icons/register_acc-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/register_acc-touch-icon-ipad.png",
-      "sizes": "167x167",
-      "type": "image/png"
+      "name": "นำเข้าข้อมูล",
+      "short_name": "Import",
+      "description": "เปิดหน้าการนำเข้าข้อมูล",
+      "url": "/import.html?v=0200",
+      "icons": [
+        {
+          "src": "icons/register_acc-192.png?v=0200",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "screenshots": [
     {
-      "src": "icons/register_acc-512.png",
-      "sizes": "512x512",
+      "src": "/assets/screenshots/dashboard-desktop.png?v=0200",
+      "sizes": "1280x720",
       "type": "image/png",
-      "form_factor": "wide"
+      "form_factor": "wide",
+      "label": "Dashboard Desktop"
+    },
+    {
+      "src": "/assets/screenshots/dashboard-mobile.png?v=0200",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dashboard Mobile"
     }
-  ],
-  "categories": ["business", "finance", "productivity"],
-  "prefer_related_applications": false
+  ]
 }
