@@ -1,4 +1,4 @@
-<!-- Version: 00123.0 -->
+<!-- Version: 0200 -->
 <!-- dashboard.html -->
 <!-- SRDH PAY Dashboard -->
 
@@ -25,8 +25,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Runtime -->
-    <script src="api-config.js"></script>
-    <script src="main.js"></script>
+    <script src="js/api-config.js"></script>
+    <script src="js/main.js"></script>
 
     <style>
 
@@ -702,6 +702,36 @@
 
             </div>
 
+            <!-- Recent Transactions -->
+            <section class="mt-6 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h2 class="font-semibold text-slate-700">รายการล่าสุด</h2>
+                    <a href="list.html" class="text-sm text-violet-600 hover:underline">ดูทั้งหมด →</a>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+                            <tr>
+                                <th class="px-4 py-3 text-left">เลขทะเบียน</th>
+                                <th class="px-4 py-3 text-left">เจ้าหนี้</th>
+                                <th class="px-4 py-3 text-right">จำนวนเงิน</th>
+                                <th class="px-4 py-3 text-left">สถานะ</th>
+                                <th class="px-4 py-3 text-left">วันที่</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-8 text-slate-400">กำลังโหลด...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
+
+
         </main>
 
     </div>
@@ -711,147 +741,80 @@
 
         'use strict';
 
-        // ======================
+        // ============================================================
         // STATE
-        // ======================
+        // ============================================================
 
         let moneyChart = null;
+        let deptChart  = null;
 
-        let deptChart = null;
+        const CACHE_KEY  = 'srdh_dashboard_cache';
+        const CACHE_TIME = 5 * 60 * 1000; // 5 นาที
 
-        const DASHBOARD_CACHE_KEY =
-            'dashboard_cache_v1';
-
-        const DASHBOARD_CACHE_TIME =
-            5 * 60 * 1000;
-
-        // ======================
+        // ============================================================
         // INIT
-        // ======================
+        // ============================================================
 
-        document.addEventListener(
-            'DOMContentLoaded',
-            initializeDashboard
-        );
+        document.addEventListener('DOMContentLoaded', initializeDashboard);
 
         async function initializeDashboard() {
-
             bindEvents();
-
-            renderUserInfo();
-
             await loadDashboard();
         }
 
-        // ======================
+        // ============================================================
         // EVENTS
-        // ======================
+        // ============================================================
 
         function bindEvents() {
 
-            document
-                .getElementById(
-                    'refreshButton'
-                )
-                .addEventListener(
-                    'click',
-                    async () => {
+            const refreshBtn = document.getElementById('refreshButton');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => loadDashboard(true));
+            }
 
-                        await loadDashboard(
-                            true
-                        );
-                    }
-                );
-
-            document
-                .getElementById(
-                    'printButton'
-                )
-                .addEventListener(
-                    'click',
-                    () => {
-
-                        window.print();
-                    }
-                );
+            const printBtn = document.getElementById('printButton');
+            if (printBtn) {
+                printBtn.addEventListener('click', () => window.print());
+            }
         }
 
-        // ======================
-        // LOAD
-        // ======================
+        // ============================================================
+        // LOAD DASHBOARD
+        // ============================================================
 
-        async function loadDashboard(
-            forceRefresh = false
-        ) {
+        async function loadDashboard(forceRefresh = false) {
 
             try {
 
-                setDashboardStatus(
-                    'Loading...',
-                    'text-amber-500'
-                );
+                setStatus('กำลังโหลด...', 'text-amber-500');
 
-                const cached =
-                    getDashboardCache();
-
-                if (
-                    cached &&
-                    !forceRefresh
-                ) {
-
-                    renderDashboard(
-                        cached
-                    );
-
-                    setDashboardStatus(
-                        'Loaded from cache',
-                        'text-green-600'
-                    );
-
-                    return;
+                // ลอง cache ก่อน (ยกเว้น force refresh)
+                if (!forceRefresh) {
+                    const cached = _getCache();
+                    if (cached) {
+                        renderDashboard(cached);
+                        setStatus('โหลดจาก cache', 'text-green-600');
+                        return;
+                    }
                 }
 
                 UI.showLoading();
 
-                const result =
-                    await DashboardAPI
-                        .getDashboardData();
+                const result = await DashboardAPI.getSummary();
 
-                if (
-                    !result.success
-                ) {
+                _saveCache(result);
 
-                    throw new Error(
-                        result.message
-                    );
-                }
+                renderDashboard(result);
 
-                saveDashboardCache(
-                    result
-                );
-
-                renderDashboard(
-                    result
-                );
-
-                setDashboardStatus(
-                    'Updated',
-                    'text-green-600'
-                );
+                setStatus('อัปเดตแล้ว', 'text-green-600');
+                updateLastUpdate();
 
             } catch (error) {
 
-                console.error(error);
-
-                setDashboardStatus(
-                    'Load failed',
-                    'text-red-500'
-                );
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
+                console.error('loadDashboard error:', error);
+                setStatus('โหลดไม่สำเร็จ', 'text-red-500');
+                UI.showToast(error.message, 'error');
 
             } finally {
 
@@ -859,467 +822,287 @@
             }
         }
 
-        // ======================
-        // RENDER
-        // ======================
+        // ============================================================
+        // RENDER DASHBOARD
+        // ============================================================
 
-        function renderDashboard(
-            data
-        ) {
+        function renderDashboard(data) {
 
-            renderSummaryCards(
-                data.summary
-            );
+            // data structure จาก Code.gs:
+            // { summary: { totalRows, totalAmount, paidAmount, waitingAmount,
+            //              approvedAmount, cancelledAmount, paidRows, ... },
+            //   charts:  { moneyType: {labels, values}, dept: {labels, values},
+            //              vendor: {labels, values}, status: {labels, values} },
+            //   recent:  [...] }
 
-            renderCharts(data);
+            const summary = data.summary || {};
+            const charts  = data.charts  || {};
+            const recent  = data.recent  || [];
 
-            renderProgress(
-                data.progress
-            );
-
-            renderAvgTime(
-                data.avgTime
-            );
-
-            updateLastUpdate();
+            renderSummaryCards(summary);
+            renderCharts(charts);
+            renderRecentTable(recent);
+            renderProgress(summary);
+            renderAvgTime(summary.avgProcessDays);
         }
 
-        // ======================
-        // SUMMARY
-        // ======================
+        // ============================================================
+        // SUMMARY CARDS
+        // ============================================================
 
-        function renderSummaryCards(
-            summary
-        ) {
+        function renderSummaryCards(summary) {
 
-            const container =
-                document
-                    .getElementById(
-                        'summaryCards'
-                    );
+            const cards = [
+                {
+                    id    : 'cardTotalRows',
+                    label : 'รายการทั้งหมด',
+                    value : (summary.totalRows || 0).toLocaleString('th-TH'),
+                    sub   : 'รายการ',
+                    color : 'text-violet-600',
+                    bg    : 'bg-violet-50'
+                },
+                {
+                    id    : 'cardTotalAmount',
+                    label : 'ยอดรวมทั้งหมด',
+                    value : Formatter.currency(summary.totalAmount),
+                    sub   : 'บาท',
+                    color : 'text-blue-600',
+                    bg    : 'bg-blue-50'
+                },
+                {
+                    id    : 'cardWaiting',
+                    label : 'รอดำเนินการ',
+                    value : Formatter.currency(summary.waitingAmount),
+                    sub   : (summary.waitingRows || 0) + ' รายการ',
+                    color : 'text-amber-600',
+                    bg    : 'bg-amber-50'
+                },
+                {
+                    id    : 'cardApproved',
+                    label : 'อนุมัติแล้ว',
+                    value : Formatter.currency(summary.approvedAmount),
+                    sub   : (summary.approvedRows || 0) + ' รายการ',
+                    color : 'text-green-600',
+                    bg    : 'bg-green-50'
+                },
+                {
+                    id    : 'cardPaid',
+                    label : 'จ่ายแล้ว',
+                    value : Formatter.currency(summary.paidAmount),
+                    sub   : (summary.paidRows || 0) + ' รายการ',
+                    color : 'text-indigo-600',
+                    bg    : 'bg-indigo-50'
+                },
+                {
+                    id    : 'cardCancelled',
+                    label : 'ยกเลิก',
+                    value : Formatter.currency(summary.cancelledAmount),
+                    sub   : (summary.cancelledRows || 0) + ' รายการ',
+                    color : 'text-red-500',
+                    bg    : 'bg-red-50'
+                }
+            ];
+
+            const container = document.getElementById('summaryCards');
+            if (!container) return;
 
             container.innerHTML = '';
 
-            Object.keys(summary)
-                .forEach(type => {
-
-                    const item =
-                        summary[type];
-
-                    const card =
-                        document.createElement(
-                            'div'
-                        );
-
-                    card.className =
-                        `
-                        bg-white
-                        dark:bg-slate-900
-                        rounded-2xl
-                        shadow-sm
-                        border
-                        border-slate-200
-                        dark:border-slate-800
-                        p-5
-                        card-hover
-                        `;
-
-                    card.innerHTML =
-                        `
-                        <div class="
-                            flex
-                            items-center
-                            justify-between
-                            mb-5
-                        ">
-
-                            <h3 class="
-                                text-lg
-                                font-semibold
-                            ">
-                                ${type}
-                            </h3>
-
-                            <span class="
-                                text-sm
-                                text-slate-400
-                            ">
-                                ${item.total} รายการ
-                            </span>
-
+            cards.forEach(card => {
+                const el       = document.createElement('div');
+                el.className   = 'bg-white rounded-2xl shadow-sm border border-slate-200 p-5 card-hover';
+                el.innerHTML   = `
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm text-slate-500">${card.label}</span>
+                        <div class="w-9 h-9 rounded-xl ${card.bg} flex items-center justify-center">
+                            <span class="${card.color} text-lg">฿</span>
                         </div>
-
-                        <div class="
-                            space-y-3
-                        ">
-
-                            <div>
-
-                                <div class="
-                                    text-sm
-                                    text-slate-500
-                                ">
-                                    รวมทั้งหมด
-                                </div>
-
-                                <div class="
-                                    text-2xl
-                                    font-bold
-                                ">
-                                    ${Formatter.currency(
-                                        item.totalAmount
-                                    )}
-                                </div>
-
-                            </div>
-
-                            <div class="
-                                grid
-                                grid-cols-2
-                                gap-3
-                                text-sm
-                            ">
-
-                                <div>
-
-                                    <div class="
-                                        text-slate-500
-                                    ">
-                                        อนุมัติ
-                                    </div>
-
-                                    <div class="
-                                        font-semibold
-                                        text-green-600
-                                    ">
-                                        ${Formatter.currency(
-                                            item.approvedAmount
-                                        )}
-                                    </div>
-
-                                </div>
-
-                                <div>
-
-                                    <div class="
-                                        text-slate-500
-                                    ">
-                                        รอดำเนินการ
-                                    </div>
-
-                                    <div class="
-                                        font-semibold
-                                        text-amber-600
-                                    ">
-                                        ${Formatter.currency(
-                                            item.waitingAmount
-                                        )}
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-                        `;
-
-                    container.appendChild(
-                        card
-                    );
-                });
+                    </div>
+                    <div class="text-2xl font-bold ${card.color} mb-1">${card.value}</div>
+                    <div class="text-xs text-slate-400">${card.sub}</div>`;
+                container.appendChild(el);
+            });
         }
 
-        // ======================
+        // ============================================================
         // CHARTS
-        // ======================
+        // ============================================================
 
-        function renderCharts(
-            data
-        ) {
-
-            renderMoneyChart(
-                data.summary
-            );
-
-            renderDeptChart(
-                data.summary
-            );
+        function renderCharts(charts) {
+            renderMoneyChart(charts.moneyType || { labels: [], values: [] });
+            renderDeptChart(charts.dept       || { labels: [], values: [] });
         }
 
-        function renderMoneyChart(
-            summary
-        ) {
+        function renderMoneyChart(chartData) {
 
-            const labels =
-                Object.keys(summary);
+            if (moneyChart) { moneyChart.destroy(); moneyChart = null; }
 
-            const values =
-                labels.map(
-                    key =>
-                    summary[key]
-                        .totalAmount
-                );
+            const canvas = document.getElementById('moneyChart');
+            if (!canvas) return;
 
-            if (moneyChart) {
-
-                moneyChart.destroy();
-            }
-
-            moneyChart =
-                new Chart(
-                    document
-                        .getElementById(
-                            'moneyChart'
-                        ),
-                    {
-                        type: 'doughnut',
-
-                        data: {
-
-                            labels,
-
-                            datasets: [
-
-                                {
-                                    data: values
-                                }
-                            ]
-                        },
-
-                        options: {
-
-                            responsive: true,
-
-                            maintainAspectRatio:
-                                false
+            moneyChart = new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels  : chartData.labels,
+                    datasets: [{
+                        data           : chartData.values,
+                        backgroundColor: [
+                            '#7C3AED','#A855F7','#C026D3',
+                            '#2563EB','#0891B2','#059669',
+                            '#D97706','#DC2626','#64748B','#0EA5E9'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive         : true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ' ' + Formatter.currency(ctx.parsed) + ' บาท'
+                            }
                         }
                     }
-                );
+                }
+            });
         }
 
-        function renderDeptChart(
-            summary
-        ) {
+        function renderDeptChart(chartData) {
 
-            const labels =
-                Object.keys(summary);
+            if (deptChart) { deptChart.destroy(); deptChart = null; }
 
-            const values =
-                labels.map(
-                    key =>
-                    summary[key]
-                        .approvedAmount
-                );
+            const canvas = document.getElementById('deptChart');
+            if (!canvas) return;
 
-            if (deptChart) {
-
-                deptChart.destroy();
-            }
-
-            deptChart =
-                new Chart(
-                    document
-                        .getElementById(
-                            'deptChart'
-                        ),
-                    {
-                        type: 'bar',
-
-                        data: {
-
-                            labels,
-
-                            datasets: [
-
-                                {
-                                    data: values
-                                }
-                            ]
-                        },
-
-                        options: {
-
-                            responsive: true,
-
-                            maintainAspectRatio:
-                                false
+            deptChart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels  : chartData.labels,
+                    datasets: [{
+                        label          : 'ยอดรวม (บาท)',
+                        data           : chartData.values,
+                        backgroundColor: '#7C3AED',
+                        borderRadius   : 6
+                    }]
+                },
+                options: {
+                    responsive         : true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ' ' + Formatter.currency(ctx.parsed.y) + ' บาท'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: {
+                            ticks: {
+                                callback: val => Formatter.currency(val)
+                            }
                         }
                     }
-                );
+                }
+            });
         }
 
-        // ======================
-        // KPI
-        // ======================
+        // ============================================================
+        // RECENT TABLE
+        // ============================================================
 
-        function renderProgress(
-            progress
-        ) {
+        function renderRecentTable(rows) {
 
-            const value =
-                Math.round(
-                    progress || 0
-                );
+            const container = document.getElementById('recentTableBody');
+            if (!container) return;
 
-            document
-                .getElementById(
-                    'progressPercent'
-                )
-                .textContent =
-                    `${value}%`;
-
-            document
-                .getElementById(
-                    'progressBar'
-                )
-                .style.width =
-                    `${value}%`;
-        }
-
-        function renderAvgTime(
-            avgTime
-        ) {
-
-            document
-                .getElementById(
-                    'avgTime'
-                )
-                .textContent =
-                    Math.round(
-                        avgTime || 0
-                    );
-        }
-
-        function renderUserInfo() {
-
-            const user =
-                SessionManager
-                    .getUser();
-
-            if (!user) {
-
+            if (!rows.length) {
+                container.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-8 text-slate-400 text-sm">
+                            ยังไม่มีข้อมูล
+                        </td>
+                    </tr>`;
                 return;
             }
 
-            document
-                .getElementById(
-                    'currentUserName'
-                )
-                .textContent =
-                    user.username ||
-                    '-';
-
-            document
-                .getElementById(
-                    'currentUserRole'
-                )
-                .textContent =
-                    user.role ||
-                    '-';
+            container.innerHTML = rows.map(row => `
+                <tr class="table-row border-b border-slate-100 text-sm">
+                    <td class="px-4 py-3 font-mono text-xs text-slate-500">${escapeHtml(row.registerNo || '-')}</td>
+                    <td class="px-4 py-3">${escapeHtml(row.vendor || '-')}</td>
+                    <td class="px-4 py-3 text-right font-medium">${Formatter.currency(row.amount)}</td>
+                    <td class="px-4 py-3">${StatusHelper.badge(row.status)}</td>
+                    <td class="px-4 py-3 text-slate-400">${Formatter.thaiDate(row.createdAt)}</td>
+                </tr>`
+            ).join('');
         }
 
-        // ======================
-        // CACHE
-        // ======================
+        // ============================================================
+        // KPI
+        // ============================================================
 
-        function saveDashboardCache(
-            data
-        ) {
+        function renderProgress(summary) {
 
-            localStorage.setItem(
-                DASHBOARD_CACHE_KEY,
-                JSON.stringify({
+            const total = summary.totalRows || 0;
+            const paid  = summary.paidRows  || 0;
+            const pct   = total > 0 ? Math.round((paid / total) * 100) : 0;
 
-                    timestamp:
-                        Date.now(),
+            const pctEl = document.getElementById('progressPercent');
+            const barEl = document.getElementById('progressBar');
 
-                    data
-                })
-            );
+            if (pctEl) pctEl.textContent = pct + '%';
+            if (barEl) barEl.style.width = pct + '%';
         }
 
-        function getDashboardCache() {
+        function renderAvgTime(avgDays) {
 
-            const raw =
-                localStorage.getItem(
-                    DASHBOARD_CACHE_KEY
-                );
-
-            if (!raw) {
-
-                return null;
-            }
-
-            try {
-
-                const parsed =
-                    JSON.parse(raw);
-
-                const expired =
-                    (
-                        Date.now() -
-                        parsed.timestamp
-                    ) >
-                    DASHBOARD_CACHE_TIME;
-
-                if (expired) {
-
-                    localStorage.removeItem(
-                        DASHBOARD_CACHE_KEY
-                    );
-
-                    return null;
-                }
-
-                return parsed.data;
-
-            } catch {
-
-                return null;
-            }
+            const el = document.getElementById('avgTime');
+            if (el) el.textContent = Math.round(avgDays || 0);
         }
 
-        // ======================
-        // STATUS
-        // ======================
+        // ============================================================
+        // STATUS / CACHE / UTIL
+        // ============================================================
 
-        function setDashboardStatus(
-            text,
-            className
-        ) {
+        function setStatus(text, className) {
 
-            const element =
-                document
-                    .getElementById(
-                        'dashboardStatus'
-                    );
-
-            element.className =
-                `
-                text-sm
-                font-medium
-                ${className}
-                `;
-
-            element.textContent =
-                text;
+            const el = document.getElementById('dashboardStatus');
+            if (!el) return;
+            el.className   = 'text-sm font-medium ' + className;
+            el.textContent = text;
         }
 
         function updateLastUpdate() {
 
-            document
-                .getElementById(
-                    'lastUpdate'
-                )
-                .textContent =
-                    Formatter.thaiDate(
-                        new Date()
-                    ) +
-                    ' ' +
-                    new Date()
-                        .toLocaleTimeString(
-                            'th-TH'
-                        );
+            const el = document.getElementById('lastUpdate');
+            if (!el) return;
+            el.textContent = Formatter.thaiDate(new Date()) + ' ' +
+                new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function _saveCache(data) {
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    timestamp: Date.now(), data
+                }));
+            } catch (e) { /* quota exceeded */ }
+        }
+
+        function _getCache() {
+            try {
+                const raw = localStorage.getItem(CACHE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if ((Date.now() - parsed.timestamp) > CACHE_TIME) {
+                    localStorage.removeItem(CACHE_KEY);
+                    return null;
+                }
+                return parsed.data;
+            } catch { return null; }
         }
 
     </script>
