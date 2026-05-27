@@ -3,7 +3,7 @@
   "short_name": "SRDH Pay",
   "description": "ระบบทะเบียนเบิกจ่ายเงิน รพส.",
   "lang": "th",
-  "start_url": "/login.html?v=0200",
+  "start_url": "/login.html",
   "scope": "/",
   "display": "standalone",
   "display_override": [
