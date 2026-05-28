@@ -1,4 +1,4 @@
-<!-- Version: 00123.0 -->
+<!-- Version: 00200 -->
 <!-- settings.html -->
 <!-- SRDH PAY System Settings -->
 
@@ -22,8 +22,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Runtime -->
-    <script src="api-config.js"></script>
-    <script src="main.js"></script>
+    <script src="js/api-config.js"></script>
+    <script src="js/main.js"></script>
 
     <style>
 
@@ -429,6 +429,34 @@
                         active
                     "
                 >
+
+                    <!-- Vendors -->
+                    <div class="settings-card mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">บริษัท / เจ้าหนี้</h3>
+                            <button id="addVendorButton"
+                                class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm">
+                                + เพิ่มเจ้าหนี้
+                            </button>
+                        </div>
+                        <div id="vendorList" class="space-y-2">
+                            <div class="text-slate-400 text-sm py-4 text-center">กำลังโหลด...</div>
+                        </div>
+                    </div>
+
+                    <!-- Checkers -->
+                    <div class="settings-card mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">ผู้ตรวจ (Checker)</h3>
+                            <button id="addCheckerButton"
+                                class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm">
+                                + เพิ่มผู้ตรวจ
+                            </button>
+                        </div>
+                        <div id="checkerList" class="space-y-2">
+                            <div class="text-slate-400 text-sm py-4 text-center">กำลังโหลด...</div>
+                        </div>
+                    </div>
 
                     <div class="settings-card">
 
@@ -1711,455 +1739,550 @@
 
         'use strict';
 
-        // ======================
-        // INIT
-        // ======================
+        // ============================================================
+        // STATE
+        // ============================================================
 
-        document.addEventListener(
-            'DOMContentLoaded',
-            initializePage
-        );
+        let settingsData = null;
+        let usersData    = null;
+
+        // ============================================================
+        // INIT
+        // ============================================================
+
+        document.addEventListener('DOMContentLoaded', initializePage);
 
         async function initializePage() {
-
             try {
-
-                Auth.requireRoles([
-                    'admin'
-                ]);
-
+                if (!PermissionManager.canAccess('settings')) {
+                    UI.showToast('ไม่มีสิทธิ์เข้าถึงหน้านี้', 'error');
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
+                    return;
+                }
                 initializeSidebar();
-
                 bindEvents();
-
                 await loadSettings();
-
             } catch (error) {
-
                 console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
+                UI.showToast(error.message, 'error');
             }
         }
 
-        // ======================
+        // ============================================================
         // SIDEBAR
-        // ======================
+        // ============================================================
 
         function initializeSidebar() {
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                    document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+                    link.classList.add('active');
+                    const sec = document.getElementById(link.dataset.section);
+                    if (sec) sec.classList.add('active');
+                });
+            });
+        }
 
-            const links =
-                document.querySelectorAll(
-                    '.sidebar-link'
-                );
+        // ============================================================
+        // EVENTS
+        // ============================================================
 
-            links.forEach(
-                link => {
+        function bindEvents() {
+            _on('refreshButton',      'click', loadSettings);
+            _on('saveAllButton',      'click', saveAllSettings);
+            _on('addUserButton',      'click', openAddUserModal);
+            _on('addMoneyTypeButton', 'click', () => openAddSettingModal('money_type', 'ประเภทเงิน'));
+            _on('addVendorButton',    'click', () => openAddSettingModal('vendor', 'เจ้าหนี้/บริษัท'));
+            _on('addCheckerButton',   'click', () => openAddSettingModal('checker', 'ผู้ตรวจ'));
+        }
 
-                    link.addEventListener(
-                        'click',
-                        () => {
+        // ============================================================
+        // LOAD ALL
+        // ============================================================
 
-                            links.forEach(
-                                item =>
-                                    item.classList.remove(
-                                        'active'
-                                    )
-                            );
+        async function loadSettings() {
+            try {
+                UI.showLoading();
+                const [settingsResult, usersResult] = await Promise.all([
+                    SettingsAPI.getAll(),
+                    UserAPI.getAll()
+                ]);
+                settingsData = settingsResult.data || {};
+                usersData    = usersResult.data    || [];
 
-                            document
-                                .querySelectorAll(
-                                    '.settings-section'
-                                )
-                                .forEach(
-                                    section =>
-                                        section.classList.remove(
-                                            'active'
-                                        )
-                                );
+                renderUsers(usersData);
+                renderMoneyTypes(settingsData.moneyTypes || []);
+                renderVendors(settingsData.vendors       || []);
+                renderCheckers(settingsData.checkers     || []);
+                renderMappings(settingsData.aliases      || []);
+                renderPermissions();
+                await loadAuditLogs();
+            } catch (error) {
+                console.error(error);
+                UI.showToast(error.message, 'error');
+            } finally {
+                UI.hideLoading();
+            }
+        }
 
-                            link.classList.add(
-                                'active'
-                            );
+        // ============================================================
+        // USERS
+        // ============================================================
 
-                            document
-                                .getElementById(
-                                    link.dataset.section
-                                )
-                                .classList.add(
-                                    'active'
-                                );
-                        }
-                    );
+        function renderUsers(users) {
+            const tbody = document.getElementById('userTableBody');
+            if (!tbody) return;
+
+            if (!users.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">ไม่มีข้อมูลผู้ใช้</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => `
+                <tr class="border-b border-slate-200 text-sm hover:bg-slate-50">
+                    <td class="px-4 py-3">${escapeHtml(user.email)}</td>
+                    <td class="px-4 py-3">${escapeHtml(user.username || '-')}</td>
+                    <td class="px-4 py-3">${escapeHtml(user.dept || '-')}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-0.5 rounded-full text-xs ${_roleBadge(user.role)}">
+                            ${escapeHtml(user.role)}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-0.5 rounded-full text-xs ${user.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-500'}">
+                            ${user.active ? 'Active' : 'Disabled'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex gap-1">
+                            <button onclick="openEditUserModal('${escapeHtml(user.email)}')"
+                                class="px-2.5 py-1 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs">
+                                แก้ไข
+                            </button>
+                            <button onclick="toggleUserActive('${escapeHtml(user.email)}')"
+                                class="px-2.5 py-1 rounded-lg ${user.active ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white text-xs">
+                                ${user.active ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
+                            </button>
+                        </div>
+                    </td>
+                </tr>`
+            ).join('');
+        }
+
+        async function toggleUserActive(email) {
+            const ok = await UI.confirmModal('ยืนยัน', 'ต้องการเปลี่ยนสถานะผู้ใช้ ' + email + ' ใช่หรือไม่?');
+            if (!ok) return;
+            try {
+                UI.showLoading();
+                await UserAPI.toggleStatus(email);
+                UI.showToast('เปลี่ยนสถานะสำเร็จ');
+                await loadSettings();
+            } catch (e) {
+                UI.showToast(e.message, 'error');
+            } finally {
+                UI.hideLoading();
+            }
+        }
+
+        function openAddUserModal() {
+            _openFormModal('เพิ่มผู้ใช้งาน', `
+                <div class="space-y-3">
+                    <input id="formEmail"    type="email"    placeholder="Email" class="${_inputCls()}">
+                    <input id="formPassword" type="password" placeholder="Password" class="${_inputCls()}">
+                    <input id="formUsername" type="text"     placeholder="ชื่อ-สกุล" class="${_inputCls()}">
+                    <input id="formPosition" type="text"     placeholder="ตำแหน่ง"  class="${_inputCls()}">
+                    <input id="formDept"     type="text"     placeholder="หน่วยงาน" class="${_inputCls()}">
+                    <select id="formRole" class="${_inputCls()}">
+                        <option value="staff">Staff</option>
+                        <option value="editor">Editor</option>
+                        <option value="checker">Checker</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>`,
+                async () => {
+                    await UserAPI.create({
+                        email   : document.getElementById('formEmail').value,
+                        password: document.getElementById('formPassword').value,
+                        username: document.getElementById('formUsername').value,
+                        position: document.getElementById('formPosition').value,
+                        dept    : document.getElementById('formDept').value,
+                        role    : document.getElementById('formRole').value
+                    });
+                    UI.showToast('เพิ่มผู้ใช้สำเร็จ');
+                    await loadSettings();
                 }
             );
         }
 
-        // ======================
-        // EVENTS
-        // ======================
-
-        function bindEvents() {
-
-            document
-                .getElementById(
-                    'refreshButton'
-                )
-                .addEventListener(
-                    'click',
-                    loadSettings
-                );
-
-            document
-                .getElementById(
-                    'saveAllButton'
-                )
-                .addEventListener(
-                    'click',
-                    saveAllSettings
-                );
+        function openEditUserModal(email) {
+            const user = (usersData || []).find(u => u.email === email);
+            if (!user) return;
+            _openFormModal('แก้ไขผู้ใช้: ' + email, `
+                <div class="space-y-3">
+                    <input id="formUsername" type="text"     value="${escapeHtml(user.username || '')}" placeholder="ชื่อ-สกุล"  class="${_inputCls()}">
+                    <input id="formPosition" type="text"     value="${escapeHtml(user.position || '')}" placeholder="ตำแหน่ง"    class="${_inputCls()}">
+                    <input id="formDept"     type="text"     value="${escapeHtml(user.dept     || '')}" placeholder="หน่วยงาน"   class="${_inputCls()}">
+                    <input id="formPassword" type="password" placeholder="รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)" class="${_inputCls()}">
+                    <select id="formRole" class="${_inputCls()}">
+                        ${['staff','editor','checker','admin'].map(r =>
+                            `<option value="${r}" ${r === user.role ? 'selected' : ''}>${r}</option>`
+                        ).join('')}
+                    </select>
+                </div>`,
+                async () => {
+                    const updates = {
+                        username: document.getElementById('formUsername').value,
+                        position: document.getElementById('formPosition').value,
+                        dept    : document.getElementById('formDept').value,
+                        role    : document.getElementById('formRole').value
+                    };
+                    const pw = document.getElementById('formPassword').value;
+                    if (pw) updates.password = pw;
+                    await UserAPI.update(email, updates);
+                    UI.showToast('แก้ไขผู้ใช้สำเร็จ');
+                    await loadSettings();
+                }
+            );
         }
 
-        // ======================
-        // LOAD
-        // ======================
+        // ============================================================
+        // MONEY TYPES
+        // ============================================================
 
-        async function loadSettings() {
+        function renderMoneyTypes(items) {
+            _renderSettingList('moneyTypeList', items, 'money_type', true);
+        }
 
+        // ============================================================
+        // VENDORS
+        // ============================================================
+
+        function renderVendors(vendors) {
+            const container = document.getElementById('vendorList');
+            if (!container) return;
+            if (!vendors.length) {
+                container.innerHTML = '<div class="text-slate-400 text-sm py-4 text-center">ยังไม่มีข้อมูล</div>';
+                return;
+            }
+            container.innerHTML = vendors.map(name => `
+                <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50">
+                    <span class="flex-1 text-sm">${escapeHtml(name)}</span>
+                    <button onclick="deleteVendor('${escapeHtml(name)}')"
+                        class="px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 text-xs">
+                        ลบ
+                    </button>
+                </div>`
+            ).join('');
+        }
+
+        async function deleteVendor(name) {
+            // vendors ใน settings sheet ไม่มี id ใช้ชื่อเป็น key
+            // settings_system type=vendor ใช้ id แทน — ดึง id จาก settingsData
+            const ok = await UI.confirmModal('ลบเจ้าหนี้', 'ต้องการลบ "' + name + '" ใช่หรือไม่?');
+            if (!ok) return;
+            // settings sheet (vendor) ไม่มี id — ต้องหาจาก settings_system หรือ index
+            // กรณีนี้ vendor เก็บใน settings sheet แบบ name-only ไม่มี id
+            // ใช้ addSetting type=vendor เพื่อลบไม่ได้ — แจ้ง user ให้ลบใน sheet โดยตรง
+            UI.showToast('กรุณาลบรายชื่อเจ้าหนี้โดยตรงในช่อง settings sheet', 'info');
+        }
+
+        // ============================================================
+        // CHECKERS
+        // ============================================================
+
+        function renderCheckers(items) {
+            _renderSettingList('checkerList', items, 'checker', false);
+        }
+
+        // ============================================================
+        // GENERIC SETTING LIST (money_type, checker)
+        // ============================================================
+
+        function _renderSettingList(containerId, items, type, showColor) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            if (!items.length) {
+                container.innerHTML = '<div class="text-slate-400 text-sm py-4 text-center">ยังไม่มีข้อมูล</div>';
+                return;
+            }
+            container.innerHTML = items.map(item => `
+                <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50">
+                    ${showColor
+                        ? `<input type="color" value="${escapeHtml(item.color || '#7C3AED')}"
+                                onchange="updateSettingColor('${item.id}', this.value)"
+                                class="w-9 h-9 rounded-lg cursor-pointer border-0 p-0">`
+                        : ''
+                    }
+                    <span class="flex-1 text-sm font-medium">${escapeHtml(item.name)}</span>
+                    <span class="px-2 py-0.5 rounded-full text-xs ${item.active !== false ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}">
+                        ${item.active !== false ? 'Active' : 'Disabled'}
+                    </span>
+                    <button onclick="toggleSettingActive('${item.id}', ${item.active !== false})"
+                        class="px-2.5 py-1 rounded-lg text-xs ${item.active !== false ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}">
+                        ${item.active !== false ? 'ปิด' : 'เปิด'}
+                    </button>
+                    <button onclick="deleteSetting('${item.id}', '${escapeHtml(item.name)}')"
+                        class="px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 text-xs">
+                        ลบ
+                    </button>
+                </div>`
+            ).join('');
+        }
+
+        async function updateSettingColor(id, color) {
             try {
+                await SettingsAPI.update(id, { color });
+            } catch (e) {
+                UI.showToast(e.message, 'error');
+            }
+        }
 
+        async function toggleSettingActive(id, currentActive) {
+            try {
+                await SettingsAPI.update(id, { active: !currentActive });
+                UI.showToast('เปลี่ยนสถานะสำเร็จ');
+                await loadSettings();
+            } catch (e) {
+                UI.showToast(e.message, 'error');
+            }
+        }
+
+        async function deleteSetting(id, name) {
+            const ok = await UI.confirmWithInput(
+                'ลบรายการ',
+                'ต้องการลบ "' + name + '" ใช่หรือไม่? การลบไม่สามารถกู้คืนได้',
+                'DELETE'
+            );
+            if (!ok) return;
+            try {
                 UI.showLoading();
-
-                await Promise.all([
-                    loadUsers(),
-                    loadMoneyTypes(),
-                    loadMappings(),
-                    loadPermissions(),
-                    loadAuditLogs()
-                ]);
-
-            } catch (error) {
-
-                console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
-
+                await SettingsAPI.delete(id);
+                UI.showToast('ลบสำเร็จ');
+                await loadSettings();
+            } catch (e) {
+                UI.showToast(e.message, 'error');
             } finally {
-
                 UI.hideLoading();
             }
         }
 
-        // ======================
-        // USERS
-        // ======================
+        // ============================================================
+        // ADD SETTING MODAL
+        // ============================================================
 
-        async function loadUsers() {
+        function openAddSettingModal(type, label) {
 
-            const tbody =
-                document.getElementById(
-                    'userTableBody'
-                );
+            const showColor = (type === 'money_type');
 
-            tbody.innerHTML =
-                `
-                <tr>
-                    <td colspan="6"
-                        class="
-                            px-4
-                            py-8
-                            text-center
-                            text-slate-500
-                        "
-                    >
-                        User API Pending
-                    </td>
-                </tr>
-                `;
+            _openFormModal('เพิ่ม' + label, `
+                <div class="space-y-3">
+                    <input id="formName"  type="text"  placeholder="${label}" class="${_inputCls()}">
+                    ${showColor
+                        ? `<div class="flex items-center gap-3">
+                               <label class="text-sm text-slate-600">สีแสดงผล</label>
+                               <input id="formColor" type="color" value="#7C3AED"
+                                   class="w-12 h-10 rounded-lg cursor-pointer border border-slate-300">
+                           </div>`
+                        : ''
+                    }
+                </div>`,
+                async () => {
+                    const name  = document.getElementById('formName').value.trim();
+                    const color = showColor ? document.getElementById('formColor')?.value : '';
+                    if (!name) throw new Error('กรุณากรอกชื่อ');
+                    if (type === 'vendor') {
+                        await SettingsAPI.add('vendor', name);
+                    } else {
+                        await SettingsAPI.add(type, name, color);
+                    }
+                    UI.showToast('เพิ่ม' + label + 'สำเร็จ');
+                    await loadSettings();
+                }
+            );
         }
 
-        // ======================
-        // MONEY TYPES
-        // ======================
+        // ============================================================
+        // MAPPINGS (alias)
+        // ============================================================
 
-        async function loadMoneyTypes() {
-
-            const container =
-                document.getElementById(
-                    'moneyTypeList'
-                );
-
-            container.innerHTML =
-                `
-                <div
-                    class="
-                        p-4
-                        rounded-xl
-                        border
-                        border-slate-200
-                        dark:border-slate-700
-                        flex
-                        flex-col
-                        md:flex-row
-                        md:items-center
-                        gap-4
-                    "
-                >
-
-                    <input
-                        type="text"
-                        value="งบประมาณ"
-                        class="
-                            flex-1
-                            rounded-xl
-                            border
-                            border-slate-300
-                            dark:border-slate-700
-                            bg-white
-                            dark:bg-slate-900
-                            px-4
-                            py-2
-                        "
-                    />
-
-                    <input
-                        type="color"
-                        value="#2563eb"
-                        class="
-                            h-12
-                            w-20
-                            rounded-xl
-                        "
-                    />
-
-                    <input
-                        type="text"
-                        value="budget,bg"
-                        class="
-                            flex-1
-                            rounded-xl
-                            border
-                            border-slate-300
-                            dark:border-slate-700
-                            bg-white
-                            dark:bg-slate-900
-                            px-4
-                            py-2
-                        "
-                    />
-
-                    <button
-                        class="
-                            px-4
-                            py-2
-                            rounded-xl
-                            bg-red-600
-                            text-white
-                        "
-                    >
-                        Disable
-                    </button>
-
-                </div>
-                `;
-        }
-
-        // ======================
-        // MAPPING
-        // ======================
-
-        async function loadMappings() {
-
-            const tbody =
-                document.getElementById(
-                    'mappingTableBody'
-                );
-
-            tbody.innerHTML =
-                `
-                <tr>
-
+        function renderMappings(aliases) {
+            const tbody = document.getElementById('mappingTableBody');
+            if (!tbody) return;
+            if (!aliases.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-sm">ยังไม่มี alias</td></tr>';
+                return;
+            }
+            tbody.innerHTML = aliases.map(alias => `
+                <tr class="border-b border-slate-200 text-sm hover:bg-slate-50">
+                    <td class="px-4 py-3 font-mono">${escapeHtml(alias.alias || alias.name)}</td>
+                    <td class="px-4 py-3">${escapeHtml(alias.moneyType || alias.color || '-')}</td>
                     <td class="px-4 py-3">
-                        เลขที่ใบขอเบิก
+                        <span class="px-2 py-0.5 rounded-full text-xs ${alias.active !== false ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}">
+                            ${alias.active !== false ? 'Active' : 'Disabled'}
+                        </span>
                     </td>
-
                     <td class="px-4 py-3">
-                        bgdk_rcvno
-                    </td>
-
-                    <td class="px-4 py-3">
-                        YES
-                    </td>
-
-                    <td class="px-4 py-3">
-                        <button
-                            class="
-                                px-3
-                                py-1
-                                rounded-lg
-                                bg-blue-600
-                                text-white
-                            "
-                        >
-                            Edit
+                        <button onclick="deleteSetting('${alias.id}', '${escapeHtml(alias.alias || alias.name)}')"
+                            class="px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 text-xs">
+                            ลบ
                         </button>
                     </td>
-
-                </tr>
-                `;
+                </tr>`
+            ).join('');
         }
 
-        // ======================
-        // PERMISSIONS
-        // ======================
+        // ============================================================
+        // PERMISSIONS (static display)
+        // ============================================================
 
-        async function loadPermissions() {
+        function renderPermissions() {
+            const tbody = document.getElementById('permissionTableBody');
+            if (!tbody) return;
 
-            const modules = [
+            const matrix = {
+                'Dashboard': { admin: true,  editor: true,  checker: true,  staff: true,  guest: true  },
+                'Register' : { admin: true,  editor: true,  checker: true,  staff: true,  guest: true  },
+                'Import'   : { admin: true,  editor: false, checker: false, staff: true,  guest: false },
+                'Approve'  : { admin: true,  editor: true,  checker: true,  staff: false, guest: false },
+                'Report'   : { admin: true,  editor: false, checker: true,  staff: true,  guest: false },
+                'Settings' : { admin: true,  editor: false, checker: false, staff: false, guest: false },
+                'Delete'   : { admin: true,  editor: false, checker: false, staff: false, guest: false },
+                'Export'   : { admin: true,  editor: false, checker: true,  staff: true,  guest: false }
+            };
 
-                'Dashboard',
-                'Register',
-                'Import',
-                'Approve',
-                'Report',
-                'Settings',
-                'Delete',
-                'Export'
+            const roles = ['admin','editor','checker','staff','guest'];
 
-            ];
-
-            const tbody =
-                document.getElementById(
-                    'permissionTableBody'
-                );
-
-            tbody.innerHTML =
-                modules.map(
-                    module => {
-
-                        return `
-                        <tr
-                            class="
-                                border-b
-                                border-slate-200
-                                dark:border-slate-800
-                            "
-                        >
-
-                            <td class="px-4 py-3">
-                                ${module}
-                            </td>
-
-                            ${['admin','editor','checker','staff','guest']
-                                .map(
-                                    () => `
-                                    <td class="px-4 py-3 text-center">
-                                        <input
-                                            type="checkbox"
-                                            checked
-                                        />
-                                    </td>
-                                    `
-                                )
-                                .join('')
-                            }
-
-                        </tr>
-                        `;
-                    }
-                ).join('');
+            tbody.innerHTML = Object.entries(matrix).map(([module, perms]) => `
+                <tr class="border-b border-slate-200 text-sm">
+                    <td class="px-4 py-3 font-medium">${module}</td>
+                    ${roles.map(role => `
+                        <td class="px-4 py-3 text-center">
+                            <span class="${perms[role] ? 'text-green-500' : 'text-slate-200'} text-lg">
+                                ${perms[role] ? '✓' : '—'}
+                            </span>
+                        </td>`
+                    ).join('')}
+                </tr>`
+            ).join('');
         }
 
-        // ======================
-        // AUDIT
-        // ======================
+        // ============================================================
+        // AUDIT LOGS
+        // ============================================================
 
         async function loadAuditLogs() {
-
-            const tbody =
-                document.getElementById(
-                    'auditTableBody'
-                );
-
-            tbody.innerHTML =
-                `
-                <tr>
-
-                    <td class="px-4 py-3">
-                        22/05/2569 14:20
-                    </td>
-
-                    <td class="px-4 py-3">
-                        admin@srdh.go.th
-                    </td>
-
-                    <td class="px-4 py-3">
-                        LOGIN
-                    </td>
-
-                    <td class="px-4 py-3">
-                        Chrome
-                    </td>
-
-                    <td class="px-4 py-3">
-                        Success login
-                    </td>
-
-                </tr>
-                `;
+            const tbody = document.getElementById('auditTableBody');
+            if (!tbody) return;
+            try {
+                const result = await SystemAPI.getAuditLogs();
+                const logs   = result.data || [];
+                if (!logs.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400">ไม่มีข้อมูล</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = logs.slice(0, 100).map(log => `
+                    <tr class="border-b border-slate-200 text-sm hover:bg-slate-50">
+                        <td class="px-4 py-3 text-slate-400 text-xs">${Formatter.thaiDate(log.timestamp)}</td>
+                        <td class="px-4 py-3">${escapeHtml(log.email || '-')}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">
+                                ${escapeHtml(log.action || '-')}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-slate-400 text-xs">${escapeHtml(log.detail || '-')}</td>
+                        <td class="px-4 py-3 text-slate-400 text-xs">${escapeHtml(log.browser || '-')}</td>
+                    </tr>`
+                ).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-red-400 text-sm">' + e.message + '</td></tr>';
+            }
         }
 
-        // ======================
-        // SAVE
-        // ======================
+        // ============================================================
+        // SAVE ALL (cache clear + reload)
+        // ============================================================
 
         async function saveAllSettings() {
-
             try {
-
                 UI.showLoading();
-
-                await delay(1000);
-
-                UI.showToast(
-                    'บันทึกการตั้งค่าเรียบร้อย',
-                    'success'
-                );
-
+                await SystemAPI.clearCache();
+                await loadSettings();
+                UI.showToast('รีเฟรชการตั้งค่าสำเร็จ');
             } catch (error) {
-
-                console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
-
+                UI.showToast(error.message, 'error');
             } finally {
-
                 UI.hideLoading();
             }
         }
 
-        // ======================
-        // UTILS
-        // ======================
+        // ============================================================
+        // FORM MODAL (reusable)
+        // ============================================================
 
-        function delay(ms) {
+        function _openFormModal(title, bodyHtml, onConfirm) {
 
-            return new Promise(
-                resolve =>
-                    setTimeout(
-                        resolve,
-                        ms
-                    )
-            );
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl mx-4">
+                    <h2 class="text-lg font-bold mb-4">${title}</h2>
+                    ${bodyHtml}
+                    <div id="formError" class="text-red-500 text-sm mt-2 hidden"></div>
+                    <div class="flex justify-end gap-2 mt-5">
+                        <button id="formCancelBtn"
+                            class="px-4 py-2 border rounded-xl text-sm hover:bg-slate-50">ยกเลิก</button>
+                        <button id="formConfirmBtn"
+                            class="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm">
+                            บันทึก
+                        </button>
+                    </div>
+                </div>`;
+
+            document.body.appendChild(modal);
+
+            const cleanup = () => modal.remove();
+
+            modal.querySelector('#formCancelBtn').onclick = cleanup;
+
+            modal.querySelector('#formConfirmBtn').onclick = async () => {
+                const errEl = modal.querySelector('#formError');
+                errEl.classList.add('hidden');
+                try {
+                    UI.showLoading();
+                    await onConfirm();
+                    cleanup();
+                } catch (e) {
+                    errEl.textContent = e.message;
+                    errEl.classList.remove('hidden');
+                } finally {
+                    UI.hideLoading();
+                }
+            };
+        }
+
+        // ============================================================
+        // HELPERS
+        // ============================================================
+
+        function _on(id, event, handler) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener(event, handler);
+        }
+
+        function _inputCls() {
+            return 'w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400';
+        }
+
+        function _roleBadge(role) {
+            const map = {
+                admin  : 'bg-red-100 text-red-700',
+                editor : 'bg-blue-100 text-blue-700',
+                checker: 'bg-green-100 text-green-700',
+                staff  : 'bg-yellow-100 text-yellow-700',
+                guest  : 'bg-gray-100 text-gray-600'
+            };
+            return map[role] || 'bg-gray-100 text-gray-600';
         }
 
     </script>
