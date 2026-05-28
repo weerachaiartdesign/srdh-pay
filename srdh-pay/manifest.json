@@ -3,7 +3,7 @@
   "short_name": "SRDH PAY",
   "description": "ระบบทะเบียนฎีกาเบิกจ่ายเงิน โรงพยาบาลสิรินธร",
   "version": "0200",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F3E8FF",
   "theme_color": "#7C3AED",
