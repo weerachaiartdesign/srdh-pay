@@ -57,7 +57,7 @@ const App = {
         this.initializeGlobalComponents();
 
         // Login page — ไม่ต้องตรวจ session
-        if (AppState.currentPage === 'login.html' ||
+        if (AppState.currentPage === 'index.html' ||
             AppState.currentPage === 'index.html' ||
             AppState.currentPage === '') {
             AppState.initialized = true;
@@ -66,7 +66,7 @@ const App = {
 
         // ตรวจ session
         if (!SessionManager.isLoggedIn()) {
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
             return;
         }
 
