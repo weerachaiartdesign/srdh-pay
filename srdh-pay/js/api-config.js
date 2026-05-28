@@ -238,7 +238,7 @@ const AuthAPI = {
             console.warn('logout error:', e);
         } finally {
             SessionManager.clearSession();
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
     },
 
@@ -470,7 +470,7 @@ const PermissionManager = {
 function _handleSessionExpired() {
     SessionManager.clearSession();
     UI.showToast('Session หมดอายุ กรุณาเข้าสู่ระบบใหม่', 'error');
-    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+    setTimeout(() => { window.location.href = 'index.html'; }, 1500);
 }
 
 // ============================================================
@@ -491,7 +491,7 @@ setInterval(function () {
     if (SessionManager.isLoggedIn()) return;
 
     const page = window.location.pathname.split('/').pop();
-    const publicPages = ['login.html', 'index.html', ''];
+    const publicPages = ['index.html', 'index.html', ''];
 
     if (!publicPages.includes(page)) {
         _handleSessionExpired();
