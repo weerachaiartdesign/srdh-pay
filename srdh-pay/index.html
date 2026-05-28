@@ -1,0 +1,752 @@
+<!-- Version: 0200 -->
+<!-- login.html -->
+<!-- SRDH PAY SYSTEM -->
+
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+
+    <meta charset="UTF-8" />
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+        SRDH PAY - เข้าสู่ระบบ
+    </title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Main Runtime -->
+    <script src="js/api-config.js"></script>
+    <script src="js/main.js"></script>
+
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Prevent iframe -->
+    <script>
+
+        if (window.top !== window.self) {
+
+            window.top.location = window.self.location;
+        }
+
+    </script>
+
+    <style>
+
+        html,
+        body {
+
+            height: 100%;
+        }
+
+        body {
+
+            font-family:
+                system-ui,
+                sans-serif;
+        }
+
+        .glass-card {
+
+            backdrop-filter: blur(14px);
+
+            background:
+                rgba(255,255,255,0.90);
+        }
+
+        .animate-fade {
+
+            animation:
+                fadeIn 0.35s ease;
+        }
+
+        @keyframes fadeIn {
+
+            from {
+
+                opacity: 0;
+
+                transform:
+                    translateY(10px);
+            }
+
+            to {
+
+                opacity: 1;
+
+                transform:
+                    translateY(0);
+            }
+        }
+
+    </style>
+
+</head>
+
+<body
+    class="
+        bg-gradient-to-br
+        from-slate-100
+        via-white
+        to-slate-200
+        dark:from-slate-900
+        dark:via-slate-950
+        dark:to-slate-900
+        text-slate-800
+        dark:text-slate-100
+    "
+>
+
+    <!-- Background -->
+    <div
+        class="
+            fixed
+            inset-0
+            overflow-hidden
+            pointer-events-none
+        "
+    >
+
+        <div
+            class="
+                absolute
+                top-0
+                left-0
+                w-96
+                h-96
+                bg-blue-200
+                dark:bg-blue-900
+                rounded-full
+                blur-3xl
+                opacity-20
+            "
+        ></div>
+
+        <div
+            class="
+                absolute
+                bottom-0
+                right-0
+                w-96
+                h-96
+                bg-cyan-200
+                dark:bg-cyan-900
+                rounded-full
+                blur-3xl
+                opacity-20
+            "
+        ></div>
+
+    </div>
+
+    <!-- Wrapper -->
+    <div
+        class="
+            relative
+            z-10
+            min-h-screen
+            flex
+            items-center
+            justify-center
+            px-4
+            py-10
+        "
+    >
+
+        <div
+            class="
+                w-full
+                max-w-md
+                animate-fade
+            "
+        >
+
+            <!-- Logo -->
+            <div
+                class="
+                    text-center
+                    mb-6
+                "
+            >
+
+                <div
+                    class="
+                        inline-flex
+                        items-center
+                        justify-center
+                        w-20
+                        h-20
+                        rounded-3xl
+                        bg-blue-600
+                        text-white
+                        text-3xl
+                        font-bold
+                        shadow-xl
+                        mb-4
+                    "
+                >
+                    ฿
+                </div>
+
+                <h1
+                    class="
+                        text-3xl
+                        font-bold
+                        tracking-tight
+                    "
+                >
+                    SRDH PAY
+                </h1>
+
+                <p
+                    class="
+                        text-sm
+                        text-slate-500
+                        dark:text-slate-400
+                        mt-2
+                    "
+                >
+                    ระบบทะเบียนเบิกจ่ายเงิน
+                </p>
+
+            </div>
+
+            <!-- Card -->
+            <div
+                class="
+                    glass-card
+                    rounded-3xl
+                    shadow-2xl
+                    border
+                    border-white/30
+                    dark:border-slate-700
+                    p-8
+                "
+            >
+
+                <!-- Form -->
+                <form
+                    id="loginForm"
+                    class="space-y-5"
+                >
+
+                    <!-- Email -->
+                    <div>
+
+                        <label
+                            class="
+                                block
+                                text-sm
+                                font-medium
+                                mb-2
+                            "
+                        >
+                            อีเมล
+                        </label>
+
+                        <input
+                            type="email"
+                            id="email"
+                            autocomplete="username"
+                            required
+                            class="
+                                w-full
+                                rounded-xl
+                                border
+                                border-slate-300
+                                dark:border-slate-700
+                                bg-white
+                                dark:bg-slate-900
+                                px-4
+                                py-3
+                                outline-none
+                                focus:ring-2
+                                focus:ring-blue-500
+                                transition
+                            "
+                            placeholder="example@email.com"
+                        />
+
+                        <p
+                            id="emailError"
+                            class="
+                                hidden
+                                text-red-500
+                                text-sm
+                                mt-1
+                            "
+                        ></p>
+
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+
+                        <label
+                            class="
+                                block
+                                text-sm
+                                font-medium
+                                mb-2
+                            "
+                        >
+                            รหัสผ่าน
+                        </label>
+
+                        <div class="relative">
+
+                            <input
+                                type="password"
+                                id="password"
+                                autocomplete="current-password"
+                                required
+                                class="
+                                    w-full
+                                    rounded-xl
+                                    border
+                                    border-slate-300
+                                    dark:border-slate-700
+                                    bg-white
+                                    dark:bg-slate-900
+                                    px-4
+                                    py-3
+                                    pr-14
+                                    outline-none
+                                    focus:ring-2
+                                    focus:ring-blue-500
+                                    transition
+                                "
+                                placeholder="••••••••"
+                            />
+
+                            <button
+                                type="button"
+                                id="togglePassword"
+                                class="
+                                    absolute
+                                    right-3
+                                    top-1/2
+                                    -translate-y-1/2
+                                    text-sm
+                                    text-slate-500
+                                "
+                            >
+                                แสดง
+                            </button>
+
+                        </div>
+
+                        <!-- Capslock -->
+                        <p
+                            id="capslockWarning"
+                            class="
+                                hidden
+                                text-amber-500
+                                text-sm
+                                mt-2
+                            "
+                        >
+                            เปิด Caps Lock อยู่
+                        </p>
+
+                        <p
+                            id="passwordError"
+                            class="
+                                hidden
+                                text-red-500
+                                text-sm
+                                mt-1
+                            "
+                        ></p>
+
+                    </div>
+
+                    <!-- Remember -->
+                    <div
+                        class="
+                            flex
+                            items-center
+                            justify-between
+                            text-sm
+                        "
+                    >
+
+                        <label
+                            class="
+                                flex
+                                items-center
+                                gap-2
+                                cursor-pointer
+                            "
+                        >
+
+                            <input
+                                type="checkbox"
+                                id="rememberEmail"
+                                class="
+                                    rounded
+                                "
+                            />
+
+                            <span>
+                                จำอีเมล
+                            </span>
+
+                        </label>
+
+                    </div>
+
+                    <!-- Login Button -->
+                    <button
+                        type="submit"
+                        id="loginButton"
+                        class="
+                            w-full
+                            rounded-xl
+                            bg-blue-600
+                            hover:bg-blue-700
+                            text-white
+                            py-3
+                            font-medium
+                            transition
+                            disabled:opacity-50
+                        "
+                    >
+                        เข้าสู่ระบบ
+                    </button>
+
+                </form>
+
+                <!-- Divider -->
+                <div
+                    class="
+                        flex
+                        items-center
+                        my-6
+                    "
+                >
+
+                    <div
+                        class="
+                            flex-1
+                            h-px
+                            bg-slate-300
+                            dark:bg-slate-700
+                        "
+                    ></div>
+
+                    <span
+                        class="
+                            px-3
+                            text-sm
+                            text-slate-400
+                        "
+                    >
+                        หรือ
+                    </span>
+
+                    <div
+                        class="
+                            flex-1
+                            h-px
+                            bg-slate-300
+                            dark:bg-slate-700
+                        "
+                    ></div>
+
+                </div>
+
+                <!-- Guest -->
+                <button
+                    id="guestButton"
+                    class="
+                        w-full
+                        rounded-xl
+                        border
+                        border-slate-300
+                        dark:border-slate-700
+                        hover:bg-slate-100
+                        dark:hover:bg-slate-800
+                        py-3
+                        font-medium
+                        transition
+                    "
+                >
+                    เข้าชมระบบ
+                </button>
+
+            </div>
+
+            <!-- Footer -->
+            <div
+                class="
+                    text-center
+                    mt-6
+                    text-xs
+                    text-slate-500
+                    dark:text-slate-400
+                "
+            >
+
+                <p>
+                    SRDH PAY SYSTEM
+                </p>
+
+                <p class="mt-1">
+                    Version 0200
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Script -->
+    <script>
+
+        'use strict';
+
+        // ============================================================
+        // INIT
+        // ============================================================
+
+        document.addEventListener('DOMContentLoaded', initLoginPage);
+
+        async function initLoginPage() {
+
+            // ถ้า login อยู่แล้ว redirect เลย
+            if (SessionManager.isLoggedIn()) {
+                redirectByRole();
+                return;
+            }
+
+            restoreRememberedEmail();
+            bindEvents();
+        }
+
+        // ============================================================
+        // EVENTS
+        // ============================================================
+
+        function bindEvents() {
+
+            document.getElementById('loginForm')
+                .addEventListener('submit', handleLogin);
+
+            document.getElementById('guestButton')
+                .addEventListener('click', handleGuestAccess);
+
+            document.getElementById('togglePassword')
+                .addEventListener('click', togglePassword);
+
+            document.getElementById('password')
+                .addEventListener('keyup',  detectCapslock);
+
+            document.getElementById('password')
+                .addEventListener('keydown', detectCapslock);
+        }
+
+        // ============================================================
+        // LOGIN
+        // ============================================================
+
+        async function handleLogin(event) {
+
+            event.preventDefault();
+            clearErrors();
+
+            const email    = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!validateForm(email, password)) return;
+
+            setLoading(true);
+
+            try {
+
+                const result = await AuthAPI.login(email, password);
+
+                saveRememberEmail();
+
+                UI.showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ' + (result.user?.username || ''));
+
+                setTimeout(() => redirectByRole(), 700);
+
+            } catch (error) {
+
+                console.error('login error:', error);
+                UI.showToast(error.message, 'error');
+
+            } finally {
+
+                setLoading(false);
+            }
+        }
+
+        // ============================================================
+        // GUEST ACCESS
+        // ============================================================
+
+        async function handleGuestAccess() {
+
+            setLoading(true);
+
+            try {
+
+                await AuthAPI.guestAccess();
+
+                UI.showToast('เข้าสู่โหมดผู้เยี่ยมชม');
+
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 700);
+
+            } catch (error) {
+
+                console.error('guest error:', error);
+                UI.showToast(error.message, 'error');
+
+            } finally {
+
+                setLoading(false);
+            }
+        }
+
+        // ============================================================
+        // REDIRECT BY ROLE
+        // ============================================================
+
+        function redirectByRole() {
+
+            const user = SessionManager.getUser();
+            if (!user) return;
+
+            const routes = {
+                admin  : 'dashboard.html',
+                editor : 'approve.html',
+                checker: 'report.html',
+                staff  : 'import.html',
+                guest  : 'dashboard.html'
+            };
+
+            window.location.href = routes[user.role] || 'dashboard.html';
+        }
+
+        // ============================================================
+        // FORM VALIDATION
+        // ============================================================
+
+        function validateForm(email, password) {
+
+            let valid = true;
+
+            if (!email) {
+                showFieldError('emailError', 'กรุณากรอกอีเมล');
+                valid = false;
+            }
+
+            if (!password) {
+                showFieldError('passwordError', 'กรุณากรอกรหัสผ่าน');
+                valid = false;
+            }
+
+            return valid;
+        }
+
+        function showFieldError(id, message) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = message;
+            el.classList.remove('hidden');
+        }
+
+        function clearErrors() {
+            document.querySelectorAll('#emailError, #passwordError')
+                .forEach(el => el.classList.add('hidden'));
+        }
+
+        // ============================================================
+        // PASSWORD TOGGLE
+        // ============================================================
+
+        function togglePassword() {
+
+            const input  = document.getElementById('password');
+            const btn    = document.getElementById('togglePassword');
+            const isPass = input.type === 'password';
+
+            input.type       = isPass ? 'text' : 'password';
+            btn.textContent  = isPass ? 'ซ่อน' : 'แสดง';
+        }
+
+        // ============================================================
+        // CAPSLOCK DETECTION
+        // ============================================================
+
+        function detectCapslock(event) {
+
+            const warning = document.getElementById('capslockWarning');
+            if (!warning) return;
+
+            const isOn = event.getModifierState && event.getModifierState('CapsLock');
+
+            warning.classList.toggle('hidden', !isOn);
+        }
+
+        // ============================================================
+        // REMEMBER EMAIL
+        // ============================================================
+
+        function saveRememberEmail() {
+
+            const remember = document.getElementById('rememberEmail')?.checked;
+            const email    = document.getElementById('email')?.value.trim();
+
+            if (remember) {
+                localStorage.setItem('srdh_remember_email', email);
+            } else {
+                localStorage.removeItem('srdh_remember_email');
+            }
+        }
+
+        function restoreRememberedEmail() {
+
+            const email = localStorage.getItem('srdh_remember_email');
+            if (!email) return;
+
+            const emailInput    = document.getElementById('email');
+            const rememberCheck = document.getElementById('rememberEmail');
+
+            if (emailInput)    emailInput.value   = email;
+            if (rememberCheck) rememberCheck.checked = true;
+        }
+
+        // ============================================================
+        // LOADING STATE
+        // ============================================================
+
+        function setLoading(state) {
+
+            const loginBtn = document.getElementById('loginButton');
+            const guestBtn = document.getElementById('guestButton');
+
+            if (loginBtn) {
+                loginBtn.disabled = state;
+                loginBtn.innerHTML = state
+                    ? '<span class="inline-flex items-center gap-2"><span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>กำลังเข้าสู่ระบบ...</span>'
+                    : 'เข้าสู่ระบบ';
+            }
+
+            if (guestBtn) guestBtn.disabled = state;
+        }
+
+    </script>
+
+</body>
+
+</html>
