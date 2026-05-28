@@ -9,7 +9,6 @@
   "theme_color": "#7C3AED",
   "orientation": "portrait-primary",
   "lang": "th-TH",
-  "dir": "ltr",
   "icons": [
     {
       "src": "icons/register_acc-192.png",
