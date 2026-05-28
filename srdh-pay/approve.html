@@ -1,4 +1,4 @@
-<!-- Version: 00123.0 -->
+<!-- Version: 0200 -->
 <!-- approve.html -->
 <!-- SRDH PAY Approval Workflow -->
 
@@ -22,8 +22,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Runtime -->
-    <script src="api-config.js"></script>
-    <script src="main.js"></script>
+    <script src="js/api-config.js"></script>
+    <script src="js/main.js"></script>
 
     <style>
 
@@ -794,6 +794,12 @@
 
                 </div>
 
+                <!-- Pagination -->
+                <div class="px-5 py-4 border-t border-slate-200 flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+                    <div id="paginationInfo" class="text-sm text-slate-500">-</div>
+                    <div id="paginationContainer" class="flex items-center gap-1"></div>
+                </div>
+
             </section>
 
         </main>
@@ -1034,762 +1040,357 @@
 
         'use strict';
 
-        // ======================
+        // ============================================================
         // STATE
-        // ======================
+        // ============================================================
 
-        let allRows = [];
-
-        let filteredRows = [];
-
-        let selectedRows = new Set();
-
+        let currentPage  = 1;
+        let pageSize     = 20;
+        let totalPages   = 1;
+        let totalRows    = 0;
+        let currentRows  = [];
+        let selectedUuids = new Set();
         let currentAction = '';
-
+        let masterData    = null;
         let searchTimeout = null;
 
-        // ======================
+        // ============================================================
         // INIT
-        // ======================
+        // ============================================================
 
-        document.addEventListener(
-            'DOMContentLoaded',
-            initializePage
-        );
+        document.addEventListener('DOMContentLoaded', initializePage);
 
         async function initializePage() {
 
             try {
 
-                Auth.requireRoles([
-                    'admin',
-                    'editor',
-                    'checker'
-                ]);
+                if (!PermissionManager.canAccess('approve')) {
+                    UI.showToast('ไม่มีสิทธิ์เข้าถึงหน้านี้', 'error');
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
+                    return;
+                }
 
                 bindEvents();
-
-                initializePermissions();
-
                 restoreFilters();
-
+                await loadMasterData();
                 await loadData();
 
-                startAutoRefresh();
-
             } catch (error) {
-
                 console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
+                UI.showToast(error.message, 'error');
             }
         }
 
-        // ======================
+        // ============================================================
+        // MASTER DATA
+        // ============================================================
+
+        async function loadMasterData() {
+            try {
+                const result = await RegisterAPI.getMasterData();
+                masterData   = result.data || {};
+                populateMoneyTypes(masterData.moneyTypes || []);
+            } catch (e) {
+                console.warn('loadMasterData:', e.message);
+            }
+        }
+
+        function populateMoneyTypes(types) {
+            const select = document.getElementById('moneyTypeFilter');
+            if (!select) return;
+            const first = select.options[0];
+            select.innerHTML = '';
+            select.appendChild(first);
+            types.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = t;
+                select.appendChild(opt);
+            });
+        }
+
+        // ============================================================
         // EVENTS
-        // ======================
+        // ============================================================
 
         function bindEvents() {
 
-            document
-                .getElementById(
-                    'refreshButton'
-                )
-                .addEventListener(
-                    'click',
-                    loadData
-                );
+            _on('refreshButton',    'click',  () => loadData(true));
+            _on('printButton',      'click',  () => window.print());
+            _on('clearFilterButton','click',  clearFilters);
+            _on('selectAll',        'change', toggleSelectAll);
 
-            document
-                .getElementById(
-                    'printButton'
-                )
-                .addEventListener(
-                    'click',
-                    () => window.print()
-                );
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', () => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => { currentPage = 1; loadData(); }, 350);
+                });
+            }
 
-            document
-                .getElementById(
-                    'searchInput'
-                )
-                .addEventListener(
-                    'input',
-                    handleSearch
-                );
-
-            [
-                'statusFilter',
-                'moneyTypeFilter',
-                'startDate',
-                'endDate'
-            ].forEach(id => {
-
-                document
-                    .getElementById(id)
-                    .addEventListener(
-                        'change',
-                        applyFilters
-                    );
+            ['statusFilter', 'moneyTypeFilter', 'startDate', 'endDate'].forEach(id => {
+                _on(id, 'change', () => { currentPage = 1; loadData(); });
             });
 
-            document
-                .getElementById(
-                    'clearFilterButton'
-                )
-                .addEventListener(
-                    'click',
-                    clearFilters
-                );
-
-            document
-                .getElementById(
-                    'selectAll'
-                )
-                .addEventListener(
-                    'change',
-                    toggleSelectAll
-                );
+            _on('pageSize', 'change', () => {
+                pageSize    = Number(document.getElementById('pageSize')?.value) || 20;
+                currentPage = 1;
+                loadData();
+            });
         }
 
-        // ======================
-        // PERMISSIONS
-        // ======================
+        // ============================================================
+        // LOAD DATA (server-side filter + pagination)
+        // ============================================================
 
-        function initializePermissions() {
-
-            const role =
-                Auth.user.role;
-
-            if (
-                role === 'admin'
-            ) {
-
-                document
-                    .querySelectorAll(
-                        '.action-admin, .action-editor, .action-checker'
-                    )
-                    .forEach(element => {
-
-                        element.classList.remove(
-                            'hidden'
-                        );
-                    });
-
-                return;
-            }
-
-            if (
-                role === 'editor'
-            ) {
-
-                document
-                    .querySelectorAll(
-                        '.action-editor'
-                    )
-                    .forEach(element => {
-
-                        element.classList.remove(
-                            'hidden'
-                        );
-                    });
-            }
-
-            if (
-                role === 'checker'
-            ) {
-
-                document
-                    .querySelectorAll(
-                        '.action-checker'
-                    )
-                    .forEach(element => {
-
-                        element.classList.remove(
-                            'hidden'
-                        );
-                    });
-            }
-        }
-
-        // ======================
-        // LOAD
-        // ======================
-
-        async function loadData() {
+        async function loadData(forceRefresh = false) {
 
             try {
 
                 UI.showLoading();
+                selectedUuids.clear();
+                updateSelectAllCheckbox();
 
-                const result =
-                    await RegisterAPI
-                        .getRegisterData();
+                const params = _buildParams();
+                const result = await RegisterAPI.getList(params);
 
-                if (
-                    !result.success
-                ) {
+                currentRows = result.data || [];
 
-                    throw new Error(
-                        result.message
-                    );
-                }
+                const pag  = result.pagination || {};
+                currentPage = pag.page       || 1;
+                pageSize    = pag.pageSize    || 20;
+                totalPages  = pag.totalPages  || 1;
+                totalRows   = pag.total       || 0;
 
-                allRows =
-                    result.data || [];
-
-                applyFilters();
-
-                populateMoneyTypes();
-
-            } catch (error) {
-
-                console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
+                renderTable();
+                renderPaginationInfo();
+                Pagination.render(
+                    document.getElementById('paginationContainer'),
+                    currentPage, totalPages, goToPage
                 );
 
+            } catch (error) {
+                console.error(error);
+                UI.showToast(error.message, 'error');
             } finally {
-
                 UI.hideLoading();
             }
         }
 
-        // ======================
-        // FILTER
-        // ======================
+        function _buildParams() {
 
-        function handleSearch() {
+            const status    = document.getElementById('statusFilter')?.value    || '';
+            const moneyType = document.getElementById('moneyTypeFilter')?.value || '';
+            const keyword   = document.getElementById('searchInput')?.value.trim() || '';
 
-            clearTimeout(
-                searchTimeout
-            );
-
-            searchTimeout =
-                setTimeout(
-                    applyFilters,
-                    300
-                );
+            return {
+                page     : currentPage,
+                pageSize,
+                keyword,
+                status,
+                moneyType,
+                sortDir  : 'desc'
+            };
         }
 
-        function applyFilters() {
-
-            saveFilters();
-
-            const search =
-                document
-                    .getElementById(
-                        'searchInput'
-                    )
-                    .value
-                    .toLowerCase();
-
-            const status =
-                document
-                    .getElementById(
-                        'statusFilter'
-                    )
-                    .value;
-
-            const moneyType =
-                document
-                    .getElementById(
-                        'moneyTypeFilter'
-                    )
-                    .value;
-
-            filteredRows =
-                allRows.filter(
-                    row => {
-
-                        const rowStatus =
-                            getRowStatus(
-                                row
-                            );
-
-                        const searchable =
-                            JSON.stringify(
-                                row
-                            ).toLowerCase();
-
-                        if (
-                            search &&
-                            !searchable.includes(
-                                search
-                            )
-                        ) {
-
-                            return false;
-                        }
-
-                        if (
-                            status &&
-                            rowStatus !== status
-                        ) {
-
-                            return false;
-                        }
-
-                        if (
-                            moneyType &&
-                            row[0] !== moneyType
-                        ) {
-
-                            return false;
-                        }
-
-                        return true;
-                    }
-                );
-
-            renderTable();
+        function goToPage(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadData();
         }
 
-        function clearFilters() {
-
-            [
-                'searchInput',
-                'statusFilter',
-                'moneyTypeFilter',
-                'startDate',
-                'endDate'
-            ].forEach(id => {
-
-                document.getElementById(
-                    id
-                ).value = '';
-            });
-
-            applyFilters();
-        }
-
-        // ======================
-        // TABLE
-        // ======================
+        // ============================================================
+        // RENDER TABLE
+        // ============================================================
 
         function renderTable() {
 
-            const tbody =
-                document.getElementById(
-                    'tableBody'
-                );
+            const tbody = document.getElementById('tableBody');
+            if (!tbody) return;
 
-            tbody.innerHTML = '';
-
-            if (
-                !filteredRows.length
-            ) {
-
-                tbody.innerHTML =
-                    `
+            if (!currentRows.length) {
+                tbody.innerHTML = `
                     <tr>
-                        <td
-                            colspan="10"
-                            class="
-                                px-6
-                                py-12
-                                text-center
-                                text-slate-500
-                            "
-                        >
+                        <td colspan="10" class="px-6 py-12 text-center text-slate-500 text-sm">
                             ไม่พบข้อมูล
                         </td>
-                    </tr>
-                    `;
-
+                    </tr>`;
                 return;
             }
 
-            filteredRows.forEach(
-                row => {
+            const startNo = (currentPage - 1) * pageSize + 1;
 
-                    const status =
-                        getRowStatus(
-                            row
-                        );
+            tbody.innerHTML = currentRows.map((row, i) => {
 
-                    const registerNo =
-                        row[9] || '-';
+                const uuid    = row.uuid || '';
+                const checked = selectedUuids.has(uuid);
 
-                    const receiveNo =
-                        row[10] || '-';
-
-                    const uniqueId =
-                        receiveNo;
-
-                    const tr =
-                        document.createElement(
-                            'tr'
-                        );
-
-                    if (
-                        selectedRows.has(
-                            uniqueId
-                        )
-                    ) {
-
-                        tr.classList.add(
-                            'table-row-selected'
-                        );
-                    }
-
-                    tr.innerHTML =
-                        `
+                return `
+                    <tr class="border-b border-slate-200 text-sm ${checked ? 'bg-violet-50' : 'hover:bg-slate-50'}">
                         <td class="px-4 py-3">
-
-                            <input
-                                type="checkbox"
-                                ${selectedRows.has(uniqueId) ? 'checked' : ''}
-                                onchange="toggleRowSelection('${uniqueId}')"
-                            />
-
+                            <input type="checkbox" ${checked ? 'checked' : ''}
+                                onchange="toggleRowSelection('${escapeHtml(uuid)}')"
+                                class="rounded">
                         </td>
-
+                        <td class="px-4 py-3 text-slate-400 text-xs">${startNo + i}</td>
+                        <td class="px-4 py-3 font-mono text-xs font-medium">${escapeHtml(row.registerNo || '-')}</td>
+                        <td class="px-4 py-3 font-mono text-xs">${escapeHtml(Formatter.runningNo(row.receiveNo) || '-')}</td>
                         <td class="px-4 py-3">
-                            ${registerNo}
+                            <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">
+                                ${escapeHtml(row.moneyType || '-')}
+                            </span>
                         </td>
-
+                        <td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(row.dept || '-')}</td>
+                        <td class="px-4 py-3">${escapeHtml(row.vendor || '-')}</td>
+                        <td class="px-4 py-3 text-right font-medium">${Formatter.currency(row.amount)}</td>
+                        <td class="px-4 py-3">${StatusHelper.badge(row.status)}</td>
                         <td class="px-4 py-3">
-                            ${receiveNo}
+                            ${_renderActionButtons(row)}
                         </td>
-
-                        <td class="px-4 py-3">
-                            ${row[0] || '-'}
-                        </td>
-
-                        <td class="px-4 py-3">
-                            ${row[1] || '-'}
-                        </td>
-
-                        <td class="px-4 py-3">
-                            ${row[4] || '-'}
-                        </td>
-
-                        <td class="px-4 py-3 text-right">
-                            ${formatCurrency(row[5])}
-                        </td>
-
-                        <td class="px-4 py-3">
-
-                            ${renderStatusBadge(status)}
-
-                        </td>
-
-                        <td class="px-4 py-3">
-
-                            ${renderTimeline(row)}
-
-                        </td>
-
-                        <td class="px-4 py-3 text-xs text-slate-500">
-                            ${formatDate(row[24])}
-                        </td>
-                        `;
-
-                    tbody.appendChild(
-                        tr
-                    );
-                }
-            );
+                    </tr>`;
+            }).join('');
         }
 
-        // ======================
-        // STATUS
-        // ======================
+        // ============================================================
+        // ACTION BUTTONS (per row)
+        // ============================================================
 
-        function renderStatusBadge(
-            status
-        ) {
+        function _renderActionButtons(row) {
 
-            const map = {
+            const user   = SessionManager.getUser();
+            if (!user) return '';
+            const role   = user.role;
+            const status = row.status;
 
-                'รับเอกสาร':
-                    'status-receive',
-
-                'ตรวจผ่าน':
-                    'status-pass',
-
-                'เสนอ':
-                    'status-propose',
-
-                'อนุมัติ':
-                    'status-approve',
-
-                'จ่ายแล้ว':
-                    'status-pay',
-
-                'ส่งแก้ไข':
-                    'status-edit',
-
-                'ยกเลิก':
-                    'status-cancel'
+            const actionMap = {
+                receive : { roles: ['admin','editor'],          label: 'รับเอกสาร',   status: 'รอดำเนินการ'  },
+                pass    : { roles: ['admin','editor'],          label: 'ตรวจผ่าน',    status: 'รับเอกสาร'   },
+                propose : { roles: ['admin','editor'],          label: 'เสนอ',         status: 'ตรวจผ่าน'   },
+                approve : { roles: ['admin'],                   label: 'อนุมัติ',      status: 'เสนอ'       },
+                pay     : { roles: ['admin','checker'],         label: 'จ่ายเช็ค',    status: 'อนุมัติ'    }
             };
 
-            return `
-            <span class="
-                px-3
-                py-1
-                rounded-full
-                text-xs
-                font-medium
-                ${map[status] || ''}
-            ">
-                ${status}
-            </span>
-            `;
+            const buttons = Object.entries(actionMap)
+                .filter(([action, cfg]) =>
+                    cfg.roles.includes(role) && cfg.status === status
+                )
+                .map(([action, cfg]) => `
+                    <button onclick="openActionModal('${action}', '${escapeHtml(row.uuid)}')"
+                        class="px-2.5 py-1 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs mr-1">
+                        ${cfg.label}
+                    </button>`
+                ).join('');
+
+            return buttons || '';
         }
 
-        function renderTimeline(
-            row
-        ) {
+        // ============================================================
+        // PAGINATION INFO
+        // ============================================================
 
-            const timeline = [];
-
-            if (row[16]) {
-
-                timeline.push(
-                    `
-                    <div class="flex items-center gap-2">
-                        <div class="timeline-dot bg-blue-500"></div>
-                        <span>รับ</span>
-                    </div>
-                    `
-                );
-            }
-
-            if (row[17]) {
-
-                timeline.push(
-                    `
-                    <div class="flex items-center gap-2">
-                        <div class="timeline-dot bg-amber-500"></div>
-                        <span>แก้ไข</span>
-                    </div>
-                    `
-                );
-            }
-
-            if (row[19]) {
-
-                timeline.push(
-                    `
-                    <div class="flex items-center gap-2">
-                        <div class="timeline-dot bg-emerald-500"></div>
-                        <span>ผ่าน</span>
-                    </div>
-                    `
-                );
-            }
-
-            if (row[20]) {
-
-                timeline.push(
-                    `
-                    <div class="flex items-center gap-2">
-                        <div class="timeline-dot bg-purple-500"></div>
-                        <span>เสนอ</span>
-                    </div>
-                    `
-                );
-            }
-
-            if (row[21]) {
-
-                timeline.push(
-                    `
-                    <div class="flex items-center gap-2">
-                        <div class="timeline-dot bg-sky-500"></div>
-                        <span>อนุมัติ</span>
-                    </div>
-                    `
-                );
-            }
-
-            if (row[22]) {
-
-                timeline.push(
-                    `
-                    <div class="flex items-center gap-2">
-                        <div class="timeline-dot bg-green-600"></div>
-                        <span>จ่าย</span>
-                    </div>
-                    `
-                );
-            }
-
-            return `
-            <div class="
-                flex
-                flex-wrap
-                gap-2
-            ">
-                ${timeline.join('')}
-            </div>
-            `;
+        function renderPaginationInfo() {
+            const el    = document.getElementById('paginationInfo');
+            if (!el) return;
+            const start = totalRows === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+            const end   = Math.min(currentPage * pageSize, totalRows);
+            el.textContent = `แสดง ${start}–${end} จาก ${totalRows.toLocaleString('th-TH')} รายการ`;
         }
 
-        // ======================
-        // SELECT
-        // ======================
+        // ============================================================
+        // SELECTION
+        // ============================================================
 
-        function toggleRowSelection(
-            id
-        ) {
+        function toggleRowSelection(uuid) {
 
-            if (
-                selectedRows.has(id)
-            ) {
-
-                selectedRows.delete(id);
-
+            if (selectedUuids.has(uuid)) {
+                selectedUuids.delete(uuid);
             } else {
-
-                if (
-                    selectedRows.size >= 100
-                ) {
-
-                    UI.showToast(
-                        'เลือกได้สูงสุด 100 รายการ',
-                        'warning'
-                    );
-
+                if (selectedUuids.size >= 100) {
+                    UI.showToast('เลือกได้สูงสุด 100 รายการ', 'warning');
                     return;
                 }
-
-                selectedRows.add(id);
+                selectedUuids.add(uuid);
             }
 
             renderTable();
+            updateSelectAllCheckbox();
         }
 
-        function toggleSelectAll(
-            event
-        ) {
+        function toggleSelectAll(event) {
 
-            if (
-                event.target.checked
-            ) {
-
-                filteredRows
-                    .slice(0, 100)
-                    .forEach(row => {
-
-                        selectedRows.add(
-                            row[10]
-                        );
-                    });
-
+            if (event.target.checked) {
+                currentRows.slice(0, 100).forEach(row => {
+                    if (row.uuid) selectedUuids.add(row.uuid);
+                });
             } else {
-
-                selectedRows.clear();
+                selectedUuids.clear();
             }
 
             renderTable();
         }
 
-        // ======================
-        // ACTION
-        // ======================
+        function updateSelectAllCheckbox() {
+            const chk = document.getElementById('selectAll');
+            if (!chk) return;
+            chk.checked       = selectedUuids.size > 0 && selectedUuids.size >= currentRows.length;
+            chk.indeterminate = selectedUuids.size > 0 && selectedUuids.size < currentRows.length;
+        }
 
-        function openActionModal(
-            action
-        ) {
+        // ============================================================
+        // ACTION MODAL
+        // ============================================================
 
-            if (
-                !selectedRows.size
-            ) {
+        function openActionModal(action, uuid = null) {
 
-                UI.showToast(
-                    'กรุณาเลือกรายการ',
-                    'warning'
-                );
+            // ถ้าส่ง uuid มา = single row action; ไม่ส่ง = batch จาก selectedUuids
+            if (uuid) {
+                selectedUuids.clear();
+                selectedUuids.add(uuid);
+                renderTable();
+            }
 
+            if (!selectedUuids.size) {
+                UI.showToast('กรุณาเลือกรายการ', 'warning');
                 return;
             }
 
-            currentAction =
-                action;
+            currentAction = action;
 
-            document
-                .getElementById(
-                    'modalTitle'
-                )
-                .textContent =
-                getActionLabel(
-                    action
-                );
+            const labels = {
+                receive: 'รับเอกสาร', edit   : 'ส่งแก้ไข',
+                returned: 'รับคืน',   pass   : 'ตรวจผ่าน',
+                propose : 'เสนอ',     approve: 'อนุมัติ',
+                pay     : 'จ่ายเช็ค', cancel : 'ยกเลิก'
+            };
 
-            document
-                .getElementById(
-                    'selectedCount'
-                )
-                .textContent =
-                selectedRows.size;
+            _setEl('modalTitle',    labels[action] || action);
+            _setEl('selectedCount', selectedUuids.size);
 
-            document
-                .getElementById(
-                    'checkerContainer'
-                )
-                .classList.toggle(
-                    'hidden',
-                    action !== 'pay'
-                );
+            // แสดง/ซ่อน fields ตาม action
+            _toggleEl('checkerContainer', action === 'pay');
+            _toggleEl('noteContainer',    action === 'cancel' || action === 'edit');
 
-            document
-                .getElementById(
-                    'noteContainer'
-                )
-                .classList.toggle(
-                    'hidden',
-                    action !== 'edit'
-                );
-
-            document
-                .getElementById(
-                    'actionModal'
-                )
-                .classList.remove(
-                    'hidden'
-                );
-
-            document
-                .getElementById(
-                    'confirmActionButton'
-                )
-                .onclick =
-                executeAction;
+            document.getElementById('actionModal').classList.remove('hidden');
+            document.getElementById('confirmActionButton').onclick = executeAction;
         }
 
         function openCancelModal() {
-
-            openActionModal(
-                'cancel'
-            );
-
-            document
-                .getElementById(
-                    'noteContainer'
-                )
-                .classList.remove(
-                    'hidden'
-                );
+            openActionModal('cancel');
         }
 
         function closeModal() {
-
-            document
-                .getElementById(
-                    'actionModal'
-                )
-                .classList.add(
-                    'hidden'
-                );
+            document.getElementById('actionModal').classList.add('hidden');
+            // reset fields
+            const note    = document.getElementById('actionNote');
+            const checker = document.getElementById('checkerInput');
+            const date    = document.getElementById('actionDate');
+            if (note)    note.value    = '';
+            if (checker) checker.value = '';
+            if (date)    date.value    = '';
         }
+
+        // ============================================================
+        // EXECUTE ACTION (batchUpdateStatus)
+        // ============================================================
 
         async function executeAction() {
 
@@ -1797,282 +1398,98 @@
 
                 UI.showLoading();
 
-                const date =
-                    document
-                        .getElementById(
-                            'actionDate'
-                        )
-                        .value;
+                const note    = document.getElementById('actionNote')?.value    || '';
+                const checker = document.getElementById('checkerInput')?.value  || '';
+                const date    = document.getElementById('actionDate')?.value    || '';
 
-                const note =
-                    document
-                        .getElementById(
-                            'actionNote'
-                        )
-                        .value;
+                if (!date) throw new Error('กรุณาระบุวันที่');
 
-                const checker =
-                    document
-                        .getElementById(
-                            'checkerInput'
-                        )
-                        .value;
+                if (currentAction === 'cancel' && !note)
+                    throw new Error('กรุณาระบุเหตุผลการยกเลิก');
 
-                if (
-                    !date
-                ) {
+                if (currentAction === 'pay' && !checker)
+                    throw new Error('กรุณาระบุผู้จ่ายเช็ค');
 
-                    throw new Error(
-                        'กรุณาระบุวันที่'
-                    );
-                }
+                const uuids = [...selectedUuids];
 
-                if (
-                    currentAction === 'cancel' &&
-                    !note
-                ) {
-
-                    throw new Error(
-                        'กรุณาระบุเหตุผลการยกเลิก'
-                    );
-                }
-
-                if (
-                    currentAction === 'pay' &&
-                    !checker
-                ) {
-
-                    throw new Error(
-                        'กรุณาระบุผู้จ่ายเช็ค'
-                    );
-                }
-
-                const items =
-                    allRows.filter(
-                        row =>
-                            selectedRows.has(
-                                row[10]
-                            )
-                    );
-
-                const result =
-                    await RegisterAPI
-                        .updateWorkflowStatus({
-
-                            action:
-                                currentAction,
-
-                            items,
-
-                            date,
-
-                            note,
-
-                            checker
-                        });
-
-                if (
-                    !result.success
-                ) {
-
-                    throw new Error(
-                        result.message
-                    );
-                }
-
-                UI.showToast(
-                    'อัพเดทสถานะสำเร็จ',
-                    'success'
+                const result = await RegisterAPI.batchUpdateStatus(
+                    uuids,
+                    currentAction,
+                    note
                 );
 
-                selectedRows.clear();
+                const successCount = (result.results || [])
+                    .filter(r => r.result?.success !== false).length;
 
+                UI.showToast(`อัปเดตสถานะสำเร็จ ${successCount}/${uuids.length} รายการ`);
+
+                selectedUuids.clear();
                 closeModal();
-
-                await loadData();
+                await loadData(true);
 
             } catch (error) {
-
                 console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
-
+                UI.showToast(error.message, 'error');
             } finally {
-
                 UI.hideLoading();
             }
         }
 
-        // ======================
-        // STORAGE
-        // ======================
+        // ============================================================
+        // FILTER STORAGE
+        // ============================================================
 
         function saveFilters() {
-
-            localStorage.setItem(
-                'approve_filters',
-                JSON.stringify({
-
-                    search:
-                        document.getElementById(
-                            'searchInput'
-                        ).value,
-
-                    status:
-                        document.getElementById(
-                            'statusFilter'
-                        ).value,
-
-                    moneyType:
-                        document.getElementById(
-                            'moneyTypeFilter'
-                        ).value
-                })
-            );
+            localStorage.setItem('srdh_approve_filters', JSON.stringify({
+                status   : document.getElementById('statusFilter')?.value    || '',
+                moneyType: document.getElementById('moneyTypeFilter')?.value || '',
+                keyword  : document.getElementById('searchInput')?.value     || ''
+            }));
         }
 
         function restoreFilters() {
-
-            const raw =
-                localStorage.getItem(
-                    'approve_filters'
-                );
-
-            if (!raw) {
-
-                return;
-            }
-
             try {
-
-                const filters =
-                    JSON.parse(raw);
-
-                document.getElementById(
-                    'searchInput'
-                ).value =
-                    filters.search || '';
-
-                document.getElementById(
-                    'statusFilter'
-                ).value =
-                    filters.status || '';
-
-                document.getElementById(
-                    'moneyTypeFilter'
-                ).value =
-                    filters.moneyType || '';
-
-            } catch (error) {
-
-                console.error(error);
-            }
+                const raw = localStorage.getItem('srdh_approve_filters');
+                if (!raw) return;
+                const f = JSON.parse(raw);
+                _setInputVal('statusFilter',    f.status);
+                _setInputVal('moneyTypeFilter', f.moneyType);
+                _setInputVal('searchInput',     f.keyword);
+            } catch (e) { /* ignore */ }
         }
 
-        // ======================
-        // REFRESH
-        // ======================
-
-        function startAutoRefresh() {
-
-            setInterval(
-                async () => {
-
-                    await loadData();
-
-                },
-                300000
-            );
+        function clearFilters() {
+            ['searchInput','statusFilter','moneyTypeFilter','startDate','endDate'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            localStorage.removeItem('srdh_approve_filters');
+            currentPage = 1;
+            loadData();
         }
 
-        // ======================
-        // UTILS
-        // ======================
+        // ============================================================
+        // HELPERS
+        // ============================================================
 
-        function populateMoneyTypes() {
-
-            const select =
-                document.getElementById(
-                    'moneyTypeFilter'
-                );
-
-            const current =
-                select.value;
-
-            const values =
-                [
-                    ...new Set(
-                        allRows.map(
-                            row => row[0]
-                        )
-                    )
-                ]
-                    .filter(Boolean)
-                    .sort();
-
-            select.innerHTML =
-                `
-                <option value="">
-                    ทั้งหมด
-                </option>
-                `;
-
-            values.forEach(
-                value => {
-
-                    const option =
-                        document.createElement(
-                            'option'
-                        );
-
-                    option.value =
-                        value;
-
-                    option.textContent =
-                        value;
-
-                    select.appendChild(
-                        option
-                    );
-                }
-            );
-
-            select.value =
-                current;
+        function _setEl(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
         }
 
-        function getActionLabel(
-            action
-        ) {
+        function _setInputVal(id, value) {
+            const el = document.getElementById(id);
+            if (el && value !== undefined) el.value = value;
+        }
 
-            const map = {
+        function _toggleEl(id, show) {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('hidden', !show);
+        }
 
-                receive:
-                    'รับเอกสาร',
-
-                edit:
-                    'ส่งแก้ไข',
-
-                return:
-                    'รับคืน',
-
-                pass:
-                    'ตรวจผ่าน',
-
-                propose:
-                    'เสนอ',
-
-                pay:
-                    'จ่ายเช็ค',
-
-                cancel:
-                    'ยกเลิก'
-            };
-
-            return map[action] || action;
+        function _on(id, event, handler) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener(event, handler);
         }
 
     </script>
