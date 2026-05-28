@@ -1,4 +1,4 @@
-<!-- Version: 00123.0 -->
+<!-- Version: 0200 -->
 <!-- report.html -->
 <!-- SRDH PAY Report System -->
 
@@ -25,8 +25,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Runtime -->
-    <script src="api-config.js"></script>
-    <script src="main.js"></script>
+    <script src="js/api-config.js"></script>
+    <script src="js/main.js"></script>
 
     <style>
 
@@ -1137,1000 +1137,521 @@
 
         'use strict';
 
-        // ======================
+        // ============================================================
         // STATE
-        // ======================
+        // ============================================================
 
-        let allRows = [];
+        let reportData   = null;
+        let masterData   = null;
+        let currentFilters = {};
 
-        let filteredRows = [];
+        const charts = {
+            moneyType: null,
+            status   : null,
+            monthly  : null,
+            vendor   : null
+        };
 
-        let charts = {};
-
-        // ======================
+        // ============================================================
         // INIT
-        // ======================
+        // ============================================================
 
-        document.addEventListener(
-            'DOMContentLoaded',
-            initializePage
-        );
+        document.addEventListener('DOMContentLoaded', initializePage);
 
         async function initializePage() {
 
             try {
 
-                Auth.requireRoles([
-                    'admin',
-                    'checker',
-                    'staff'
-                ]);
+                if (!PermissionManager.canAccess('report')) {
+                    UI.showToast('ไม่มีสิทธิ์เข้าถึงหน้านี้', 'error');
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
+                    return;
+                }
 
                 bindEvents();
-
+                await loadMasterData();
                 await loadData();
 
-                startAutoRefresh();
-
             } catch (error) {
-
                 console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
+                UI.showToast(error.message, 'error');
             }
         }
 
-        // ======================
-        // EVENTS
-        // ======================
+        // ============================================================
+        // MASTER DATA
+        // ============================================================
 
-        function bindEvents() {
-
-            document
-                .getElementById(
-                    'refreshButton'
-                )
-                .addEventListener(
-                    'click',
-                    loadData
-                );
-
-            document
-                .getElementById(
-                    'applyFilterButton'
-                )
-                .addEventListener(
-                    'click',
-                    applyFilters
-                );
-
-            document
-                .getElementById(
-                    'printButton'
-                )
-                .addEventListener(
-                    'click',
-                    printReport
-                );
-
-            document
-                .getElementById(
-                    'exportExcelButton'
-                )
-                .addEventListener(
-                    'click',
-                    exportExcel
-                );
-
-            document
-                .getElementById(
-                    'exportPdfButton'
-                )
-                .addEventListener(
-                    'click',
-                    printReport
-                );
+        async function loadMasterData() {
+            try {
+                const result = await RegisterAPI.getMasterData();
+                masterData   = result.data || {};
+                _populateSelect('moneyTypeFilter', masterData.moneyTypes || []);
+                _populateSelect('deptFilter',      masterData.departments || []);
+                _populateSelect('statusFilter',    masterData.statuses    || []);
+            } catch (e) {
+                console.warn('loadMasterData:', e.message);
+            }
         }
 
-        // ======================
-        // LOAD
-        // ======================
+        function _populateSelect(id, values) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const first = el.options[0];
+            el.innerHTML = '';
+            el.appendChild(first);
+            values.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = v;
+                el.appendChild(opt);
+            });
+        }
 
-        async function loadData() {
+        // ============================================================
+        // EVENTS
+        // ============================================================
+
+        function bindEvents() {
+            _on('refreshButton',      'click', () => loadData(true));
+            _on('applyFilterButton',  'click', applyFilters);
+            _on('printButton',        'click', printReport);
+            _on('exportExcelButton',  'click', exportExcel);
+            _on('exportPdfButton',    'click', printReport);
+        }
+
+        // ============================================================
+        // LOAD DATA (server-side)
+        // ============================================================
+
+        async function loadData(forceRefresh = false) {
 
             try {
 
                 UI.showLoading();
 
-                const result =
-                    await RegisterAPI
-                        .getRegisterData();
+                const result = await ReportAPI.getReport(currentFilters);
+                reportData   = result.report || {};
 
-                if (
-                    !result.success
-                ) {
-
-                    throw new Error(
-                        result.message
-                    );
-                }
-
-                allRows =
-                    result.data || [];
-
-                applyRoleFilter();
-
-                populateFilters();
-
-                applyFilters();
+                updateKPI(reportData.summary  || {});
+                renderCharts(reportData);
+                renderTopLists(reportData);
+                renderTable(reportData.monthly || []);
 
             } catch (error) {
-
                 console.error(error);
-
-                UI.showToast(
-                    error.message,
-                    'error'
-                );
-
+                UI.showToast(error.message, 'error');
             } finally {
-
                 UI.hideLoading();
             }
         }
 
-        function applyRoleFilter() {
-
-            if (
-                Auth.user.role === 'staff'
-            ) {
-
-                allRows =
-                    allRows.filter(
-                        row =>
-                            row[1] ===
-                            Auth.user.dept
-                    );
-            }
-        }
-
-        // ======================
-        // FILTER
-        // ======================
-
         function applyFilters() {
 
-            const moneyType =
-                document
-                    .getElementById(
-                        'moneyTypeFilter'
-                    )
-                    .value;
+            currentFilters = {
+                moneyType : document.getElementById('moneyTypeFilter')?.value || '',
+                dept      : document.getElementById('deptFilter')?.value      || '',
+                status    : document.getElementById('statusFilter')?.value    || '',
+                fiscalYear: document.getElementById('fiscalYearFilter')?.value|| ''
+            };
 
-            const dept =
-                document
-                    .getElementById(
-                        'deptFilter'
-                    )
-                    .value;
+            // ลบ key ที่ว่าง
+            Object.keys(currentFilters).forEach(k => {
+                if (!currentFilters[k]) delete currentFilters[k];
+            });
 
-            const status =
-                document
-                    .getElementById(
-                        'statusFilter'
-                    )
-                    .value;
-
-            filteredRows =
-                allRows.filter(
-                    row => {
-
-                        const rowStatus =
-                            getRowStatus(
-                                row
-                            );
-
-                        if (
-                            moneyType &&
-                            row[0] !== moneyType
-                        ) {
-
-                            return false;
-                        }
-
-                        if (
-                            dept &&
-                            row[1] !== dept
-                        ) {
-
-                            return false;
-                        }
-
-                        if (
-                            status &&
-                            rowStatus !== status
-                        ) {
-
-                            return false;
-                        }
-
-                        return true;
-                    }
-                );
-
-            updateKPI();
-
-            renderCharts();
-
-            renderTopLists();
-
-            renderTable();
+            loadData();
         }
 
-        // ======================
+        // ============================================================
         // KPI
-        // ======================
+        // ============================================================
 
-        function updateKPI() {
+        function updateKPI(summary) {
 
-            let total = 0;
+            // summary จาก Code.gs:
+            // { totalRows, totalAmount, paidAmount, waitingAmount,
+            //   approvedAmount, cancelledAmount, paidRows, waitingRows, ... }
 
-            let paid = 0;
+            _setEl('totalAmount',   Formatter.currency(summary.totalAmount));
+            _setEl('paidAmount',    Formatter.currency(summary.paidAmount));
+            _setEl('pendingAmount', Formatter.currency(summary.waitingAmount));
+            _setEl('cancelAmount',  Formatter.currency(summary.cancelledAmount));
+            _setEl('tableCount',    (reportData.totalRows || 0) + ' รายการ');
 
-            let pending = 0;
+            const total   = summary.totalRows || 0;
+            const success = summary.paidRows  || 0;
+            const rate    = total > 0 ? ((success / total) * 100).toFixed(1) : '0';
+            _setEl('successRate', rate + '%');
 
-            let cancel = 0;
-
-            let success = 0;
-
-            filteredRows.forEach(
-                row => {
-
-                    const amount =
-                        Number(
-                            row[5]
-                        ) || 0;
-
-                    const status =
-                        getRowStatus(
-                            row
-                        );
-
-                    total += amount;
-
-                    if (
-                        status === 'จ่ายแล้ว'
-                    ) {
-
-                        paid += amount;
-
-                        success++;
-
-                    } else if (
-                        status === 'ยกเลิก'
-                    ) {
-
-                        cancel += amount;
-
-                    } else {
-
-                        pending += amount;
-                    }
-                }
-            );
-
-            document
-                .getElementById(
-                    'totalAmount'
-                )
-                .textContent =
-                formatCurrency(
-                    total
-                );
-
-            document
-                .getElementById(
-                    'paidAmount'
-                )
-                .textContent =
-                formatCurrency(
-                    paid
-                );
-
-            document
-                .getElementById(
-                    'pendingAmount'
-                )
-                .textContent =
-                formatCurrency(
-                    pending
-                );
-
-            document
-                .getElementById(
-                    'cancelAmount'
-                )
-                .textContent =
-                formatCurrency(
-                    cancel
-                );
-
-            document
-                .getElementById(
-                    'avgDays'
-                )
-                .textContent =
-                calculateAverageDays();
-
-            document
-                .getElementById(
-                    'successRate'
-                )
-                .textContent =
-                total > 0
-                    ? (
-                        (
-                            success /
-                            filteredRows.length
-                        ) * 100
-                    ).toFixed(1) + '%'
-                    : '0%';
+            // avg days จาก server ถ้ามี
+            _setEl('avgDays', Math.round(summary.avgProcessDays || 0));
         }
 
-        // ======================
+        // ============================================================
         // CHARTS
-        // ======================
+        // ============================================================
 
-        function renderCharts() {
+        function renderCharts(data) {
 
             destroyCharts();
 
-            renderMoneyTypeChart();
+            // charts จาก Code.gs:
+            // { moneyType, dept, vendor, status }
+            // แต่ละ chart = { labels: [...], values: [...] }
+            const c = data.charts || {};
 
-            renderStatusChart();
-
-            renderMonthlyChart();
-
-            renderVendorChart();
+            renderMoneyTypeChart(c.moneyType || { labels: [], values: [] });
+            renderStatusChart(c.status       || { labels: [], values: [] });
+            renderMonthlyChart(data.monthly  || []);
+            renderVendorChart(c.vendor       || { labels: [], values: [] });
         }
 
-        function renderMoneyTypeChart() {
+        function renderMoneyTypeChart(chartData) {
 
-            const grouped =
-                groupBy(
-                    filteredRows,
-                    0
-                );
+            const ctx = document.getElementById('moneyTypeChart');
+            if (!ctx) return;
 
-            charts.moneyType =
-                new Chart(
-                    document
-                        .getElementById(
-                            'moneyTypeChart'
-                        ),
-                    {
-
-                        type: 'pie',
-
-                        data: {
-
-                            labels:
-                                Object.keys(
-                                    grouped
-                                ),
-
-                            datasets: [
-
-                                {
-
-                                    data:
-                                        Object.values(
-                                            grouped
-                                        )
-                                }
-                            ]
+            charts.moneyType = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels  : chartData.labels,
+                    datasets: [{
+                        data           : chartData.values,
+                        backgroundColor: [
+                            '#7C3AED','#A855F7','#C026D3',
+                            '#2563EB','#0891B2','#059669',
+                            '#D97706','#DC2626','#64748B','#0EA5E9'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend : { position: 'bottom', labels: { font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ' ' + Formatter.currency(ctx.parsed) + ' บาท'
+                            }
                         }
                     }
-                );
-        }
-
-        function renderStatusChart() {
-
-            const grouped = {};
-
-            filteredRows.forEach(
-                row => {
-
-                    const status =
-                        getRowStatus(
-                            row
-                        );
-
-                    grouped[status] =
-                        (
-                            grouped[status] || 0
-                        ) + 1;
                 }
-            );
-
-            charts.status =
-                new Chart(
-                    document
-                        .getElementById(
-                            'statusChart'
-                        ),
-                    {
-
-                        type: 'bar',
-
-                        data: {
-
-                            labels:
-                                Object.keys(
-                                    grouped
-                                ),
-
-                            datasets: [
-
-                                {
-
-                                    data:
-                                        Object.values(
-                                            grouped
-                                        )
-                                }
-                            ]
-                        }
-                    }
-                );
+            });
         }
 
-        function renderMonthlyChart() {
+        function renderStatusChart(chartData) {
 
-            const grouped = {};
+            const ctx = document.getElementById('statusChart');
+            if (!ctx) return;
 
-            filteredRows.forEach(
-                row => {
+            const statusColors = {
+                'รอดำเนินการ': '#F59E0B',
+                'รับเอกสาร'  : '#3B82F6',
+                'ส่งแก้ไข'   : '#F97316',
+                'รับคืน'     : '#8B5CF6',
+                'ตรวจผ่าน'   : '#14B8A6',
+                'เสนอ'       : '#06B6D4',
+                'อนุมัติ'    : '#10B981',
+                'จ่ายแล้ว'   : '#6366F1',
+                'ยกเลิก'     : '#EF4444'
+            };
 
-                    const key =
-                        formatMonth(
-                            row[15]
-                        );
-
-                    grouped[key] =
-                        (
-                            grouped[key] || 0
-                        ) +
-                        (
-                            Number(
-                                row[5]
-                            ) || 0
-                        );
+            charts.status = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels  : chartData.labels,
+                    datasets: [{
+                        data           : chartData.values,
+                        backgroundColor: chartData.labels.map(l => statusColors[l] || '#94A3B8'),
+                        borderWidth    : 2,
+                        borderColor    : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend : { position: 'bottom', labels: { font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ' ' + ctx.parsed.toLocaleString('th-TH') + ' รายการ'
+                            }
+                        }
+                    }
                 }
-            );
-
-            charts.monthly =
-                new Chart(
-                    document
-                        .getElementById(
-                            'monthlyChart'
-                        ),
-                    {
-
-                        type: 'line',
-
-                        data: {
-
-                            labels:
-                                Object.keys(
-                                    grouped
-                                ),
-
-                            datasets: [
-
-                                {
-
-                                    data:
-                                        Object.values(
-                                            grouped
-                                        )
-                                }
-                            ]
-                        }
-                    }
-                );
+            });
         }
 
-        function renderVendorChart() {
+        function renderMonthlyChart(monthlyData) {
 
-            const grouped =
-                groupBy(
-                    filteredRows,
-                    4
-                );
+            // monthlyData = [{ month, amount, count }, ...]
+            const ctx = document.getElementById('monthlyChart');
+            if (!ctx) return;
 
-            const sorted =
-                Object.entries(
-                    grouped
-                )
-                    .sort(
-                        (
-                            a,
-                            b
-                        ) => b[1] - a[1]
-                    )
-                    .slice(0, 10);
+            const labels = monthlyData.map(m => _formatMonth(m.month));
+            const values = monthlyData.map(m => m.amount);
 
-            charts.vendor =
-                new Chart(
-                    document
-                        .getElementById(
-                            'vendorChart'
-                        ),
-                    {
-
-                        type: 'bar',
-
-                        data: {
-
-                            labels:
-                                sorted.map(
-                                    x => x[0]
-                                ),
-
-                            datasets: [
-
-                                {
-
-                                    data:
-                                        sorted.map(
-                                            x => x[1]
-                                        )
-                                }
-                            ]
+            charts.monthly = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels  : labels,
+                    datasets: [{
+                        label          : 'ยอดรวม (บาท)',
+                        data           : values,
+                        backgroundColor: '#7C3AED',
+                        borderRadius   : 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend : { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ' ' + Formatter.currency(ctx.parsed.y) + ' บาท'
+                            }
                         }
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { ticks: { callback: v => Formatter.currency(v) } }
                     }
-                );
+                }
+            });
+        }
+
+        function renderVendorChart(chartData) {
+
+            const ctx = document.getElementById('vendorChart');
+            if (!ctx) return;
+
+            charts.vendor = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels  : chartData.labels,
+                    datasets: [{
+                        label          : 'ยอดรวม (บาท)',
+                        data           : chartData.values,
+                        backgroundColor: '#A855F7',
+                        borderRadius   : 5
+                    }]
+                },
+                options: {
+                    responsive         : true,
+                    maintainAspectRatio: false,
+                    indexAxis          : 'y',
+                    plugins: {
+                        legend : { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ' ' + Formatter.currency(ctx.parsed.x) + ' บาท'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { callback: v => Formatter.currency(v) } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
         }
 
         function destroyCharts() {
-
-            Object.values(
-                charts
-            ).forEach(
-                chart => {
-
-                    if (
-                        chart
-                    ) {
-
-                        chart.destroy();
-                    }
+            Object.keys(charts).forEach(key => {
+                if (charts[key]) {
+                    charts[key].destroy();
+                    charts[key] = null;
                 }
-            );
+            });
         }
 
-        // ======================
-        // TOP LIST
-        // ======================
+        // ============================================================
+        // TOP LISTS
+        // ============================================================
 
-        function renderTopLists() {
+        function renderTopLists(data) {
 
-            renderTop(
-                'topDeptList',
-                groupBy(
-                    filteredRows,
-                    1
-                ),
-                5
-            );
-
-            renderTop(
-                'topMoneyList',
-                groupBy(
-                    filteredRows,
-                    0
-                ),
-                5
-            );
-
-            renderTop(
-                'topVendorList',
-                groupBy(
-                    filteredRows,
-                    4
-                ),
-                10
-            );
+            // topVendor = [{ name, amount, count }, ...]
+            // topDept   = [{ name, amount, count }, ...]
+            renderTopTable('topVendorList', data.topVendor || []);
+            renderTopTable('topDeptList',   data.topDept   || []);
         }
 
-        function renderTop(
-            id,
-            grouped,
-            limit
-        ) {
+        function renderTopTable(id, rows) {
 
-            const container =
-                document.getElementById(
-                    id
-                );
+            const el = document.getElementById(id);
+            if (!el) return;
 
-            const rows =
-                Object.entries(
-                    grouped
-                )
-                    .sort(
-                        (
-                            a,
-                            b
-                        ) => b[1] - a[1]
-                    )
-                    .slice(
-                        0,
-                        limit
-                    );
-
-            container.innerHTML =
-                rows.map(
-                    (
-                        row,
-                        index
-                    ) => {
-
-                        return `
-                        <div class="
-                            flex
-                            items-center
-                            justify-between
-                            border-b
-                            border-slate-200
-                            dark:border-slate-800
-                            pb-2
-                        ">
-
-                            <div>
-
-                                <div class="
-                                    font-medium
-                                ">
-                                    ${index + 1}. ${row[0]}
-                                </div>
-
-                            </div>
-
-                            <div class="
-                                text-sm
-                                text-slate-500
-                            ">
-                                ${formatCurrency(row[1])}
-                            </div>
-
-                        </div>
-                        `;
-                    }
-                ).join('');
-        }
-
-        // ======================
-        // TABLE
-        // ======================
-
-        function renderTable() {
-
-            const tbody =
-                document.getElementById(
-                    'tableBody'
-                );
-
-            tbody.innerHTML = '';
-
-            document
-                .getElementById(
-                    'tableCount'
-                )
-                .textContent =
-                `${filteredRows.length} rows`;
-
-            if (
-                !filteredRows.length
-            ) {
-
-                tbody.innerHTML =
-                    `
-                    <tr>
-                        <td
-                            colspan="9"
-                            class="
-                                px-6
-                                py-12
-                                text-center
-                                text-slate-500
-                            "
-                        >
-                            ไม่พบข้อมูล
-                        </td>
-                    </tr>
-                    `;
-
+            if (!rows.length) {
+                el.innerHTML = '<li class="text-slate-400 text-sm">ไม่มีข้อมูล</li>';
                 return;
             }
 
-            filteredRows.forEach(
-                row => {
+            const maxAmount = rows[0]?.amount || 1;
 
-                    const tr =
-                        document.createElement(
-                            'tr'
-                        );
+            el.innerHTML = rows.map((row, i) => {
 
-                    tr.className =
-                        `
-                        border-b
-                        border-slate-200
-                        dark:border-slate-800
-                        `;
+                const pct = Math.round((row.amount / maxAmount) * 100);
 
-                    tr.innerHTML =
-                        `
-                        <td class="px-4 py-3">
-                            ${row[9] || '-'}
-                        </td>
-
-                        <td class="px-4 py-3">
-                            ${row[10] || '-'}
-                        </td>
-
-                        <td class="px-4 py-3">
-                            ${row[0] || '-'}
-                        </td>
-
-                        <td class="px-4 py-3">
-                            ${row[1] || '-'}
-                        </td>
-
-                        <td class="px-4 py-3">
-                            ${row[4] || '-'}
-                        </td>
-
-                        <td class="px-4 py-3">
-                            ${row[6] || '-'}
-                        </td>
-
-                        <td class="px-4 py-3 text-right">
-                            ${formatCurrency(row[5])}
-                        </td>
-
-                        <td class="px-4 py-3">
-                            ${getRowStatus(row)}
-                        </td>
-
-                        <td class="px-4 py-3">
-                            ${formatDate(row[15])}
-                        </td>
-                        `;
-
-                    tbody.appendChild(
-                        tr
-                    );
-                }
-            );
+                return `
+                    <li class="flex flex-col gap-1">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-700 truncate max-w-[160px]"
+                                title="${escapeHtml(row.name)}">
+                                ${i + 1}. ${escapeHtml(row.name)}
+                            </span>
+                            <span class="font-medium text-violet-700 shrink-0 ml-2">
+                                ${Formatter.currency(row.amount)}
+                            </span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-1.5">
+                            <div class="bg-violet-500 h-1.5 rounded-full"
+                                style="width:${pct}%"></div>
+                        </div>
+                        <div class="text-xs text-slate-400">${row.count} รายการ</div>
+                    </li>`;
+            }).join('');
         }
 
-        // ======================
-        // FILTERS
-        // ======================
+        // ============================================================
+        // DETAIL TABLE (monthly breakdown)
+        // ============================================================
 
-        function populateFilters() {
+        function renderTable(monthlyData) {
 
-            populateSelect(
-                'moneyTypeFilter',
-                0
-            );
+            const tbody = document.getElementById('tableBody');
+            if (!tbody) return;
 
-            populateSelect(
-                'deptFilter',
-                1
-            );
+            _setEl('tableCount', (reportData?.totalRows || 0) + ' รายการ');
+
+            if (!monthlyData.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-400 text-sm">
+                            ไม่พบข้อมูล
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = monthlyData.map(row => `
+                <tr class="border-b border-slate-200 text-sm hover:bg-slate-50">
+                    <td class="px-4 py-3">${escapeHtml(_formatMonth(row.month))}</td>
+                    <td class="px-4 py-3 text-right font-medium">${Formatter.currency(row.amount)}</td>
+                    <td class="px-4 py-3 text-right text-slate-500">${row.count.toLocaleString('th-TH')}</td>
+                    <td class="px-4 py-3 text-right text-slate-500">
+                        ${row.count > 0 ? Formatter.currency(row.amount / row.count) : '-'}
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div class="bg-violet-500 h-2 rounded-full"
+                                style="width:${_getMonthPct(row.amount, monthlyData)}%"></div>
+                        </div>
+                    </td>
+                </tr>`
+            ).join('');
         }
 
-        function populateSelect(
-            id,
-            column
-        ) {
-
-            const select =
-                document.getElementById(
-                    id
-                );
-
-            const values =
-                [
-                    ...new Set(
-                        allRows.map(
-                            row =>
-                                row[column]
-                        )
-                    )
-                ]
-                    .filter(Boolean)
-                    .sort();
-
-            select.innerHTML =
-                `
-                <option value="">
-                    ทั้งหมด
-                </option>
-                `;
-
-            values.forEach(
-                value => {
-
-                    const option =
-                        document.createElement(
-                            'option'
-                        );
-
-                    option.value =
-                        value;
-
-                    option.textContent =
-                        value;
-
-                    select.appendChild(
-                        option
-                    );
-                }
-            );
+        function _getMonthPct(amount, rows) {
+            const max = Math.max(...rows.map(r => r.amount));
+            return max > 0 ? Math.round((amount / max) * 100) : 0;
         }
 
-        // ======================
+        // ============================================================
         // EXPORT
-        // ======================
+        // ============================================================
 
         function printReport() {
-
-            document
-                .getElementById(
-                    'printDate'
-                )
-                .textContent =
-                new Date()
-                    .toLocaleString(
-                        'th-TH'
-                    );
-
+            const el = document.getElementById('printDate');
+            if (el) el.textContent = new Date().toLocaleString('th-TH');
             window.print();
         }
 
-        function exportExcel() {
+        async function exportExcel() {
 
-            UI.showToast(
-                'กำลังเตรียม export...',
-                'info'
-            );
-        }
+            try {
 
-        // ======================
-        // REFRESH
-        // ======================
+                UI.showToast('กำลังเตรียมข้อมูล...', 'info');
+                UI.showLoading();
 
-        function startAutoRefresh() {
+                const result = await ReportAPI.export('excel', currentFilters);
+                const rows   = result.data || [];
 
-            setInterval(
-                async () => {
-
-                    await loadData();
-
-                },
-                300000
-            );
-        }
-
-        // ======================
-        // UTILS
-        // ======================
-
-        function groupBy(
-            rows,
-            index
-        ) {
-
-            const grouped = {};
-
-            rows.forEach(
-                row => {
-
-                    const key =
-                        row[index] || '-';
-
-                    grouped[key] =
-                        (
-                            grouped[key] || 0
-                        ) +
-                        (
-                            Number(
-                                row[5]
-                            ) || 0
-                        );
+                if (!rows.length) {
+                    UI.showToast('ไม่มีข้อมูลสำหรับ export', 'warning');
+                    return;
                 }
-            );
 
-            return grouped;
-        }
+                // สร้าง CSV
+                const headers = [
+                    'เลขทะเบียน','เลขที่รับ','ประเภทเงิน','หน่วยงาน',
+                    'เจ้าหนี้','จำนวนเงิน','รายการ','สถานะ','วันที่สร้าง'
+                ];
 
-        function calculateAverageDays() {
+                const csvRows = [headers.join(',')];
 
-            let total = 0;
+                rows.forEach(row => {
+                    csvRows.push([
+                        row.registerNo  || '',
+                        row.receiveNo   || '',
+                        row.moneyType   || '',
+                        row.dept        || '',
+                        '"' + (row.vendor      || '').replace(/"/g, '""') + '"',
+                        row.amount      || 0,
+                        '"' + (row.description || '').replace(/"/g, '""') + '"',
+                        row.status      || '',
+                        Formatter.thaiDate(row.createdAt)
+                    ].join(','));
+                });
 
-            let count = 0;
+                const bom  = '\uFEFF';
+                const blob = new Blob([bom + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+                const url  = URL.createObjectURL(blob);
+                const link = document.createElement('a');
 
-            filteredRows.forEach(
-                row => {
+                link.href     = url;
+                link.download = 'SRDH_Report_' + _today() + '.csv';
+                link.click();
 
-                    if (
-                        row[16] &&
-                        row[22]
-                    ) {
+                URL.revokeObjectURL(url);
 
-                        const start =
-                            new Date(
-                                row[16]
-                            );
+                UI.showToast('Export สำเร็จ ' + rows.length + ' รายการ');
 
-                        const end =
-                            new Date(
-                                row[22]
-                            );
-
-                        const days =
-                            (
-                                end - start
-                            ) /
-                            (
-                                1000 *
-                                60 *
-                                60 *
-                                24
-                            );
-
-                        total += days;
-
-                        count++;
-                    }
-                }
-            );
-
-            return count
-                ? (
-                    total / count
-                ).toFixed(1)
-                : '0';
-        }
-
-        function formatMonth(
-            date
-        ) {
-
-            if (!date) {
-
-                return '-';
+            } catch (error) {
+                console.error(error);
+                UI.showToast(error.message, 'error');
+            } finally {
+                UI.hideLoading();
             }
+        }
 
-            const d =
-                new Date(date);
+        // ============================================================
+        // HELPERS
+        // ============================================================
 
-            return d.toLocaleDateString(
-                'th-TH',
-                {
+        function _setEl(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        }
 
-                    month: 'short',
+        function _on(id, event, handler) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener(event, handler);
+        }
 
-                    year: 'numeric'
-                }
-            );
+        function _formatMonth(ym) {
+            if (!ym) return '-';
+            const [year, month] = ym.split('-');
+            const d = new Date(Number(year), Number(month) - 1, 1);
+            return d.toLocaleDateString('th-TH', { month: 'short', year: 'numeric' });
+        }
+
+        function _today() {
+            const d = new Date();
+            return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
         }
 
     </script>
