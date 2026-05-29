@@ -15,7 +15,7 @@ const API_CONFIG = {
     APP_VERSION: '0200',
 
     // แก้เป็น URL จริงหลัง deploy GAS
-    API_URL: 'https://script.google.com/macros/s/AKfycbxE6TGS0Xd0dN3AM7k7agRx0FHqjfcfvVDPM9FxW9GHRSN1X5XBNNu5OQTRRNcZC59Zyg/exec',
+    API_URL: 'https://script.google.com/macros/s/AKfycbxcUzP2MCjOvWn34ULBu8FIc5ldq2RO4DAAYLRaP0g7YAqyxr4bStza6h9s6wMOTRhKUg/exec',
 
     REQUEST_TIMEOUT: 30000,
     MAX_RETRY      : 2,
