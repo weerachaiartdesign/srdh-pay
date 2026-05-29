@@ -1,130 +1,205 @@
-/* Version: 0200 */
-/* ============================================= */
-/* Srdh Pay - Corporate Purple Pastel Theme     */
-/* ============================================= */
+/* ============================================================ */
+/* SRDH PAY — style.css v0200                                   */
+/* Dark mode: ควบคุมผ่าน .dark class ที่ <html>                 */
+/* ThemeManager ใน main.js จัดการ toggle                        */
+/* ============================================================ */
+
+/* ============================================================
+   CSS VARIABLES — Light Mode (default)
+   ============================================================ */
 
 :root {
-    --primary: #7C3AED;
-    --primary-light: #A78BFA;
-    --primary-dark: #6D28D9;
-    --accent: #C026D3;
-    
-    --success: #10B981;
-    --warning: #F59E0B;
-    --danger: #EF4444;
-    
-    --bg-light: #F3E8FF;
-    --card-light: #FFFFFF;
-    --text-primary: #4C1D95;
-    --text-secondary: #6B7280;
+    /* Brand */
+    --primary       : #7C3AED;
+    --primary-light : #A78BFA;
+    --primary-dark  : #6D28D9;
+    --accent        : #C026D3;
+
+    /* Semantic */
+    --success       : #10B981;
+    --warning       : #F59E0B;
+    --danger        : #EF4444;
+
+    /* Layout */
+    --bg-page       : #F5F3FF;
+    --bg-card       : #FFFFFF;
+    --bg-sidebar    : #4C1D95;
+    --bg-input      : #FFFFFF;
+
+    /* Text */
+    --text-primary  : #1E1B4B;
+    --text-secondary: #4B5563;
+    --text-muted    : #6B7280;
+    --text-on-dark  : #FFFFFF;
+
+    /* Border */
+    --border-color  : #DDD6FE;
+    --border-input  : #C4B5FD;
+
+    /* Table */
+    --table-header  : #EDE9FE;
+    --table-row-hover: #F5F3FF;
+    --table-border  : #E9D5FF;
+
+    /* Shadow */
+    --shadow-card   : 0 4px 16px -2px rgb(124 58 237 / 0.12);
+    --shadow-hover  : 0 8px 24px -4px rgb(124 58 237 / 0.20);
 }
 
-[data-theme="dark"] {
-    --bg-light: #1A1A2E;
-    --card-light: #16213E;
-    --text-primary: #E0E7FF;
-    --text-secondary: #94A3B8;
+/* ============================================================
+   CSS VARIABLES — Dark Mode
+   toggle โดย ThemeManager ใน main.js
+   ============================================================ */
+
+.dark {
+    /* Layout */
+    --bg-page       : #0F172A;
+    --bg-card       : #1E293B;
+    --bg-sidebar    : #1E1B4B;
+    --bg-input      : #1E293B;
+
+    /* Text */
+    --text-primary  : #E2E8F0;
+    --text-secondary: #CBD5E1;
+    --text-muted    : #94A3B8;
+    --text-on-dark  : #FFFFFF;
+
+    /* Border */
+    --border-color  : #334155;
+    --border-input  : #475569;
+
+    /* Table */
+    --table-header  : #1E293B;
+    --table-row-hover: #273449;
+    --table-border  : #334155;
+
+    /* Shadow */
+    --shadow-card   : 0 4px 16px -2px rgb(0 0 0 / 0.4);
+    --shadow-hover  : 0 8px 24px -4px rgb(0 0 0 / 0.5);
 }
 
-/* Base Styles */
+/* ============================================================
+   BASE
+   ============================================================ */
+
+html {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 body {
-    font-family: 'Prompt', 'Noto Sans Thai', system-ui, sans-serif;
+    font-family     : 'Prompt', 'Noto Sans Thai', system-ui, sans-serif;
+    background-color: var(--bg-page);
+    color           : var(--text-primary);
+    transition      : background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3, h4 {
     font-family: 'Prompt', sans-serif;
+    color      : var(--text-primary);
 }
 
-/* Card Style */
+/* ============================================================
+   CARD
+   ============================================================ */
+
 .card {
-    background: var(--card-light);
+    background   : var(--bg-card);
     border-radius: 20px;
-    box-shadow: 0 10px 15px -3px rgb(124 58 237 / 0.1);
-    transition: all 0.3s ease;
+    box-shadow   : var(--shadow-card);
+    transition   : all 0.3s ease;
+    color        : var(--text-primary);
 }
 
 .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgb(124 58 237 / 0.15);
+    transform : translateY(-4px);
+    box-shadow: var(--shadow-hover);
 }
 
-/* Status Badges */
-.status-r-waiting {
-    background-color: #FEF3C7;
-    color: #D97706;
-}
-.status-r-received {
-    background-color: #DBEAFE;
-    color: #2563EB;
-}
-.status-r-approved {
-    background-color: #D1FAE5;
-    color: #10B981;
-}
-.status-r-paid {
-    background-color: #E0E7FF;
-    color: #4F46E5;
-}
-.status-r-cancel {
-    background-color: #FEE2E2;
-    color: #EF4444;
-}
-
-/* Money Type Backgrounds */
-.money-type-เงินงบประมาณ { background-color: #FFCCFF; }
-.money-type-เงินบำรุง { background-color: #FFFF99; }
-.money-type-เงินประกันสุขภาพ { background-color: #F8CBAD; }
-.money-type-เงินอุดหนุน { background-color: #FF9999; }
-.money-type-เงินแพทยศาสตร์ { background-color: #FFF2CC; }
-.money-type-เงินอื่น { background-color: #E5E7EB; }
-
-/* Tailwind Custom */
-.btn-primary {
-    background: linear-gradient(135deg, #7C3AED, #A855F7);
-    transition: all 0.3s ease;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgb(124 58 237 / 0.4);
-}
-
-/* Progress Bar */
-.progress-bar {
-    height: 8px;
-    background: linear-gradient(90deg, #7C3AED, #C026D3);
-    border-radius: 9999px;
-}
-
-/* Table */
-.table-row {
-    transition: all 0.2s ease;
-}
-
-.table-row:hover {
-    background-color: #F3E8FF;
-}
-
-/* Dark Mode Adjustments */
-[data-theme="dark"] .table-row:hover {
-    background-color: #2A2A4A;
-}
-
-[data-theme="dark"] .card {
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
-}
-
-/* Card Hover (dashboard summary cards) */
 .card-hover {
     transition: all 0.2s ease;
 }
 
 .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px -4px rgb(124 58 237 / 0.15);
+    transform : translateY(-2px);
+    box-shadow: var(--shadow-hover);
 }
 
-/* Settings Layout */
+/* ============================================================
+   STATUS BADGES
+   ============================================================ */
+
+.status-r-waiting  { background-color: #FEF3C7; color: #D97706; }
+.status-r-received { background-color: #DBEAFE; color: #2563EB; }
+.status-r-approved { background-color: #D1FAE5; color: #10B981; }
+.status-r-paid     { background-color: #E0E7FF; color: #4F46E5; }
+.status-r-cancel   { background-color: #FEE2E2; color: #EF4444; }
+
+.dark .status-r-waiting  { background-color: #78350F; color: #FCD34D; }
+.dark .status-r-received { background-color: #1E3A5F; color: #93C5FD; }
+.dark .status-r-approved { background-color: #064E3B; color: #6EE7B7; }
+.dark .status-r-paid     { background-color: #312E81; color: #A5B4FC; }
+.dark .status-r-cancel   { background-color: #7F1D1D; color: #FCA5A5; }
+
+/* ============================================================
+   MONEY TYPE BACKGROUNDS
+   ============================================================ */
+
+.money-type-เงินงบประมาณ    { background-color: #FFCCFF; color: #6B21A8; }
+.money-type-เงินบำรุง       { background-color: #FFFF99; color: #713F12; }
+.money-type-เงินประกันสุขภาพ { background-color: #F8CBAD; color: #7C2D12; }
+.money-type-เงินอุดหนุน     { background-color: #FF9999; color: #7F1D1D; }
+.money-type-เงินแพทยศาสตร์  { background-color: #FFF2CC; color: #713F12; }
+.money-type-เงินอื่น        { background-color: #E5E7EB; color: #374151; }
+
+.dark .money-type-เงินงบประมาณ    { background-color: #4A1D6E; color: #E9D5FF; }
+.dark .money-type-เงินบำรุง       { background-color: #4D3800; color: #FEF08A; }
+.dark .money-type-เงินประกันสุขภาพ { background-color: #431407; color: #FED7AA; }
+.dark .money-type-เงินอุดหนุน     { background-color: #450A0A; color: #FECACA; }
+.dark .money-type-เงินแพทยศาสตร์  { background-color: #422006; color: #FEF9C3; }
+.dark .money-type-เงินอื่น        { background-color: #374151; color: #F3F4F6; }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.btn-primary {
+    background: linear-gradient(135deg, #7C3AED, #A855F7);
+    color      : #FFFFFF;
+    transition : all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform : translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgb(124 58 237 / 0.4);
+}
+
+/* ============================================================
+   PROGRESS BAR
+   ============================================================ */
+
+.progress-bar {
+    height       : 8px;
+    background   : linear-gradient(90deg, #7C3AED, #C026D3);
+    border-radius: 9999px;
+}
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+
+.table-row {
+    transition: all 0.2s ease;
+    color     : var(--text-primary);
+}
+
+.table-row:hover {
+    background-color: var(--table-row-hover);
+}
+
+/* ============================================================
+   SETTINGS LAYOUT
+   ============================================================ */
+
 .settings-section {
     display: none;
 }
@@ -134,77 +209,119 @@ h1, h2, h3, h4 {
 }
 
 .settings-card {
-    background: #ffffff;
+    background   : var(--bg-card);
     border-radius: 16px;
-    border: 1px solid #E5E7EB;
-    padding: 24px;
+    border       : 1px solid var(--border-color);
+    padding      : 24px;
     margin-bottom: 16px;
-    color: #1E293B;
+    color        : var(--text-primary);
+    transition   : background-color 0.3s ease, color 0.3s ease,
+                   border-color 0.3s ease;
 }
 
-[data-theme="dark"] .settings-card {
-    background: #1E293B;
-    border-color: #334155;
-    color: #E2E8F0;
-}
+/* ============================================================
+   SIDEBAR LINK (Settings)
+   ============================================================ */
 
-/* Tailwind dark class strategy */
-.dark .settings-card {
-    background: rgb(30 41 59);
-    border-color: rgb(51 65 85);
-    color: rgb(226 232 240);
-}
-
-/* Sidebar Link (settings sidebar) */
 .sidebar-link {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 10px;
-    font-size: 0.875rem;
-    color: #374151;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-bottom: 2px;
-}
-
-/* Tailwind dark class override */
-.dark .sidebar-link {
-    color: #CBD5E1;
-}
-
-.dark .sidebar-link:hover {
-    background-color: rgb(30 41 59);
-    color: #A78BFA;
-}
-
-.dark .sidebar-link.active {
-    background-color: #6D28D9;
-    color: #ffffff;
+    display        : flex;
+    align-items    : center;
+    gap            : 8px;
+    padding        : 8px 16px;
+    border-radius  : 10px;
+    font-size      : 0.875rem;
+    color          : var(--text-secondary);
+    cursor         : pointer;
+    transition     : all 0.2s ease;
+    margin-bottom  : 2px;
 }
 
 .sidebar-link:hover {
-    background-color: #F3E8FF;
-    color: #7C3AED;
+    background-color: var(--table-row-hover);
+    color           : var(--primary);
 }
 
 .sidebar-link.active {
-    background-color: #7C3AED;
-    color: #ffffff;
-    font-weight: 500;
+    background-color: var(--primary);
+    color           : #FFFFFF;
+    font-weight     : 500;
 }
 
-[data-theme="dark"] .sidebar-link {
-    color: #CBD5E1;
+/* ============================================================
+   DARK MODE — Global overrides สำหรับ element ที่ไม่ใช้ variable
+   ============================================================ */
+
+/* Input / Select / Textarea */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+.dark select,
+.dark textarea {
+    background-color: var(--bg-input);
+    color           : var(--text-primary);
+    border-color    : var(--border-input);
 }
 
-[data-theme="dark"] .sidebar-link:hover {
-    background-color: #2A2A4A;
-    color: #A78BFA;
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: var(--text-muted);
 }
 
-[data-theme="dark"] .sidebar-link.active {
-    background-color: #6D28D9;
-    color: #ffffff;
+/* Table header */
+.dark thead {
+    background-color: var(--table-header);
+    color           : var(--text-secondary);
+}
+
+/* Table cell */
+.dark td, .dark th {
+    border-color: var(--table-border);
+    color       : var(--text-primary);
+}
+
+/* White bg → card bg ใน dark mode */
+.dark .bg-white {
+    background-color: var(--bg-card) !important;
+    color           : var(--text-primary);
+}
+
+/* Slate backgrounds */
+.dark .bg-slate-50  { background-color: #1E293B !important; }
+.dark .bg-slate-100 { background-color: #0F172A !important; }
+
+/* Border colors */
+.dark .border-slate-200 { border-color: var(--border-color) !important; }
+.dark .border-slate-100 { border-color: var(--border-color) !important; }
+
+/* Text colors */
+.dark .text-slate-700 { color: #CBD5E1 !important; }
+.dark .text-slate-600 { color: #94A3B8 !important; }
+.dark .text-slate-500 { color: #94A3B8 !important; }
+.dark .text-slate-400 { color: #64748B !important; }
+.dark .text-gray-700  { color: #CBD5E1 !important; }
+.dark .text-gray-600  { color: #94A3B8 !important; }
+.dark .text-gray-500  { color: #94A3B8 !important; }
+
+/* Modal/Overlay */
+.dark .bg-white.rounded-xl,
+.dark .bg-white.rounded-2xl {
+    background-color: var(--bg-card) !important;
+    color           : var(--text-primary);
+}
+
+/* Scrollbar */
+.dark ::-webkit-scrollbar {
+    width     : 8px;
+    height    : 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+    background: #0F172A;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background   : #334155;
+    border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
 }
