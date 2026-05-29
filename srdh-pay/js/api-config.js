@@ -240,7 +240,7 @@ const AuthAPI = {
             console.warn('logout error:', e);
         } finally {
             SessionManager.clearSession();
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
     },
 
