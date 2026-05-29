@@ -139,11 +139,20 @@ h1, h2, h3, h4 {
     border: 1px solid #E5E7EB;
     padding: 24px;
     margin-bottom: 16px;
+    color: #1E293B;
 }
 
 [data-theme="dark"] .settings-card {
     background: #1E293B;
     border-color: #334155;
+    color: #E2E8F0;
+}
+
+/* Tailwind dark class strategy */
+.dark .settings-card {
+    background: rgb(30 41 59);
+    border-color: rgb(51 65 85);
+    color: rgb(226 232 240);
 }
 
 /* Sidebar Link (settings sidebar) */
@@ -158,6 +167,21 @@ h1, h2, h3, h4 {
     cursor: pointer;
     transition: all 0.2s ease;
     margin-bottom: 2px;
+}
+
+/* Tailwind dark class override */
+.dark .sidebar-link {
+    color: #CBD5E1;
+}
+
+.dark .sidebar-link:hover {
+    background-color: rgb(30 41 59);
+    color: #A78BFA;
+}
+
+.dark .sidebar-link.active {
+    background-color: #6D28D9;
+    color: #ffffff;
 }
 
 .sidebar-link:hover {
