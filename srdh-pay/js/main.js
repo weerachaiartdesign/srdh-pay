@@ -95,7 +95,6 @@ const App = {
 
         // Login page — ไม่ต้องตรวจ session
         if (AppState.currentPage === 'index.html' ||
-            AppState.currentPage === 'index.html' ||
             AppState.currentPage === '') {
             AppState.initialized = true;
             return;
