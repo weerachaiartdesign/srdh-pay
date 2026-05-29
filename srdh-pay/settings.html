@@ -26,8 +26,16 @@
             // default = light mode เสมอ (ไม่ follow OS)
         })();
     </script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind dark mode: class strategy -->
+    <script>
+        tailwind.config = { darkMode: 'class' };
+    </script>
+
 
     <!-- Runtime -->
     <script src="js/api-config.js"></script>
@@ -66,17 +74,7 @@
                 rgb(30 41 59);
         }
 
-        .dark .settings-card {
-
-            background:
-                rgb(30 41 59);
-
-            border-color:
-                rgb(51 65 85);
-
-            color:
-                rgb(226 232 240);
-        }
+        /* dark mode handled by css/style.css */
 
         .sidebar-link {
 
@@ -102,11 +100,7 @@
                 rgb(51 65 85);
         }
 
-        .dark .sidebar-link {
 
-            color:
-                rgb(203 213 225);
-        }
 
         .sidebar-link:hover {
 
