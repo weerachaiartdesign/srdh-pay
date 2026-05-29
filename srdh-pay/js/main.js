@@ -43,6 +43,42 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 // ============================================================
+// THEME MANAGER
+// ============================================================
+
+const ThemeManager = {
+
+    STORAGE_KEY: 'srdh_theme',
+
+    init() {
+        // Default: light mode เสมอ ถ้าไม่เคย save ค่าไว้
+        const saved = localStorage.getItem(this.STORAGE_KEY);
+        const isDark = saved === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
+        this._updateIcon(isDark);
+    },
+
+    toggle() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem(this.STORAGE_KEY, isDark ? 'dark' : 'light');
+        this._updateIcon(isDark);
+    },
+
+    isDark() {
+        return document.documentElement.classList.contains('dark');
+    },
+
+    _updateIcon(isDark) {
+        const btn = document.getElementById('themeToggleBtn');
+        if (!btn) return;
+        btn.innerHTML = isDark
+            ? '<span>☀️</span><span>Light Mode</span>'
+            : '<span>🌙</span><span>Dark Mode</span>';
+        btn.title = isDark ? 'เปลี่ยนเป็น Light Mode' : 'เปลี่ยนเป็น Dark Mode';
+    }
+};
+
+// ============================================================
 // APP ENGINE
 // ============================================================
 
@@ -50,6 +86,7 @@ const App = {
 
     async init() {
 
+        ThemeManager.init();
         this.detectPage();
         this.detectDevice();
         this.setupGlobalEvents();
@@ -265,9 +302,27 @@ const Navigation = {
             container.appendChild(a);
         });
 
+        // Divider
+        const divider     = document.createElement('div');
+        divider.className = 'border-t border-white border-opacity-20 my-2';
+        container.appendChild(divider);
+
+        // Theme Toggle button
+        const themeBtn       = document.createElement('button');
+        themeBtn.id          = 'themeToggleBtn';
+        themeBtn.className   = 'flex items-center gap-2 px-4 py-2.5 rounded-lg mb-1 text-sm w-full text-left transition-all ' +
+            'text-gray-600 hover:bg-violet-50 hover:text-violet-700 ' +
+            'dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white';
+        themeBtn.innerHTML   = ThemeManager.isDark()
+            ? '<span>☀️</span><span>Light Mode</span>'
+            : '<span>🌙</span><span>Dark Mode</span>';
+        themeBtn.title       = ThemeManager.isDark() ? 'เปลี่ยนเป็น Light Mode' : 'เปลี่ยนเป็น Dark Mode';
+        themeBtn.onclick     = () => ThemeManager.toggle();
+        container.appendChild(themeBtn);
+
         // Logout button
         const logoutBtn       = document.createElement('button');
-        logoutBtn.className   = 'flex items-center gap-2 px-4 py-2.5 rounded-lg mb-1 text-sm w-full text-left text-red-500 hover:bg-red-50 transition-all mt-4';
+        logoutBtn.className   = 'flex items-center gap-2 px-4 py-2.5 rounded-lg mb-1 text-sm w-full text-left text-red-500 hover:bg-red-50 dark:hover:bg-red-900 dark:hover:text-red-300 transition-all';
         logoutBtn.innerHTML   = '<span>🚪</span><span>ออกจากระบบ</span>';
         logoutBtn.onclick     = async () => {
             const ok = await UI.confirmModal('ออกจากระบบ', 'ต้องการออกจากระบบใช่หรือไม่?');
