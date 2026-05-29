@@ -18,6 +18,14 @@
         SRDH PAY - Settings
     </title>
 
+    <!-- Theme: anti-flash script (must be before Tailwind) -->
+    <script>
+        (function() {
+            var t = localStorage.getItem('srdh_theme');
+            if (t === 'dark') document.documentElement.classList.add('dark');
+            // default = light mode เสมอ (ไม่ follow OS)
+        })();
+    </script>
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
