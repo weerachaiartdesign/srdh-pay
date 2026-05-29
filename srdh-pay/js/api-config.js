@@ -15,7 +15,7 @@ const API_CONFIG = {
     APP_VERSION: '0200',
 
     // แก้เป็น URL จริงหลัง deploy GAS
-    API_URL: 'https://script.google.com/macros/s/AKfycbzT7wsv21jTPRjE9yvHhGwQ9E-_4aPnmjXPShs5DoAjcRh9b__YNr5xiLD-7IrqcGrsDw/exec',
+    API_URL: 'https://script.google.com/macros/s/AKfycbxE6TGS0Xd0dN3AM7k7agRx0FHqjfcfvVDPM9FxW9GHRSN1X5XBNNu5OQTRRNcZC59Zyg/exec',
 
     REQUEST_TIMEOUT: 30000,
     MAX_RETRY      : 2,
@@ -147,7 +147,9 @@ const ApiClient = {
 
             const response = await fetch(API_CONFIG.API_URL, {
                 method : 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                // ใช้ text/plain เพื่อหลีกเลี่ยง CORS preflight บน GAS
+                // GAS ไม่รองรับ OPTIONS preflight — body ยังเป็น JSON ปกติ
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body   : JSON.stringify(payload),
                 signal : controller.signal
             });
@@ -238,7 +240,7 @@ const AuthAPI = {
             console.warn('logout error:', e);
         } finally {
             SessionManager.clearSession();
-            window.location.href = 'index.html';
+            window.location.href = 'login.html';
         }
     },
 
@@ -470,7 +472,7 @@ const PermissionManager = {
 function _handleSessionExpired() {
     SessionManager.clearSession();
     UI.showToast('Session หมดอายุ กรุณาเข้าสู่ระบบใหม่', 'error');
-    setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
 }
 
 // ============================================================
@@ -491,7 +493,7 @@ setInterval(function () {
     if (SessionManager.isLoggedIn()) return;
 
     const page = window.location.pathname.split('/').pop();
-    const publicPages = ['index.html', 'index.html', ''];
+    const publicPages = ['login.html', 'index.html', ''];
 
     if (!publicPages.includes(page)) {
         _handleSessionExpired();
