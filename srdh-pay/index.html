@@ -1,5 +1,5 @@
 <!-- Version: 0200 -->
-<!-- login.html -->
+<!-- index.html -->
 <!-- SRDH PAY SYSTEM -->
 
 <!DOCTYPE html>
@@ -18,14 +18,20 @@
         SRDH PAY - เข้าสู่ระบบ
     </title>
 
+    <!-- Theme: anti-flash script (must be before Tailwind) -->
+    <script>
+        (function() {
+            var t = localStorage.getItem('srdh_theme');
+            if (t === 'dark') document.documentElement.classList.add('dark');
+            // default = light mode เสมอ (ไม่ follow OS)
+        })();
+    </script>
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Main Runtime -->
     <script src="js/api-config.js"></script>
     <script src="js/main.js"></script>
-
-    <link rel="manifest" href="manifest.json">
 
     <!-- Prevent iframe -->
     <script>
@@ -86,6 +92,18 @@
         }
 
     </style>
+
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#7C3AED">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SRDH PAY">
+    <link rel="apple-touch-icon" href="icons/register_acc-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/register_acc-152.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/register_acc-touch-icon-ipad.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/register_acc-192.png">
 
 </head>
 
