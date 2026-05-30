@@ -1,4 +1,4 @@
-// Version: 0200
+// Version: 0202
 // main.js
 // SRDH PAY Frontend Runtime Engine
 
@@ -111,6 +111,8 @@ const App = {
         this.setupPermissionUI();
         this.renderUserInfo();
         Navigation.renderMenu();
+        MobileMenu.init();
+        MobileMenu.renderMobileMenu();
         RouteGuard.check();
         this.setupDashboardRefresh();
         this.startInactivityWatcher();
@@ -226,6 +228,98 @@ const App = {
         UI.createToastContainer();
         UI.createLoadingOverlay();
         UI.createConfirmModal();
+    }
+};
+
+// ============================================================
+// MOBILE MENU ENGINE
+// ============================================================
+
+const MobileMenu = {
+
+    _isOpen: false,
+
+    init() {
+        this._createOverlay();
+        this._bindHamburger();
+        this._bindResize();
+    },
+
+    open() {
+        const sidebar  = document.getElementById('mobileSidebar');
+        const overlay  = document.getElementById('mobileOverlay');
+        if (!sidebar || !overlay) return;
+
+        sidebar.classList.remove('-translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        overlay.classList.remove('opacity-0', 'pointer-events-none');
+        overlay.classList.add('opacity-100');
+        document.body.classList.add('overflow-hidden');
+        this._isOpen = true;
+    },
+
+    close() {
+        const sidebar  = document.getElementById('mobileSidebar');
+        const overlay  = document.getElementById('mobileOverlay');
+        if (!sidebar || !overlay) return;
+
+        sidebar.classList.remove('translate-x-0');
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.remove('opacity-100');
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        document.body.classList.remove('overflow-hidden');
+        this._isOpen = false;
+    },
+
+    toggle() {
+        this._isOpen ? this.close() : this.open();
+    },
+
+    _createOverlay() {
+        if (document.getElementById('mobileOverlay')) return;
+        const overlay       = document.createElement('div');
+        overlay.id          = 'mobileOverlay';
+        overlay.className   = [
+            'fixed inset-0 bg-black bg-opacity-50 z-30',
+            'transition-opacity duration-300',
+            'opacity-0 pointer-events-none lg:hidden'
+        ].join(' ');
+        overlay.onclick     = () => this.close();
+        document.body.appendChild(overlay);
+    },
+
+    _bindHamburger() {
+        const btn = document.getElementById('hamburgerBtn');
+        if (btn) btn.onclick = () => this.toggle();
+    },
+
+    _bindResize() {
+        window.addEventListener('resize', debounce(() => {
+            if (window.innerWidth >= 1024 && this._isOpen) {
+                this.close();
+            }
+        }, 200));
+    },
+
+    // render menu ลงใน mobile sidebar
+    renderMobileMenu() {
+        const mobileNav = document.getElementById('mobileSidebarMenu');
+        const desktopNav = document.getElementById('sidebarMenu');
+        if (!mobileNav || !desktopNav) return;
+        // clone content จาก desktop sidebar
+        mobileNav.innerHTML = desktopNav.innerHTML;
+        // ปิด sidebar เมื่อกด link
+        mobileNav.querySelectorAll('a').forEach(a => {
+            a.addEventListener('click', () => this.close());
+        });
+        // ปิด sidebar เมื่อกด button (logout, theme)
+        mobileNav.querySelectorAll('button').forEach(btn => {
+            const orig = btn.onclick;
+            btn.onclick = async (e) => {
+                this.close();
+                if (orig) await orig.call(btn, e);
+            };
+        });
     }
 };
 
@@ -720,4 +814,4 @@ window.addEventListener('unhandledrejection', function (event) {
     );
 });
 
-console.log('SRDH PAY Runtime v' + (typeof API_CONFIG !== 'undefined' ? API_CONFIG.APP_VERSION : '0200') + ' loaded');
+console.log('SRDH PAY Runtime v' + (typeof API_CONFIG !== 'undefined' ? API_CONFIG.APP_VERSION : '0202') + ' loaded');
