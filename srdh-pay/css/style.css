@@ -1,5 +1,5 @@
 /* ============================================================ */
-/* SRDH PAY — style.css v0200                                   */
+/* SRDH PAY — style.css v0202                                   */
 /* Dark mode: ควบคุมผ่าน .dark class ที่ <html>                 */
 /* ThemeManager ใน main.js จัดการ toggle                        */
 /* ============================================================ */
@@ -324,4 +324,30 @@ h1, h2, h3, h4 {
 
 .dark ::-webkit-scrollbar-thumb:hover {
     background: #475569;
+}
+
+/* ============================================================
+   MOBILE SIDEBAR DRAWER
+   ============================================================ */
+
+#mobileSidebar {
+    will-change: transform;
+}
+
+/* hamburger สีตาม theme */
+#hamburgerBtn {
+    flex-shrink: 0;
+}
+
+/* ป้องกัน body scroll เมื่อ sidebar เปิด */
+body.overflow-hidden {
+    overflow: hidden;
+}
+
+/* mobile nav links — ขนาดเหมาะกับนิ้ว */
+#mobileSidebarMenu a,
+#mobileSidebarMenu button {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
 }
