@@ -1,7 +1,7 @@
-// Version: 0200
+// Version: 0202
 // api-config.js
 // Centralized API Client — SRDH PAY
-// Backend: Google Apps Script (Code.gs v0200)
+// Backend: Google Apps Script (Code.gs v0202)
 
 'use strict';
 
@@ -12,10 +12,10 @@
 const API_CONFIG = {
 
     APP_NAME   : 'SRDH PAY',
-    APP_VERSION: '0200',
+    APP_VERSION: '0202',
 
     // แก้เป็น URL จริงหลัง deploy GAS
-    API_URL: 'https://script.google.com/macros/s/AKfycbxcUzP2MCjOvWn34ULBu8FIc5ldq2RO4DAAYLRaP0g7YAqyxr4bStza6h9s6wMOTRhKUg/exec',
+    API_URL: 'https://script.google.com/macros/s/AKfycbxSWV2hYFWpozvQfcDG_TNEnVAmLe99xrIj70cN0XgXqiTih_Lr53EipV1mEH2sX3iiPw/exec',
 
     REQUEST_TIMEOUT: 30000,
     MAX_RETRY      : 2,
