@@ -1,4 +1,4 @@
-<!-- Version: 0200 -->
+<!-- Version: 0202 -->
 <!-- import.html -->
 <!-- SRDH PAY Import XLSX -->
 
@@ -110,6 +110,36 @@
         "
     >
 
+        <!-- Mobile Sidebar Drawer -->
+        <div
+            id="mobileSidebar"
+            class="
+                fixed top-0 left-0 h-full w-72
+                bg-white dark:bg-slate-900
+                border-r border-slate-200 dark:border-slate-800
+                flex flex-col z-40
+                transform -translate-x-full
+                transition-transform duration-300 ease-in-out
+                lg:hidden
+            "
+        >
+            <!-- Header -->
+            <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-bold text-violet-700 dark:text-violet-400">SRDH PAY</h1>
+                    <p class="text-xs text-slate-500 mt-0.5">Financial System</p>
+                </div>
+                <button
+                    onclick="MobileMenu.close()"
+                    class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"
+                >
+                    ✕
+                </button>
+            </div>
+            <!-- Menu -->
+            <nav id="mobileSidebarMenu" class="flex-1 p-4 overflow-y-auto"></nav>
+        </div>
+
         <!-- Sidebar -->
         <aside
             class="
@@ -208,6 +238,24 @@
                 "
             >
 
+                <!-- Hamburger (mobile only) -->
+                <button
+                    id="hamburgerBtn"
+                    class="
+                        lg:hidden
+                        p-2 mr-2 rounded-lg
+                        hover:bg-slate-100 dark:hover:bg-slate-800
+                        text-slate-600 dark:text-slate-300
+                        transition
+                    "
+                    aria-label="เปิดเมนู"
+                >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6"  x2="21" y2="6"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
                 <div>
 
                     <h2
@@ -681,7 +729,7 @@
                                 text-slate-500
                             "
                         >
-                            สูงสุด 15 rows
+                            สูงสุด <span id="importLimitDisplay">15</span> rows
                         </div>
 
                     </div>
@@ -962,8 +1010,9 @@
         // STATE
         // ============================================================
 
-        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-        const MAX_ROWS      = 15;
+        const MAX_FILE_SIZE  = 5 * 1024 * 1024; // 5 MB
+        const LIMIT_BY_ROLE  = { admin: 200, staff: 15 };
+        const MAX_ROWS       = LIMIT_BY_ROLE[SessionManager.getUser()?.role] || 15;
 
         let currentFile    = null;
         let currentHeaders = [];
@@ -978,8 +1027,18 @@
         document.addEventListener('DOMContentLoaded', initializePage);
 
         async function initializePage() {
+            initImportLimit();
             bindEvents();
             await loadImportHistory();
+        }
+
+        function initImportLimit() {
+            // กำหนด limit ตาม role — admin: 200 rows, staff: 15 rows
+            const role  = SessionManager.getUser()?.role || 'staff';
+            const limit = role === 'admin' ? 200 : 15;
+            window._importMaxRows = limit;
+            const el = document.getElementById('importLimitDisplay');
+            if (el) el.textContent = limit;
         }
 
         // ============================================================
@@ -1096,7 +1155,8 @@
         async function prepareRows(rows) {
 
             if (!rows.length)           throw new Error('ไม่พบข้อมูลในไฟล์');
-            if (rows.length > MAX_ROWS) throw new Error('Import ได้สูงสุด ' + MAX_ROWS + ' รายการ');
+            const _maxRows = window._importMaxRows || MAX_ROWS;
+            if (rows.length > _maxRows) throw new Error('Import ได้สูงสุด ' + _maxRows + ' รายการต่อครั้ง');
 
             currentHeaders = Object.keys(rows[0]);
 
